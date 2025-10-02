@@ -12,7 +12,7 @@ func DefaultTableName(name string) string {
 	snake := pascalToSnake(name)
 
 	// Pluralize
-	return pluralize(snake)
+	return Pluralize(snake)
 }
 
 // pascalToSnake converts PascalCase to snake_case
@@ -43,6 +43,12 @@ func pascalToSnake(s string) string {
 		}
 	}
 	return result.String()
+}
+
+// Pluralize converts singular to plural
+// This is exported so other packages can use it
+func Pluralize(s string) string {
+	return pluralize(s)
 }
 
 // pluralize adds simple pluralization

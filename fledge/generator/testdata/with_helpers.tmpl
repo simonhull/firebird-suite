@@ -1,0 +1,22 @@
+Original: {{ .Name }}
+PascalCase: {{ pascalCase .Name }}
+CamelCase: {{ camelCase .Name }}
+SnakeCase: {{ snakeCase .Name }}
+Plural: {{ plural .Name }}
+Upper: {{ upper .Name }}
+Lower: {{ lower .Name }}
+Title: {{ title .Name }}
+Quoted: {{ quote .Name }}
+{{- if .Type }}
+Type: {{ .Type }}
+IsPointer: {{ isPointer .Type }}
+{{- if isPointer .Type }}
+Stripped: {{ stripPointer .Type }}
+{{- end }}
+IsTime: {{ isTime .Type }}
+{{- end }}
+Default: {{ default "unknown" .Empty }}
+{{- with dict "key1" "value1" "key2" 42 }}
+Dict key1: {{ .key1 }}
+Dict key2: {{ .key2 }}
+{{- end }}

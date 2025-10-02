@@ -1,0 +1,47 @@
+package models
+
+import (
+	"time"
+)
+
+// {{ .Name }} represents a {{ lower .Name }} entity
+type {{ .Name }} struct {
+{{- range .Fields }}
+	{{ pascalCase .Name }} {{ .Type }} {{ .Tags }}
+{{- end }}
+}
+
+// TableName returns the database table name for {{ .Name }}
+func ({{ slice 0 1 (camelCase .Name) }} *{{ .Name }}) TableName() string {
+	return {{ quote (snakeCase .Name | plural) }}
+}
+
+// New{{ .Name }} creates a new {{ .Name }} instance
+func New{{ .Name }}() *{{ .Name }} {
+	return &{{ .Name }}{
+{{- range .Fields }}
+{{- if .Default }}
+		{{ pascalCase .Name }}: {{ .Default }},
+{{- end }}
+{{- end }}
+	}
+}
+
+{{- range .Fields }}
+{{- if isPointer .Type }}
+
+// Get{{ pascalCase .Name }} safely returns the {{ .Name }} value
+func ({{ slice 0 1 (camelCase $.Name) }} *{{ $.Name }}) Get{{ pascalCase .Name }}() {{ stripPointer .Type }} {
+	if {{ slice 0 1 (camelCase $.Name) }}.{{ pascalCase .Name }} == nil {
+		var zero {{ stripPointer .Type }}
+		return zero
+	}
+	return *{{ slice 0 1 (camelCase $.Name) }}.{{ pascalCase .Name }}
+}
+
+// Set{{ pascalCase .Name }} sets the {{ .Name }} value
+func ({{ slice 0 1 (camelCase $.Name) }} *{{ $.Name }}) Set{{ pascalCase .Name }}(val {{ stripPointer .Type }}) {
+	{{ slice 0 1 (camelCase $.Name) }}.{{ pascalCase .Name }} = &val
+}
+{{- end }}
+{{- end }}

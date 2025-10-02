@@ -1,0 +1,23 @@
+function alpha() {
+	return "alpha";
+}
+
+function beta() {
+	return "beta";
+}
+
+function gamma() {
+	return "gamma";
+}
+
+function delta() {
+	return "delta";
+}
+
+function epsilon() {
+	return "epsilon";
+}
+
+function zeta() {
+	return "zeta";
+}

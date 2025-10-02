@@ -1,0 +1,16 @@
+package {{ .Package }}
+{{- if .Imports }}
+
+import (
+{{- range .Imports }}
+	"{{ . }}"
+{{- end }}
+)
+{{- end }}
+
+// {{ .Name }} represents a {{ lower .Name }} resource
+type {{ .Name }} struct {
+{{- range .Fields }}
+	{{ .Name }} {{ .Type }} `json:"{{ .JSONTag }}"`
+{{- end }}
+}

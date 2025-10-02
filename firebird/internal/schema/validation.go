@@ -15,6 +15,7 @@ var validGoTypes = []string{
 	"float32", "float64", "*float32", "*float64",
 	"bool", "*bool",
 	"time.Time", "*time.Time",
+	"uuid.UUID", "*uuid.UUID",
 	"[]byte",
 }
 

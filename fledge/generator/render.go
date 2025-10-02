@@ -175,7 +175,7 @@ func defaultFuncMap() template.FuncMap {
 }
 
 // PascalCase converts snake_case or camelCase to PascalCase
-// Examples: user_name → UserName, userName → UserName
+// Examples: user_name → UserName, userName → UserName, user_id → UserID
 func PascalCase(s string) string {
 	if s == "" {
 		return ""
@@ -186,7 +186,7 @@ func PascalCase(s string) string {
 		parts := strings.Split(s, "_")
 		for i, part := range parts {
 			if part != "" {
-				parts[i] = strings.ToUpper(string(part[0])) + strings.ToLower(part[1:])
+				parts[i] = capitalizeWord(part)
 			}
 		}
 		return strings.Join(parts, "")
@@ -196,8 +196,51 @@ func PascalCase(s string) string {
 	if len(s) > 0 {
 		// If first letter is lowercase, capitalize it
 		if unicode.IsLower(rune(s[0])) {
-			return strings.ToUpper(string(s[0])) + s[1:]
+			return capitalizeWord(s)
 		}
+	}
+
+	return s
+}
+
+// capitalizeWord capitalizes a word with special handling for acronyms
+func capitalizeWord(s string) string {
+	if s == "" {
+		return ""
+	}
+
+	// Common acronyms that should be all-caps
+	acronyms := map[string]string{
+		"id":    "ID",
+		"url":   "URL",
+		"uri":   "URI",
+		"http":  "HTTP",
+		"https": "HTTPS",
+		"api":   "API",
+		"uuid":  "UUID",
+		"sql":   "SQL",
+		"html":  "HTML",
+		"css":   "CSS",
+		"json":  "JSON",
+		"xml":   "XML",
+		"ip":    "IP",
+		"tcp":   "TCP",
+		"udp":   "UDP",
+		"tls":   "TLS",
+		"ssl":   "SSL",
+		"db":    "DB",
+		"ui":    "UI",
+		"os":    "OS",
+	}
+
+	lower := strings.ToLower(s)
+	if acronym, ok := acronyms[lower]; ok {
+		return acronym
+	}
+
+	// Regular capitalization - capitalize first letter, keep rest as-is
+	if len(s) > 0 {
+		return strings.ToUpper(string(s[0])) + s[1:]
 	}
 
 	return s

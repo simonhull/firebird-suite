@@ -237,15 +237,46 @@ func TestPascalCase(t *testing.T) {
 		input    string
 		expected string
 	}{
+		// Basic conversions
 		{"", ""},
 		{"user_name", "UserName"},
 		{"blog_post", "BlogPost"},
 		{"userName", "UserName"},
 		{"UserName", "UserName"},
-		{"api_key", "ApiKey"},
-		{"http_server", "HttpServer"},
-		{"id", "Id"},
 		{"user", "User"},
+
+		// Acronyms
+		{"id", "ID"},
+		{"user_id", "UserID"},
+		{"api_key", "APIKey"},
+		{"http_server", "HTTPServer"},
+		{"https_url", "HTTPSURL"},
+		{"uuid", "UUID"},
+		{"sql_query", "SQLQuery"},
+		{"html_template", "HTMLTemplate"},
+		{"css_style", "CSSStyle"},
+		{"json_data", "JSONData"},
+		{"xml_parser", "XMLParser"},
+		{"ip_address", "IPAddress"},
+		{"tcp_connection", "TCPConnection"},
+		{"udp_packet", "UDPPacket"},
+		{"tls_config", "TLSConfig"},
+		{"ssl_cert", "SSLCert"},
+		{"db_connection", "DBConnection"},
+		{"ui_component", "UIComponent"},
+		{"os_version", "OSVersion"},
+		{"url_path", "URLPath"},
+		{"uri_scheme", "URIScheme"},
+
+		// Multiple acronyms
+		{"api_url", "APIURL"},
+		{"http_api", "HTTPAPI"},
+		{"db_uuid", "DBUUID"},
+
+		// Mixed regular words and acronyms
+		{"user_api_key", "UserAPIKey"},
+		{"server_url_path", "ServerURLPath"},
+		{"database_id_field", "DatabaseIDField"},
 	}
 
 	for _, tt := range tests {
@@ -499,7 +530,7 @@ func TestModelExampleTemplate(t *testing.T) {
 
 	// Check struct definition
 	assert.Contains(t, outputStr, "type User struct")
-	assert.Contains(t, outputStr, "Id string")
+	assert.Contains(t, outputStr, "ID string")
 	assert.Contains(t, outputStr, "Email string")
 	assert.Contains(t, outputStr, "Name *string")
 	assert.Contains(t, outputStr, "Active bool")

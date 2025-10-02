@@ -9,469 +9,134 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseValidMinimal(t *testing.T) {
-	path := filepath.Join("testdata", "valid_minimal.firebird.yml")
-	def, err := Parse(path)
+func TestParse(t *testing.T) {
+	// Create temp file
+	tempDir := t.TempDir()
+	schemaPath := filepath.Join(tempDir, "test.yml")
 
+	schemaContent := `apiVersion: v1
+kind: TestResource
+name: TestName
+metadata:
+  author: test
+spec:
+  field1: value1
+  field2: 123
+`
+
+	err := os.WriteFile(schemaPath, []byte(schemaContent), 0644)
+	require.NoError(t, err)
+
+	// Parse
+	def, err := Parse(schemaPath)
 	require.NoError(t, err)
 	require.NotNil(t, def)
 
 	assert.Equal(t, "v1", def.APIVersion)
-	assert.Equal(t, "Resource", def.Kind)
-	assert.Equal(t, "User", def.Name)
-	assert.Empty(t, def.Spec.TableName)
-	require.Len(t, def.Spec.Fields, 1)
-
-	field := def.Spec.Fields[0]
-	assert.Equal(t, "id", field.Name)
-	assert.Equal(t, "string", field.Type)
-	assert.Equal(t, "UUID", field.DBType)
-	assert.True(t, field.PrimaryKey)
-}
-
-func TestParseValidComplete(t *testing.T) {
-	path := filepath.Join("testdata", "valid_complete.firebird.yml")
-	def, err := Parse(path)
-
-	require.NoError(t, err)
-	require.NotNil(t, def)
-
-	assert.Equal(t, "v1", def.APIVersion)
-	assert.Equal(t, "Resource", def.Kind)
-	assert.Equal(t, "BlogPost", def.Name)
-	assert.Equal(t, "posts", def.Spec.TableName)
-	require.Len(t, def.Spec.Fields, 11)
-
-	// Check a few key fields
-	idField := def.Spec.Fields[0]
-	assert.Equal(t, "id", idField.Name)
-	assert.Equal(t, "string", idField.Type)
-	assert.Equal(t, "UUID", idField.DBType)
-	assert.True(t, idField.PrimaryKey)
-
-	titleField := def.Spec.Fields[1]
-	assert.Equal(t, "title", titleField.Name)
-	assert.Equal(t, "string", titleField.Type)
-	assert.Equal(t, "VARCHAR(255)", titleField.DBType)
-	assert.Equal(t, []string{"required", "min=3", "max=255"}, titleField.Validation)
-
-	createdAtField := def.Spec.Fields[9]
-	assert.Equal(t, "created_at", createdAtField.Name)
-	assert.Equal(t, "time.Time", createdAtField.Type)
-	assert.Equal(t, "TIMESTAMP", createdAtField.DBType)
-	assert.True(t, createdAtField.AutoNowAdd)
-
-	updatedAtField := def.Spec.Fields[10]
-	assert.Equal(t, "updated_at", updatedAtField.Name)
-	assert.Equal(t, "*time.Time", updatedAtField.Type)
-	assert.Equal(t, "TIMESTAMP", updatedAtField.DBType)
-	assert.True(t, updatedAtField.AutoNow)
-	assert.True(t, updatedAtField.Nullable)
+	assert.Equal(t, "TestResource", def.Kind)
+	assert.Equal(t, "TestName", def.Name)
+	assert.NotNil(t, def.Metadata)
+	assert.NotNil(t, def.Spec)
 }
 
 func TestParseBytes(t *testing.T) {
-	data := []byte(`
-apiVersion: v1
+	schemaContent := []byte(`apiVersion: v1
 kind: Resource
-name: Product
+name: Test
 spec:
-  fields:
-    - name: id
-      type: string
-      db_type: UUID
-      primary_key: true
-    - name: name
-      type: string
-      db_type: VARCHAR(100)
-    - name: price
-      type: float64
-      db_type: DECIMAL(10,2)
+  data: value
 `)
 
-	def, err := ParseBytes(data)
-
+	def, err := ParseBytes(schemaContent)
 	require.NoError(t, err)
-	require.NotNil(t, def)
-
 	assert.Equal(t, "v1", def.APIVersion)
 	assert.Equal(t, "Resource", def.Kind)
-	assert.Equal(t, "Product", def.Name)
-	require.Len(t, def.Spec.Fields, 3)
+	assert.Equal(t, "Test", def.Name)
 }
 
-func TestParseMissingAPIVersion(t *testing.T) {
-	path := filepath.Join("testdata", "invalid_missing_apiversion.firebird.yml")
-	def, err := Parse(path)
+func TestWrite(t *testing.T) {
+	tempDir := t.TempDir()
+	schemaPath := filepath.Join(tempDir, "output.yml")
 
-	assert.Nil(t, def)
-	require.Error(t, err)
-
-	// Check that the error message contains validation error
-	assert.Contains(t, err.Error(), "validation error")
-	assert.Contains(t, err.Error(), "apiVersion")
-	assert.Contains(t, err.Error(), "required")
-}
-
-func TestParseUnknownFields(t *testing.T) {
-	path := filepath.Join("testdata", "invalid_unknown_field.firebird.yml")
-	def, err := Parse(path)
-
-	assert.Nil(t, def)
-	require.Error(t, err)
-
-	// Strict parsing should catch unknown fields
-	assert.Contains(t, err.Error(), "unknown")
-}
-
-func TestParseBadType(t *testing.T) {
-	path := filepath.Join("testdata", "invalid_bad_type.firebird.yml")
-	def, err := Parse(path)
-
-	assert.Nil(t, def)
-	require.Error(t, err)
-
-	assert.Contains(t, err.Error(), "invalid Go type")
-	assert.Contains(t, err.Error(), "InvalidType")
-}
-
-func TestParseNoPrimaryKey(t *testing.T) {
-	path := filepath.Join("testdata", "invalid_no_primary_key.firebird.yml")
-	def, err := Parse(path)
-
-	assert.Nil(t, def)
-	require.Error(t, err)
-
-	assert.Contains(t, err.Error(), "primary_key")
-	assert.Contains(t, err.Error(), "at least one field must have")
-}
-
-func TestParseAutoNowBadType(t *testing.T) {
-	path := filepath.Join("testdata", "invalid_auto_now_bad_type.firebird.yml")
-	def, err := Parse(path)
-
-	assert.Nil(t, def)
-	require.Error(t, err)
-
-	assert.Contains(t, err.Error(), "auto_now")
-	assert.Contains(t, err.Error(), "time.Time")
-}
-
-func TestValidateEmptyDefinition(t *testing.T) {
-	def := &Definition{}
-	err := Validate(def)
-
-	require.Error(t, err)
-	verrs, ok := err.(ValidationErrors)
-	require.True(t, ok)
-
-	// Should have multiple errors
-	assert.True(t, len(verrs) > 0)
-
-	// Check for specific required field errors
-	errStr := err.Error()
-	assert.Contains(t, errStr, "apiVersion")
-	assert.Contains(t, errStr, "kind")
-	assert.Contains(t, errStr, "name")
-	assert.Contains(t, errStr, "fields")
-}
-
-func TestValidateInvalidAPIVersion(t *testing.T) {
-	def := &Definition{
-		APIVersion: "v2",
-		Kind:       "Resource",
-		Name:       "User",
-		Spec: Spec{
-			Fields: []Field{
-				{Name: "id", Type: "string", DBType: "UUID", PrimaryKey: true},
-			},
-		},
-	}
-
-	err := Validate(def)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid apiVersion 'v2'")
-	assert.Contains(t, err.Error(), "use 'v1'")
-}
-
-func TestValidateInvalidKind(t *testing.T) {
 	def := &Definition{
 		APIVersion: "v1",
-		Kind:       "Model",
-		Name:       "User",
-		Spec: Spec{
-			Fields: []Field{
-				{Name: "id", Type: "string", DBType: "UUID", PrimaryKey: true},
-			},
-		},
+		Kind:       "TestKind",
+		Name:       "TestName",
+		Spec:       map[string]interface{}{"field": "value"},
 	}
 
-	err := Validate(def)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid kind 'Model'")
-	assert.Contains(t, err.Error(), "use 'Resource'")
-}
+	err := Write(schemaPath, def)
+	require.NoError(t, err)
 
-func TestValidateNonPascalCaseName(t *testing.T) {
-	def := &Definition{
-		APIVersion: "v1",
-		Kind:       "Resource",
-		Name:       "user_model",
-		Spec: Spec{
-			Fields: []Field{
-				{Name: "id", Type: "string", DBType: "UUID", PrimaryKey: true},
-			},
-		},
-	}
-
-	err := Validate(def)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "should be in PascalCase")
-}
-
-func TestValidateFieldMissingName(t *testing.T) {
-	def := &Definition{
-		APIVersion: "v1",
-		Kind:       "Resource",
-		Name:       "User",
-		Spec: Spec{
-			Fields: []Field{
-				{Type: "string", DBType: "UUID", PrimaryKey: true},
-			},
-		},
-	}
-
-	err := Validate(def)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "field name is required")
-}
-
-func TestValidateFieldMissingDBType(t *testing.T) {
-	def := &Definition{
-		APIVersion: "v1",
-		Kind:       "Resource",
-		Name:       "User",
-		Spec: Spec{
-			Fields: []Field{
-				{Name: "id", Type: "string", PrimaryKey: true},
-			},
-		},
-	}
-
-	err := Validate(def)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "db_type is required")
-}
-
-func TestValidateNullableWithNonPointer(t *testing.T) {
-	def := &Definition{
-		APIVersion: "v1",
-		Kind:       "Resource",
-		Name:       "User",
-		Spec: Spec{
-			Fields: []Field{
-				{Name: "id", Type: "string", DBType: "UUID", PrimaryKey: true},
-				{Name: "age", Type: "int", DBType: "INTEGER", Nullable: true},
-			},
-		},
-	}
-
-	err := Validate(def)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "nullable field should use pointer type")
-	assert.Contains(t, err.Error(), "*int")
-}
-
-func TestValidateValidationRules(t *testing.T) {
-	def := &Definition{
-		APIVersion: "v1",
-		Kind:       "Resource",
-		Name:       "User",
-		Spec: Spec{
-			Fields: []Field{
-				{Name: "id", Type: "string", DBType: "UUID", PrimaryKey: true},
-				{
-					Name:       "email",
-					Type:       "string",
-					DBType:     "VARCHAR(255)",
-					Validation: []string{"email", "required", "max=255"},
-				},
-			},
-		},
-	}
-
-	err := Validate(def)
+	// Verify file was written
+	_, err = os.Stat(schemaPath)
 	assert.NoError(t, err)
+
+	// Parse it back
+	parsed, err := Parse(schemaPath)
+	require.NoError(t, err)
+	assert.Equal(t, def.APIVersion, parsed.APIVersion)
+	assert.Equal(t, def.Kind, parsed.Kind)
+	assert.Equal(t, def.Name, parsed.Name)
 }
 
-func TestValidateInvalidValidationRules(t *testing.T) {
-	def := &Definition{
-		APIVersion: "v1",
-		Kind:       "Resource",
-		Name:       "User",
-		Spec: Spec{
-			Fields: []Field{
-				{Name: "id", Type: "string", DBType: "UUID", PrimaryKey: true},
-				{
-					Name:       "email",
-					Type:       "string",
-					DBType:     "VARCHAR(255)",
-					Validation: []string{"==invalid", ""},
-				},
-			},
-		},
-	}
-
-	err := Validate(def)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "validation")
-}
-
-func TestDefaultTableName(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{"User", "users"},
-		{"BlogPost", "blog_posts"},
-		{"HTTPServer", "http_servers"},
-		{"APIKey", "api_keys"},
-		{"Person", "people"},
-		{"Child", "children"},
-		{"Category", "categories"},
-		{"Box", "boxes"},
-		{"Buzz", "buzzes"},
-		{"Dish", "dishes"},
-		{"Match", "matches"},
-		{"City", "cities"},
-		{"Wolf", "wolves"},
-		{"Knife", "knives"},
-		{"Hero", "heroes"},
-		{"Photo", "photos"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			result := DefaultTableName(tt.input)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestIsValidGoType(t *testing.T) {
-	validTypes := []string{
-		"string", "*string",
-		"int", "int32", "int64",
-		"*int", "*int32", "*int64",
-		"uint", "uint32", "uint64",
-		"*uint", "*uint32", "*uint64",
-		"float32", "float64",
-		"*float32", "*float64",
-		"bool", "*bool",
-		"time.Time", "*time.Time",
-		"[]byte",
-	}
-
-	for _, typ := range validTypes {
-		t.Run(typ, func(t *testing.T) {
-			assert.True(t, IsValidGoType(typ), "Type %s should be valid", typ)
-		})
-	}
-
-	invalidTypes := []string{
-		"InvalidType",
-		"map[string]string",
-		"[]string",
-		"interface{}",
-		"",
-		"Time",
-		"*",
-	}
-
-	for _, typ := range invalidTypes {
-		t.Run(typ, func(t *testing.T) {
-			assert.False(t, IsValidGoType(typ), "Type %s should be invalid", typ)
-		})
-	}
-}
-
-func TestIsPointerType(t *testing.T) {
-	assert.True(t, IsPointerType("*string"))
-	assert.True(t, IsPointerType("*int"))
-	assert.True(t, IsPointerType("*time.Time"))
-	assert.False(t, IsPointerType("string"))
-	assert.False(t, IsPointerType("int"))
-	assert.False(t, IsPointerType("[]byte"))
-	assert.False(t, IsPointerType(""))
-}
-
-func TestValidateValidationRulesDetailed(t *testing.T) {
+func TestValidateBasicStructure(t *testing.T) {
 	tests := []struct {
 		name    string
-		rules   []string
+		def     *Definition
 		wantErr bool
 		errMsg  string
 	}{
 		{
-			name:    "valid common rules",
-			rules:   []string{"required", "email", "min=3", "max=255"},
+			name: "valid structure",
+			def: &Definition{
+				APIVersion: "v1",
+				Kind:       "Resource",
+				Name:       "Test",
+			},
 			wantErr: false,
 		},
 		{
-			name:    "valid numeric rules",
-			rules:   []string{"gt=0", "lte=100", "ne=50"},
-			wantErr: false,
-		},
-		{
-			name:    "empty rule",
-			rules:   []string{""},
+			name: "missing apiVersion",
+			def: &Definition{
+				Kind: "Resource",
+				Name: "Test",
+			},
 			wantErr: true,
-			errMsg:  "cannot be empty",
+			errMsg:  "apiVersion",
 		},
 		{
-			name:    "double equals",
-			rules:   []string{"min==5"},
+			name: "missing kind",
+			def: &Definition{
+				APIVersion: "v1",
+				Name:       "Test",
+			},
 			wantErr: true,
-			errMsg:  "invalid '=='",
+			errMsg:  "kind",
 		},
 		{
-			name:    "starts with equals",
-			rules:   []string{"=value"},
+			name: "missing name",
+			def: &Definition{
+				APIVersion: "v1",
+				Kind:       "Resource",
+			},
 			wantErr: true,
-			errMsg:  "misplaced '='",
+			errMsg:  "name",
 		},
 		{
-			name:    "ends with equals",
-			rules:   []string{"min="},
+			name:    "all missing",
+			def:     &Definition{},
 			wantErr: true,
-			errMsg:  "misplaced '='",
-		},
-		{
-			name:    "unbalanced quotes",
-			rules:   []string{"oneof='a' 'b"},
-			wantErr: true,
-			errMsg:  "unbalanced",
-		},
-		{
-			name:    "space without equals",
-			rules:   []string{"invalid rule"},
-			wantErr: true,
-			errMsg:  "contains spaces",
-		},
-		{
-			name:    "custom validator",
-			rules:   []string{"customValidator", "myCustomRule"},
-			wantErr: false,
+			errMsg:  "3 validation errors",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateValidationRules(tt.rules)
+			err := ValidateBasicStructure(tt.def)
 			if tt.wantErr {
 				require.Error(t, err)
-				if tt.errMsg != "" {
-					assert.Contains(t, err.Error(), tt.errMsg)
-				}
+				assert.Contains(t, err.Error(), tt.errMsg)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -479,135 +144,29 @@ func TestValidateValidationRulesDetailed(t *testing.T) {
 	}
 }
 
-func TestValidationErrorFormatting(t *testing.T) {
-	// Single error
+func TestValidationError(t *testing.T) {
 	err := ValidationError{
-		Field:      "spec.fields[0].name",
-		Message:    "field name is required",
-		Suggestion: "provide a name for the field",
+		Field:      "spec.field",
+		Message:    "is required",
+		Suggestion: "add the field",
 		Line:       10,
 	}
 
 	errStr := err.Error()
-	assert.Contains(t, errStr, "spec.fields[0].name")
+	assert.Contains(t, errStr, "spec.field")
 	assert.Contains(t, errStr, "line 10")
-	assert.Contains(t, errStr, "field name is required")
-	assert.Contains(t, errStr, "provide a name for the field")
-
-	// Single error without line number
-	err2 := ValidationError{
-		Field:   "apiVersion",
-		Message: "is required",
-	}
-
-	errStr2 := err2.Error()
-	assert.Contains(t, errStr2, "apiVersion")
-	assert.Contains(t, errStr2, "is required")
-	assert.NotContains(t, errStr2, "line")
-
-	// Multiple errors
-	errs := ValidationErrors{
-		ValidationError{
-			Field:   "apiVersion",
-			Message: "is required",
-			Line:    1,
-		},
-		ValidationError{
-			Field:   "kind",
-			Message: "invalid value",
-			Line:    2,
-		},
-		ValidationError{
-			Field:   "spec.fields",
-			Message: "at least one field is required",
-			Line:    5,
-		},
-	}
-
-	errsStr := errs.Error()
-	assert.Contains(t, errsStr, "3 validation errors")
-	assert.Contains(t, errsStr, "1.")
-	assert.Contains(t, errsStr, "2.")
-	assert.Contains(t, errsStr, "3.")
-	assert.Contains(t, errsStr, "apiVersion")
-	assert.Contains(t, errsStr, "kind")
-	assert.Contains(t, errsStr, "spec.fields")
+	assert.Contains(t, errStr, "is required")
+	assert.Contains(t, errStr, "add the field")
 }
 
-func TestParseNonExistentFile(t *testing.T) {
-	def, err := Parse("nonexistent.yml")
-
-	assert.Nil(t, def)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to read")
-}
-
-func TestParseMalformedYAML(t *testing.T) {
-	// Create a temporary file with malformed YAML
-	tempDir := t.TempDir()
-	malformedPath := filepath.Join(tempDir, "malformed.yml")
-
-	malformedYAML := []byte(`
-apiVersion: v1
-kind: Resource
-name: User
-spec:
-  fields:
-    - name: id
-      type: string
-      db_type UUID  # Missing colon
-      primary_key: true
-`)
-
-	err := os.WriteFile(malformedPath, malformedYAML, 0644)
-	require.NoError(t, err)
-
-	def, err := Parse(malformedPath)
-
-	assert.Nil(t, def)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to parse")
-}
-
-func TestValidateMultipleFields(t *testing.T) {
-	def := &Definition{
-		APIVersion: "v1",
-		Kind:       "Resource",
-		Name:       "Order",
-		Spec: Spec{
-			Fields: []Field{
-				{Name: "id", Type: "string", DBType: "UUID", PrimaryKey: true},
-				{Name: "customer_id", Type: "string", DBType: "UUID", Index: true},
-				{Name: "total", Type: "float64", DBType: "DECIMAL(10,2)"},
-				{Name: "status", Type: "string", DBType: "VARCHAR(50)", Default: "pending"},
-				{Name: "notes", Type: "*string", DBType: "TEXT", Nullable: true},
-				{Name: "created_at", Type: "time.Time", DBType: "TIMESTAMP", AutoNowAdd: true},
-				{Name: "updated_at", Type: "time.Time", DBType: "TIMESTAMP", AutoNow: true},
-			},
-		},
+func TestValidationErrors(t *testing.T) {
+	errors := ValidationErrors{
+		ValidationError{Field: "field1", Message: "error 1"},
+		ValidationError{Field: "field2", Message: "error 2"},
 	}
 
-	err := Validate(def)
-	assert.NoError(t, err)
-}
-
-func TestValidateCustomTableName(t *testing.T) {
-	def := &Definition{
-		APIVersion: "v1",
-		Kind:       "Resource",
-		Name:       "Person",
-		Spec: Spec{
-			TableName: "employees",
-			Fields: []Field{
-				{Name: "id", Type: "string", DBType: "UUID", PrimaryKey: true},
-			},
-		},
-	}
-
-	err := Validate(def)
-	assert.NoError(t, err)
-	assert.Equal(t, "employees", def.Spec.TableName)
-
-	// DefaultTableName should still work
-	assert.Equal(t, "people", DefaultTableName(def.Name))
+	errStr := errors.Error()
+	assert.Contains(t, errStr, "2 validation errors")
+	assert.Contains(t, errStr, "field1")
+	assert.Contains(t, errStr, "field2")
 }

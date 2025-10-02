@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Resource
+name: User
+spec:
+  fields:
+    - name: id
+      type: string
+      db_type: UUID
+    - name: email
+      type: string
+      db_type: VARCHAR(255)

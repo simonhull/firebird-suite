@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Resource
+name: User
+spec:
+  fields:
+    - name: id
+      type: InvalidType
+      db_type: UUID
+      primary_key: true

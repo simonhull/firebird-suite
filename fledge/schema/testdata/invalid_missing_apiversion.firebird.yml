@@ -1,0 +1,8 @@
+kind: Resource
+name: User
+spec:
+  fields:
+    - name: id
+      type: string
+      db_type: UUID
+      primary_key: true

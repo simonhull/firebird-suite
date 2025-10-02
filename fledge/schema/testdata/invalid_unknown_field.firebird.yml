@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Resource
+name: User
+unknownField: test
+spec:
+  fields:
+    - name: id
+      type: string
+      db_type: UUID
+      primary_key: true
+      unknownProperty: value

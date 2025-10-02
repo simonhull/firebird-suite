@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Resource
+name: BlogPost
+spec:
+  table_name: posts
+  fields:
+    - name: id
+      type: string
+      db_type: UUID
+      primary_key: true
+      json: id
+    - name: title
+      type: string
+      db_type: VARCHAR(255)
+      validation:
+        - required
+        - min=3
+        - max=255
+      json: title
+    - name: content
+      type: string
+      db_type: TEXT
+      nullable: false
+      json: content
+    - name: slug
+      type: string
+      db_type: VARCHAR(255)
+      unique: true
+      index: true
+      json: slug
+    - name: author_id
+      type: string
+      db_type: UUID
+      index: true
+      json: author_id
+    - name: published
+      type: bool
+      db_type: BOOLEAN
+      default: false
+      json: published
+    - name: view_count
+      type: int64
+      db_type: BIGINT
+      default: 0
+      json: view_count
+    - name: tags
+      type: "[]byte"
+      db_type: JSONB
+      json: tags
+    - name: metadata
+      type: "*string"
+      db_type: JSON
+      nullable: true
+      json: metadata
+    - name: created_at
+      type: time.Time
+      db_type: TIMESTAMP
+      auto_now_add: true
+      json: created_at
+    - name: updated_at
+      type: "*time.Time"
+      db_type: TIMESTAMP
+      auto_now: true
+      nullable: true
+      json: updated_at

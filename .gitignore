@@ -1,0 +1,36 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test artifacts
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Go workspace
+.DS_Store
+*.swp
+*.swo
+*~
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Build artifacts
+vendor/
+
+# OS files
+Thumbs.db

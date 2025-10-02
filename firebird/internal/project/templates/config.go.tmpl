@@ -1,0 +1,77 @@
+package config
+
+import (
+	"fmt"
+	"log"
+	"strings"
+	"time"
+
+	"github.com/spf13/viper"
+)
+
+type Config struct {
+	AppName         string            `mapstructure:"app_name"`
+	Module          string            `mapstructure:"module"`
+	FirebirdVersion string            `mapstructure:"firebird_version"`
+	Application     ApplicationConfig `mapstructure:"application"`
+}
+
+type ApplicationConfig struct {
+	Server   ServerConfig   `mapstructure:"server"`
+	Database DatabaseConfig `mapstructure:"database"`
+	Logging  LoggingConfig  `mapstructure:"logging"`
+}
+
+type ServerConfig struct {
+	Host         string        `mapstructure:"host"`
+	Port         int           `mapstructure:"port"`
+	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout time.Duration `mapstructure:"write_timeout"`
+}
+
+type DatabaseConfig struct {
+	Driver          string        `mapstructure:"driver"`
+	Host            string        `mapstructure:"host"`
+	Port            int           `mapstructure:"port"`
+	Name            string        `mapstructure:"name"`
+	User            string        `mapstructure:"user"`
+	Password        string        `mapstructure:"password"`
+	SSLMode         string        `mapstructure:"sslmode"`
+	MaxOpenConns    int           `mapstructure:"max_open_conns"`
+	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
+	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
+}
+
+type LoggingConfig struct {
+	Level  string `mapstructure:"level"`
+	Format string `mapstructure:"format"`
+}
+
+var AppConfig *Config
+
+func Load() error {
+	viper.SetConfigName("firebird")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	if err := viper.ReadInConfig(); err != nil {
+		return fmt.Errorf("failed to read config: %w", err)
+	}
+
+	AppConfig = &Config{}
+	if err := viper.Unmarshal(AppConfig); err != nil {
+		return fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	return nil
+}
+
+func MustLoad() *Config {
+	if err := Load(); err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+	return AppConfig
+}

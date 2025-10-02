@@ -1,0 +1,30 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"{{ .Module }}/internal/config"
+	"{{ .Module }}/internal/routes"
+)
+
+func main() {
+	// Load configuration
+	cfg := config.MustLoad()
+
+	// Initialize logger
+	logger := config.NewLogger(cfg)
+	logger.Info("Starting {{ .Name }}", "port", cfg.Application.Server.Port)
+
+	// Setup routes
+	mux := routes.RegisterRoutes(logger)
+
+	// Start server
+	addr := fmt.Sprintf("%s:%d", cfg.Application.Server.Host, cfg.Application.Server.Port)
+	logger.Info("Server listening", "address", addr)
+
+	if err := http.ListenAndServe(addr, mux); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
+}

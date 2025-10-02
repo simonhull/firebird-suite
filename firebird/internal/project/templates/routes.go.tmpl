@@ -1,0 +1,20 @@
+package routes
+
+import (
+	"log/slog"
+	"net/http"
+)
+
+func RegisterRoutes(logger *slog.Logger) *http.ServeMux {
+	mux := http.NewServeMux()
+
+	// Health check endpoint
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
+	})
+
+	// Add your routes here
+
+	return mux
+}

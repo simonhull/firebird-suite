@@ -6,6 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGenerateDiff_Identical(t *testing.T) {
@@ -14,9 +17,7 @@ func TestGenerateDiff_Identical(t *testing.T) {
 
 	result := GenerateDiffDefault("old.txt", "new.txt", old, newer)
 
-	if result != "" {
-		t.Errorf("Expected empty string for identical files, got: %q", result)
-	}
+	assert.Empty(t, result, "Expected empty string for identical files")
 }
 
 func TestGenerateDiff_EmptyFiles(t *testing.T) {
@@ -51,17 +52,13 @@ func TestGenerateDiff_EmptyFiles(t *testing.T) {
 			result := GenerateDiffDefault("old.txt", "new.txt", tt.old, tt.newer)
 
 			if tt.want == "" {
-				if result != "" {
-					t.Errorf("Expected empty diff, got: %q", result)
-				}
+				assert.Empty(t, result, "Expected empty diff")
 			} else if tt.want == "addition" {
-				if !strings.Contains(result, "+line 1") || !strings.Contains(result, "+line 2") {
-					t.Errorf("Expected additions, got: %q", result)
-				}
+				assert.Contains(t, result, "+line 1", "Expected additions")
+				assert.Contains(t, result, "+line 2", "Expected additions")
 			} else if tt.want == "deletion" {
-				if !strings.Contains(result, "-line 1") || !strings.Contains(result, "-line 2") {
-					t.Errorf("Expected deletions, got: %q", result)
-				}
+				assert.Contains(t, result, "-line 1", "Expected deletions")
+				assert.Contains(t, result, "-line 2", "Expected deletions")
 			}
 		})
 	}
@@ -73,18 +70,10 @@ func TestGenerateDiff_SimpleAddition(t *testing.T) {
 
 	result := GenerateDiffDefault("old.txt", "new.txt", old, newer)
 
-	if !strings.Contains(result, "--- old.txt") {
-		t.Error("Missing old file header")
-	}
-	if !strings.Contains(result, "+++ new.txt") {
-		t.Error("Missing new file header")
-	}
-	if !strings.Contains(result, "+line 2.5") {
-		t.Error("Missing added line")
-	}
-	if !strings.Contains(result, "@@") {
-		t.Error("Missing hunk header")
-	}
+	assert.Contains(t, result, "--- old.txt", "Missing old file header")
+	assert.Contains(t, result, "+++ new.txt", "Missing new file header")
+	assert.Contains(t, result, "+line 2.5", "Missing added line")
+	assert.Contains(t, result, "@@", "Missing hunk header")
 }
 
 func TestGenerateDiff_SimpleRemoval(t *testing.T) {
@@ -93,9 +82,7 @@ func TestGenerateDiff_SimpleRemoval(t *testing.T) {
 
 	result := GenerateDiffDefault("old.txt", "new.txt", old, newer)
 
-	if !strings.Contains(result, "-line 3") {
-		t.Error("Missing removed line")
-	}
+	assert.Contains(t, result, "-line 3", "Missing removed line")
 }
 
 func TestGenerateDiff_Replacement(t *testing.T) {
@@ -104,12 +91,8 @@ func TestGenerateDiff_Replacement(t *testing.T) {
 
 	result := GenerateDiffDefault("old.txt", "new.txt", old, newer)
 
-	if !strings.Contains(result, "-old content") {
-		t.Error("Missing removed line")
-	}
-	if !strings.Contains(result, "+new content") {
-		t.Error("Missing added line")
-	}
+	assert.Contains(t, result, "-old content", "Missing removed line")
+	assert.Contains(t, result, "+new content", "Missing added line")
 }
 
 func TestGenerateDiff_MultipleHunks(t *testing.T) {
@@ -147,9 +130,7 @@ line 12
 	hunkCount := strings.Count(result, "@@")
 
 	// With default context of 3, these changes should be in separate hunks
-	if hunkCount < 2 {
-		t.Errorf("Expected at least 2 hunks, got %d", hunkCount)
-	}
+	assert.GreaterOrEqual(t, hunkCount, 2, "Expected at least 2 hunks")
 }
 
 func TestGenerateDiff_ContextLines(t *testing.T) {
@@ -171,12 +152,8 @@ func TestGenerateDiff_ContextLines(t *testing.T) {
 			opts := &DiffOptions{ContextLines: tt.contextLines}
 			result := GenerateDiff("old.txt", "new.txt", old, newer, opts)
 
-			if !strings.Contains(result, "-line 3") {
-				t.Error("Missing removed line")
-			}
-			if !strings.Contains(result, "+changed") {
-				t.Error("Missing added line")
-			}
+			assert.Contains(t, result, "-line 3", "Missing removed line")
+			assert.Contains(t, result, "+changed", "Missing added line")
 		})
 	}
 }
@@ -189,9 +166,7 @@ func TestGenerateDiff_TabHandling(t *testing.T) {
 	result := GenerateDiff("old.txt", "new.txt", old, newer, opts)
 
 	// Tabs should be expanded to spaces
-	if strings.Contains(result, "\t") {
-		t.Error("Result contains tab characters, should be expanded")
-	}
+	assert.NotContains(t, result, "\t", "Result contains tab characters, should be expanded")
 }
 
 func TestGenerateDiff_BinaryFiles(t *testing.T) {
@@ -201,9 +176,7 @@ func TestGenerateDiff_BinaryFiles(t *testing.T) {
 
 	result := GenerateDiffDefault("old.bin", "new.bin", old, newer)
 
-	if !strings.Contains(result, "Binary files differ") {
-		t.Errorf("Expected binary file message, got: %q", result)
-	}
+	assert.Contains(t, result, "Binary files differ", "Expected binary file message")
 }
 
 func TestGenerateDiff_LargeFiles(t *testing.T) {
@@ -216,9 +189,7 @@ func TestGenerateDiff_LargeFiles(t *testing.T) {
 
 	result := GenerateDiffDefault("old.txt", "new.txt", []byte(oldBuf.String()), []byte(newBuf.String()))
 
-	if !strings.Contains(result, "too large") {
-		t.Errorf("Expected large file message, got: %q", result)
-	}
+	assert.Contains(t, result, "too large", "Expected large file message")
 }
 
 func TestGenerateDiff_VeryLongLines(t *testing.T) {
@@ -230,9 +201,7 @@ func TestGenerateDiff_VeryLongLines(t *testing.T) {
 	result := GenerateDiffDefault("old.txt", "new.txt", old, newer)
 
 	// Should contain truncation indicator
-	if !strings.Contains(result, "+") {
-		t.Error("Missing added line indicator")
-	}
+	assert.Contains(t, result, "+", "Missing added line indicator")
 }
 
 func TestComputeEditScript_Simple(t *testing.T) {
@@ -242,17 +211,13 @@ func TestComputeEditScript_Simple(t *testing.T) {
 	script := computeEditScript(old, newer)
 
 	// Should have: unchanged(a), added(x), unchanged(b), unchanged(c)
-	if len(script) != 4 {
-		t.Errorf("Expected 4 operations, got %d", len(script))
-	}
+	assert.Len(t, script, 4, "Expected 4 operations")
 
-	if script[0].op != opUnchanged || script[0].content != "a" {
-		t.Errorf("Expected unchanged 'a', got %v", script[0])
-	}
+	assert.Equal(t, opUnchanged, script[0].op, "Expected unchanged operation")
+	assert.Equal(t, "a", script[0].content, "Expected unchanged 'a'")
 
-	if script[1].op != opAdded || script[1].content != "x" {
-		t.Errorf("Expected added 'x', got %v", script[1])
-	}
+	assert.Equal(t, opAdded, script[1].op, "Expected added operation")
+	assert.Equal(t, "x", script[1].content, "Expected added 'x'")
 }
 
 func TestComputeEditScript_Deletion(t *testing.T) {
@@ -270,9 +235,7 @@ func TestComputeEditScript_Deletion(t *testing.T) {
 		}
 	}
 
-	if !foundDeletion {
-		t.Error("Expected deletion of 'b' not found")
-	}
+	assert.True(t, foundDeletion, "Expected deletion of 'b' not found")
 }
 
 func TestBuildHunks_SingleChange(t *testing.T) {
@@ -287,14 +250,10 @@ func TestBuildHunks_SingleChange(t *testing.T) {
 
 	hunks := buildHunks(lines, 2)
 
-	if len(hunks) != 1 {
-		t.Errorf("Expected 1 hunk, got %d", len(hunks))
-	}
+	assert.Len(t, hunks, 1, "Expected 1 hunk")
 
 	if len(hunks) > 0 {
-		if hunks[0].oldStart != 1 {
-			t.Errorf("Expected oldStart=1, got %d", hunks[0].oldStart)
-		}
+		assert.Equal(t, 1, hunks[0].oldStart, "Expected oldStart=1")
 	}
 }
 
@@ -317,9 +276,7 @@ func TestBuildHunks_MultipleChanges(t *testing.T) {
 	hunks := buildHunks(lines, 2)
 
 	// Should create multiple hunks if changes are far enough apart
-	if len(hunks) == 0 {
-		t.Error("Expected at least one hunk")
-	}
+	assert.NotEmpty(t, hunks, "Expected at least one hunk")
 }
 
 func TestIsBinary(t *testing.T) {
@@ -337,9 +294,7 @@ func TestIsBinary(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := isBinary(tt.data)
-			if result != tt.binary {
-				t.Errorf("isBinary() = %v, want %v", result, tt.binary)
-			}
+			assert.Equal(t, tt.binary, result, "isBinary()")
 		})
 	}
 }
@@ -360,14 +315,9 @@ func TestSplitLines(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := splitLines(tt.input)
-			if len(result) != len(tt.want) {
-				t.Errorf("splitLines() length = %v, want %v", len(result), len(tt.want))
-				return
-			}
+			require.Len(t, result, len(tt.want), "splitLines() length mismatch")
 			for i := range result {
-				if result[i] != tt.want[i] {
-					t.Errorf("splitLines()[%d] = %q, want %q", i, result[i], tt.want[i])
-				}
+				assert.Equal(t, tt.want[i], result[i], "splitLines()[%d]", i)
 			}
 		})
 	}
@@ -390,9 +340,7 @@ func TestExpandTabs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := expandTabs(tt.input, tt.tabWidth)
-			if result != tt.want {
-				t.Errorf("expandTabs() = %q, want %q", result, tt.want)
-			}
+			assert.Equal(t, tt.want, result, "expandTabs()")
 		})
 	}
 }
@@ -414,9 +362,7 @@ func TestTruncateLine(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := truncateLine(tt.input, tt.maxWidth)
-			if result != tt.want {
-				t.Errorf("truncateLine() = %q, want %q", result, tt.want)
-			}
+			assert.Equal(t, tt.want, result, "truncateLine()")
 		})
 	}
 }
@@ -430,9 +376,7 @@ func TestGenerateDiff_GoldenFiles(t *testing.T) {
 	}
 
 	goldenFiles, err := filepath.Glob(filepath.Join(testdataDir, "*.golden"))
-	if err != nil {
-		t.Fatalf("Failed to read golden files: %v", err)
-	}
+	require.NoError(t, err, "Failed to read golden files")
 
 	for _, goldenPath := range goldenFiles {
 		testName := strings.TrimSuffix(filepath.Base(goldenPath), ".golden")
@@ -443,31 +387,23 @@ func TestGenerateDiff_GoldenFiles(t *testing.T) {
 			newPath := filepath.Join(testdataDir, testName+".new")
 
 			old, err := os.ReadFile(oldPath)
-			if err != nil {
-				t.Fatalf("Failed to read old file: %v", err)
-			}
+			require.NoError(t, err, "Failed to read old file")
 
 			newer, err := os.ReadFile(newPath)
-			if err != nil {
-				t.Fatalf("Failed to read new file: %v", err)
-			}
+			require.NoError(t, err, "Failed to read new file")
 
 			// Generate diff
 			result := GenerateDiffDefault("old.txt", "new.txt", old, newer)
 
 			// Read golden file
 			golden, err := os.ReadFile(goldenPath)
-			if err != nil {
-				t.Fatalf("Failed to read golden file: %v", err)
-			}
+			require.NoError(t, err, "Failed to read golden file")
 
 			// Remove ANSI color codes from result for comparison
 			resultClean := stripAnsiCodes(result)
 			goldenClean := stripAnsiCodes(string(golden))
 
-			if resultClean != goldenClean {
-				t.Errorf("Diff mismatch.\nGot:\n%s\n\nWant:\n%s", resultClean, goldenClean)
-			}
+			assert.Equal(t, goldenClean, resultClean, "Diff mismatch")
 		})
 	}
 }
@@ -509,9 +445,7 @@ func TestDiffGenerator_IdenticalOutput(t *testing.T) {
 	gen := NewDiffGenerator()
 	generatorResult := gen.GenerateDiffDefault("test.txt", "test.txt", old, newer)
 
-	if standaloneResult != generatorResult {
-		t.Error("DiffGenerator should produce identical output to standalone function")
-	}
+	assert.Equal(t, standaloneResult, generatorResult, "DiffGenerator should produce identical output to standalone function")
 }
 
 func TestDiffGenerator_Reuse(t *testing.T) {
@@ -523,14 +457,14 @@ func TestDiffGenerator_Reuse(t *testing.T) {
 	diff3 := gen.GenerateDiffDefault("c.txt", "c.txt", []byte("test\n"), []byte("test\nmore\n"))
 
 	// All should be non-empty (they have changes)
-	if diff1 == "" || diff2 == "" || diff3 == "" {
-		t.Error("Expected non-empty diffs")
-	}
+	assert.NotEmpty(t, diff1, "Expected non-empty diff1")
+	assert.NotEmpty(t, diff2, "Expected non-empty diff2")
+	assert.NotEmpty(t, diff3, "Expected non-empty diff3")
 
 	// Verify each diff is different
-	if diff1 == diff2 || diff2 == diff3 || diff1 == diff3 {
-		t.Error("Different inputs should produce different diffs")
-	}
+	assert.NotEqual(t, diff1, diff2, "Different inputs should produce different diffs")
+	assert.NotEqual(t, diff2, diff3, "Different inputs should produce different diffs")
+	assert.NotEqual(t, diff1, diff3, "Different inputs should produce different diffs")
 }
 
 func TestDiffGenerator_StateCleared(t *testing.T) {
@@ -547,15 +481,10 @@ func TestDiffGenerator_StateCleared(t *testing.T) {
 		[]byte("alpha\ngamma\n"))
 
 	// Both should contain their respective changes
-	if !strings.Contains(diff1, "modified") {
-		t.Error("First diff should contain 'modified'")
-	}
-	if !strings.Contains(diff2, "gamma") {
-		t.Error("Second diff should contain 'gamma'")
-	}
+	assert.Contains(t, diff1, "modified", "First diff should contain 'modified'")
+	assert.Contains(t, diff2, "gamma", "Second diff should contain 'gamma'")
 
 	// First diff should NOT contain content from second diff
-	if strings.Contains(diff1, "gamma") || strings.Contains(diff1, "alpha") {
-		t.Error("First diff contaminated with content from second diff")
-	}
+	assert.NotContains(t, diff1, "gamma", "First diff contaminated with content from second diff")
+	assert.NotContains(t, diff1, "alpha", "First diff contaminated with content from second diff")
 }

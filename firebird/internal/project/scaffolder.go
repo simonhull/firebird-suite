@@ -7,12 +7,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
+	fledgeExec "github.com/simonhull/firebird-suite/fledge/exec"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 	"github.com/simonhull/firebird-suite/fledge/input"
 	"github.com/simonhull/firebird-suite/fledge/output"
-	fledgeExec "github.com/simonhull/firebird-suite/fledge/exec"
 )
 
 //go:embed templates/*
@@ -46,6 +47,31 @@ func (s *Scaffolder) Scaffold(opts *ScaffoldOptions) error {
 	// 2. Check if directory exists
 	if _, err := os.Stat(projectPath); err == nil {
 		return fmt.Errorf("directory '%s' already exists. Choose a different name or location", opts.ProjectName)
+	}
+
+	// 2.5. Warn if creating inside an existing Go module
+	if opts.Path == "." || opts.Path == "" {
+		parentGoMod := "go.mod"
+		if _, err := os.Stat(parentGoMod); err == nil {
+			output.Info("⚠️  Creating project inside an existing Go module")
+			output.Info("   Generated projects work best in their own directory")
+			output.Info("   Consider using: firebird new " + opts.ProjectName + " --path ~/projects")
+			output.Info("")
+
+			// Give user a chance to cancel
+			if !input.Confirm("Continue anyway?", false) {
+				return fmt.Errorf("project creation cancelled")
+			}
+			output.Info("")
+		}
+	} else if opts.Path != "" && opts.Path != "." {
+		// Check in the target path too
+		parentGoMod := filepath.Join(opts.Path, "go.mod")
+		if _, err := os.Stat(parentGoMod); err == nil {
+			output.Info("⚠️  Target directory contains a go.mod file")
+			output.Info("   Generated projects work best in their own directory")
+			output.Info("")
+		}
 	}
 
 	// 3. Get module path (interactive or from flag)
@@ -157,13 +183,13 @@ func (s *Scaffolder) generateFiles(projectPath string, data *ProjectData) error 
 // detectGoVersion detects the installed Go version
 func detectGoVersion() string {
 	cmd := exec.Command("go", "version")
-	output, err := cmd.Output()
+	out, err := cmd.Output()
 	if err != nil {
 		return "1.25" // Fallback
 	}
 
 	// Parse "go version go1.23.4 linux/amd64" -> "1.23"
-	versionStr := string(output)
+	versionStr := string(out)
 	parts := strings.Fields(versionStr)
 	if len(parts) < 3 {
 		return "1.25" // Fallback
@@ -173,14 +199,20 @@ func detectGoVersion() string {
 	fullVersion := strings.TrimPrefix(parts[2], "go")
 	versionParts := strings.Split(fullVersion, ".")
 	if len(versionParts) >= 2 {
-		majorMinor := versionParts[0] + "." + versionParts[1]
+		// Parse as integers for proper comparison
+		major, err1 := strconv.Atoi(versionParts[0])
+		minor, err2 := strconv.Atoi(versionParts[1])
+
+		if err1 != nil || err2 != nil {
+			return "1.25" // Fallback on parse error
+		}
 
 		// Ensure minimum version 1.25
-		if majorMinor < "1.25" {
+		if major < 1 || (major == 1 && minor < 25) {
 			return "1.25"
 		}
 
-		return majorMinor
+		return fmt.Sprintf("%d.%d", major, minor)
 	}
 
 	return "1.25" // Fallback

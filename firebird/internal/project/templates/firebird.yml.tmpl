@@ -8,18 +8,30 @@ application:
     port: 8080
     read_timeout: 30s
     write_timeout: 30s
+{{- if ne .Database "none" }}
 
   database:
-    driver: postgres
+    driver: {{ .Database }}
+    {{- if eq .Database "postgres" }}
     host: localhost
     port: 5432
     name: {{ .Name }}_dev
     user: postgres
     password: ${DB_PASSWORD}
     sslmode: disable
+    {{- else if eq .Database "mysql" }}
+    host: localhost
+    port: 3306
+    name: {{ .Name }}_dev
+    user: root
+    password: ${DB_PASSWORD}
+    {{- else if eq .Database "sqlite" }}
+    name: ./{{ .Name }}.db
+    {{- end }}
     max_open_conns: 25
     max_idle_conns: 5
     conn_max_lifetime: 5m
+{{- end }}
 
   logging:
     level: info

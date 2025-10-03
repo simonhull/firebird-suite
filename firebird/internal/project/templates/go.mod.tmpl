@@ -5,4 +5,14 @@ go {{ .GoVersion }}
 require (
 	github.com/google/uuid v1.6.0
 	github.com/spf13/viper v1.18.2
+{{- if ne .Database "none" }}
+	github.com/jmoiron/sqlx v1.3.5
+{{- if eq .Database "postgres" }}
+	github.com/jackc/pgx/v5 v5.5.1
+{{- else if eq .Database "mysql" }}
+	github.com/go-sql-driver/mysql v1.7.1
+{{- else if eq .Database "sqlite" }}
+	modernc.org/sqlite v1.28.0
+{{- end }}
+{{- end }}
 )

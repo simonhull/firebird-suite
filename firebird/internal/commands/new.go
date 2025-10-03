@@ -3,11 +3,14 @@ package commands
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/simonhull/firebird-suite/firebird/internal/project"
 	"github.com/simonhull/firebird-suite/fledge/generator"
+	"github.com/simonhull/firebird-suite/fledge/input"
 	"github.com/simonhull/firebird-suite/fledge/output"
 	"github.com/spf13/cobra"
 )
@@ -19,6 +22,7 @@ func NewCmd() *cobra.Command {
 	var skipTidy bool
 	var dryRun bool
 	var force bool
+	var database string
 
 	cmd := &cobra.Command{
 		Use:   "new [project-name]",
@@ -27,12 +31,15 @@ func NewCmd() *cobra.Command {
 • Go module initialization
 • Standard directory structure
 • Configuration (firebird.yml)
+• Optional database setup
 • Logging (slog)
 • Hot reload (Air)
 
 Example:
   firebird new myapp
   firebird new myapp --module github.com/username/myapp
+  firebird new myapp --database postgres
+  firebird new myapp --database none
   firebird new myapp --path ~/projects
   firebird new myapp --dry-run
   firebird new myapp --skip-tidy`,
@@ -40,8 +47,26 @@ Example:
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 			projectName := args[0]
+			writer := cmd.OutOrStdout()
 
 			output.Verbose(fmt.Sprintf("Creating new Firebird project: %s (dry-run=%v, force=%v)", projectName, dryRun, force))
+
+			// Get database choice
+			var dbDriver project.DatabaseDriver
+			if database != "" {
+				// Non-interactive: use flag
+				dbDriver = project.DatabaseDriver(database)
+				if err := validateDatabaseChoice(dbDriver); err != nil {
+					output.Error(err.Error())
+					os.Exit(1)
+				}
+			} else if !dryRun {
+				// Interactive: prompt user
+				dbDriver = promptForDatabase(writer)
+			} else {
+				// Dry-run without flag: default to postgres
+				dbDriver = project.DatabasePostgreSQL
+			}
 
 			scaffolder := project.NewScaffolder()
 
@@ -52,6 +77,7 @@ Example:
 				Path:        path,
 				SkipTidy:    skipTidy,
 				Interactive: !dryRun, // Disable prompts in dry-run mode
+				Database:    dbDriver,
 			}
 
 			ops, result, err := scaffolder.Scaffold(opts)
@@ -61,7 +87,6 @@ Example:
 			}
 
 			// Execute operations through Fledge
-			writer := cmd.OutOrStdout()
 			if err := generator.Execute(ctx, ops, generator.ExecuteOptions{
 				DryRun: dryRun,
 				Force:  force,
@@ -85,29 +110,17 @@ Example:
 
 			// Run go mod tidy if requested (only in non-dry-run mode)
 			if result.ShouldRunTidy {
-				output.Info("Running go mod tidy...")
+				fmt.Fprintln(writer, "\n📦 Installing dependencies...")
 				if err := scaffolder.RunGoModTidy(result.ProjectPath); err != nil {
 					output.Error("Failed to run go mod tidy (you can run it manually later)")
 					output.Verbose(err.Error())
 				} else {
-					output.Verbose("Ran go mod tidy successfully")
+					fmt.Fprintln(writer, "✓ go mod tidy complete")
 				}
 			}
 
-			output.Success(fmt.Sprintf("Created Firebird project: %s", projectName))
-			output.Info("Next steps:")
-
-			// Show cd command if path was custom
-			if path != "" && path != "." {
-				output.Step(fmt.Sprintf("cd %s/%s", path, projectName))
-			} else {
-				output.Step(fmt.Sprintf("cd %s", projectName))
-			}
-
-			if skipTidy {
-				output.Step("go mod tidy  # Skipped, run manually")
-			}
-			output.Step("air  # Start with hot reload")
+			// Print success message with database-specific info
+			printSuccessMessage(writer, result, path, skipTidy)
 		},
 	}
 
@@ -116,6 +129,92 @@ Example:
 	cmd.Flags().BoolVar(&skipTidy, "skip-tidy", false, "Skip running go mod tidy")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be generated without creating files")
 	cmd.Flags().BoolVar(&force, "force", false, "Overwrite existing files without prompting")
+	cmd.Flags().StringVar(&database, "database", "", "Database driver: postgres, mysql, sqlite, none")
 
 	return cmd
+}
+
+// promptForDatabase prompts the user to select a database driver
+func promptForDatabase(writer io.Writer) project.DatabaseDriver {
+	fmt.Fprintln(writer, "\n🗄️  Select database:")
+	fmt.Fprintln(writer, "  1. PostgreSQL (recommended for production)")
+	fmt.Fprintln(writer, "  2. MySQL")
+	fmt.Fprintln(writer, "  3. SQLite (great for development/testing)")
+	fmt.Fprintln(writer, "  4. None (API-only, no database)")
+
+	choiceStr := input.Prompt("\nChoice [1-4]", "1")
+
+	switch choiceStr {
+	case "1":
+		return project.DatabasePostgreSQL
+	case "2":
+		return project.DatabaseMySQL
+	case "3":
+		return project.DatabaseSQLite
+	case "4":
+		return project.DatabaseNone
+	default:
+		fmt.Fprintln(writer, "Invalid choice, defaulting to PostgreSQL")
+		return project.DatabasePostgreSQL
+	}
+}
+
+// validateDatabaseChoice validates the database driver string
+func validateDatabaseChoice(db project.DatabaseDriver) error {
+	valid := map[project.DatabaseDriver]bool{
+		project.DatabasePostgreSQL: true,
+		project.DatabaseMySQL:      true,
+		project.DatabaseSQLite:     true,
+		project.DatabaseNone:       true,
+	}
+
+	if !valid[db] {
+		return fmt.Errorf("invalid database: %s (valid: postgres, mysql, sqlite, none)", db)
+	}
+	return nil
+}
+
+// printSuccessMessage prints a database-aware success message
+func printSuccessMessage(writer io.Writer, result *project.ScaffoldResult, path string, skipTidy bool) {
+	projectName := filepath.Base(result.ProjectPath)
+
+	fmt.Fprintf(writer, "\n✨ Project %s created successfully!\n\n", projectName)
+
+	if result.Database != project.DatabaseNone {
+		fmt.Fprintf(writer, "📊 Database: %s\n", result.Database)
+		fmt.Fprintln(writer, "\nNext steps:")
+
+		// Show cd command
+		if path != "" && path != "." {
+			fmt.Fprintf(writer, "  1. cd %s/%s\n", path, projectName)
+		} else {
+			fmt.Fprintf(writer, "  1. cd %s\n", projectName)
+		}
+
+		if skipTidy {
+			fmt.Fprintln(writer, "  2. go mod tidy  # Skipped, run manually")
+		}
+
+		fmt.Fprintln(writer, "  2. Update config/database.yml with your credentials")
+		fmt.Fprintln(writer, "  3. Run: firebird generate migration <ModelName>")
+		fmt.Fprintln(writer, "  4. Run: firebird migrate up")
+		fmt.Fprintln(writer, "  5. Run: firebird serve")
+	} else {
+		fmt.Fprintln(writer, "🚀 No database configured (API-only mode)")
+		fmt.Fprintln(writer, "\nNext steps:")
+
+		// Show cd command
+		if path != "" && path != "." {
+			fmt.Fprintf(writer, "  1. cd %s/%s\n", path, projectName)
+		} else {
+			fmt.Fprintf(writer, "  1. cd %s\n", projectName)
+		}
+
+		if skipTidy {
+			fmt.Fprintln(writer, "  2. go mod tidy  # Skipped, run manually")
+		}
+
+		fmt.Fprintln(writer, "  2. Run: firebird serve")
+		fmt.Fprintln(writer, "\n💡 To add a database later, edit firebird.yml")
+	}
 }

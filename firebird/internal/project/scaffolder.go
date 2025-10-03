@@ -19,6 +19,16 @@ import (
 //go:embed templates/*
 var templatesFS embed.FS
 
+// DatabaseDriver represents the database driver choice
+type DatabaseDriver string
+
+const (
+	DatabasePostgreSQL DatabaseDriver = "postgres"
+	DatabaseMySQL      DatabaseDriver = "mysql"
+	DatabaseSQLite     DatabaseDriver = "sqlite"
+	DatabaseNone       DatabaseDriver = "none"
+)
+
 // Scaffolder scaffolds new Firebird projects
 type Scaffolder struct {
 	renderer *generator.Renderer
@@ -30,7 +40,8 @@ type ScaffoldOptions struct {
 	Module      string
 	Path        string
 	SkipTidy    bool
-	Interactive bool // If false, skip interactive prompts
+	Interactive bool           // If false, skip interactive prompts
+	Database    DatabaseDriver // Database driver choice
 }
 
 // NewScaffolder creates a new project scaffolder
@@ -98,25 +109,38 @@ func (s *Scaffolder) Scaffold(opts *ScaffoldOptions) ([]generator.Operation, *Sc
 		Name:      opts.ProjectName,
 		Module:    modulePath,
 		GoVersion: goVersion,
+		Database:  opts.Database,
 	}
 
-	// 6. Build operations for directory structure
-	ops, err := s.buildDirectoryOperations(projectPath)
+	// 6. Build operations for core directory structure
+	ops, err := s.buildCoreDirectoryOperations(projectPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to build directory operations: %w", err)
 	}
 
-	// 7. Build operations for files from templates
-	fileOps, err := s.buildFileOperations(projectPath, data)
+	// 7. Build operations for core project files
+	fileOps, err := s.buildCoreFileOperations(projectPath, data)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to build file operations: %w", err)
 	}
 	ops = append(ops, fileOps...)
 
-	// 8. Prepare result metadata
+	// 8. Conditionally add database-specific operations
+	if opts.Database != DatabaseNone {
+		dbOps, err := s.buildDatabaseOperations(projectPath, data)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to build database operations: %w", err)
+		}
+		ops = append(ops, dbOps...)
+	}
+
+	// 9. Prepare result metadata
 	result := &ScaffoldResult{
-		ProjectPath: projectPath,
-		ShouldRunTidy: !opts.SkipTidy && opts.Interactive && input.Confirm("Run go mod tidy?", true),
+		ProjectPath:    projectPath,
+		ShouldRunTidy:  !opts.SkipTidy && opts.Interactive && input.Confirm("Run go mod tidy?", true),
+		Database:       opts.Database,
+		InstallMigrate: opts.Database != DatabaseNone,
+		InstallSQLC:    opts.Database != DatabaseNone,
 	}
 
 	return ops, result, nil
@@ -124,27 +148,27 @@ func (s *Scaffolder) Scaffold(opts *ScaffoldOptions) ([]generator.Operation, *Sc
 
 // ScaffoldResult contains metadata about the scaffolding operation
 type ScaffoldResult struct {
-	ProjectPath   string
-	ShouldRunTidy bool
+	ProjectPath    string
+	ShouldRunTidy  bool
+	Database       DatabaseDriver
+	InstallMigrate bool
+	InstallSQLC    bool
 }
 
 // ProjectData is the data passed to templates
 type ProjectData struct {
-	Name      string // Project name (e.g., "myapp")
-	Module    string // Go module path (e.g., "github.com/username/myapp")
-	GoVersion string // Go version (e.g., "1.25")
+	Name      string         // Project name (e.g., "myapp")
+	Module    string         // Go module path (e.g., "github.com/username/myapp")
+	GoVersion string         // Go version (e.g., "1.25")
+	Database  DatabaseDriver // Database driver
 }
 
-// buildDirectoryOperations creates operations for the standard Firebird project structure
-// Note: WriteFileOp handles parent directory creation automatically, so we create
-// .gitkeep files in each directory to ensure they exist
-func (s *Scaffolder) buildDirectoryOperations(projectPath string) ([]generator.Operation, error) {
+// buildCoreDirectoryOperations creates operations for core directories (always created)
+func (s *Scaffolder) buildCoreDirectoryOperations(projectPath string) ([]generator.Operation, error) {
 	var ops []generator.Operation
 
-	// Create .gitkeep files to ensure directories exist
-	// This is needed for migrations/ and internal/schemas/ which start empty
+	// Create .gitkeep files to ensure core directories exist
 	keepDirs := []string{
-		filepath.Join(projectPath, "migrations"),
 		filepath.Join(projectPath, "internal", "schemas"),
 		filepath.Join(projectPath, "internal", "models"),
 		filepath.Join(projectPath, "internal", "handlers"),
@@ -162,8 +186,8 @@ func (s *Scaffolder) buildDirectoryOperations(projectPath string) ([]generator.O
 	return ops, nil
 }
 
-// buildFileOperations generates operations for all project files from templates
-func (s *Scaffolder) buildFileOperations(projectPath string, data *ProjectData) ([]generator.Operation, error) {
+// buildCoreFileOperations generates operations for core project files (always created)
+func (s *Scaffolder) buildCoreFileOperations(projectPath string, data *ProjectData) ([]generator.Operation, error) {
 	var ops []generator.Operation
 
 	files := map[string]string{
@@ -195,6 +219,98 @@ func (s *Scaffolder) buildFileOperations(projectPath string, data *ProjectData) 
 	}
 
 	return ops, nil
+}
+
+// buildDatabaseOperations generates operations for database-specific files
+func (s *Scaffolder) buildDatabaseOperations(projectPath string, data *ProjectData) ([]generator.Operation, error) {
+	var ops []generator.Operation
+
+	// Create migrations directory
+	migrationsKeep := filepath.Join(projectPath, "migrations", ".gitkeep")
+	ops = append(ops, &generator.WriteFileOp{
+		Path:    migrationsKeep,
+		Content: []byte{},
+		Mode:    0644,
+	})
+
+	// Create database.yml
+	databaseYML := generateDatabaseYML(data.Database, data.Name)
+	dbYMLPath := filepath.Join(projectPath, "config", "database.yml")
+	ops = append(ops, &generator.WriteFileOp{
+		Path:    dbYMLPath,
+		Content: []byte(databaseYML),
+		Mode:    0644,
+	})
+
+	return ops, nil
+}
+
+// generateDatabaseYML creates database.yml content based on driver
+func generateDatabaseYML(driver DatabaseDriver, projectName string) string {
+	switch driver {
+	case DatabasePostgreSQL:
+		return fmt.Sprintf(`development:
+  driver: postgres
+  host: localhost
+  port: 5432
+  database: %s_development
+  username: postgres
+  password: postgres
+  sslmode: disable
+
+test:
+  driver: postgres
+  host: localhost
+  port: 5432
+  database: %s_test
+  username: postgres
+  password: postgres
+  sslmode: disable
+
+production:
+  driver: postgres
+  url: ${DATABASE_URL}
+`, projectName, projectName)
+
+	case DatabaseMySQL:
+		return fmt.Sprintf(`development:
+  driver: mysql
+  host: localhost
+  port: 3306
+  database: %s_development
+  username: root
+  password: root
+
+test:
+  driver: mysql
+  host: localhost
+  port: 3306
+  database: %s_test
+  username: root
+  password: root
+
+production:
+  driver: mysql
+  url: ${DATABASE_URL}
+`, projectName, projectName)
+
+	case DatabaseSQLite:
+		return `development:
+  driver: sqlite
+  database: db/development.db
+
+test:
+  driver: sqlite
+  database: db/test.db
+
+production:
+  driver: sqlite
+  database: db/production.db
+`
+
+	default:
+		return ""
+	}
 }
 
 // detectGoVersion detects the installed Go version

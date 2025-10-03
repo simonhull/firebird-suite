@@ -137,21 +137,7 @@ func (m *Migrator) Force(ctx context.Context, version string) error {
 
 // maskPassword masks the password in connection string for display
 func (m *Migrator) maskPassword(connStr string) string {
-	// Simple masking: replace password between : and @
-	parts := strings.Split(connStr, ":")
-	if len(parts) < 3 {
-		return connStr
-	}
-
-	// Find the password part (between second : and @)
-	for i := 2; i < len(parts); i++ {
-		if idx := strings.Index(parts[i], "@"); idx != -1 {
-			parts[i] = "****" + parts[i][idx:]
-			break
-		}
-	}
-
-	return strings.Join(parts, ":")
+	return MaskPassword(connStr)
 }
 
 // List shows all migrations with their status

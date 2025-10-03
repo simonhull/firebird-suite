@@ -20,6 +20,7 @@ type Definition struct {
 type Spec struct {
 	TableName string  `yaml:"table_name,omitempty"`
 	Fields    []Field `yaml:"fields"`
+	Indexes   []Index `yaml:"indexes,omitempty"`
 }
 
 // Field represents a single field in the resource
@@ -38,6 +39,15 @@ type Field struct {
 	JSON       string            `yaml:"json,omitempty"`
 	AutoNowAdd bool              `yaml:"auto_now_add,omitempty"`
 	AutoNow    bool              `yaml:"auto_now,omitempty"`
+}
+
+// Index represents a database index definition
+type Index struct {
+	Name    string   `yaml:"name,omitempty"`    // Index name (optional, will be generated if empty)
+	Columns []string `yaml:"columns"`           // Column names to index
+	Unique  bool     `yaml:"unique,omitempty"`  // Unique constraint
+	Where   string   `yaml:"where,omitempty"`   // Partial index condition (PostgreSQL/SQLite only)
+	Type    string   `yaml:"type,omitempty"`    // Index type: btree, hash, gin, gist (PostgreSQL only)
 }
 
 // ValidationError represents a schema validation error with context
@@ -272,6 +282,40 @@ func ValidateWithLineNumbers(def *Definition, lineMap map[string]int) error {
 				Message:    "at least one field must have primary_key: true",
 				Suggestion: "mark your ID field with 'primary_key: true'",
 			})
+		}
+	}
+
+	// Validate indexes
+	for i, index := range def.Spec.Indexes {
+		indexPath := fmt.Sprintf("spec.indexes[%d]", i)
+
+		// Validate columns
+		if len(index.Columns) == 0 {
+			errors = append(errors, ValidationError{
+				Field:      fmt.Sprintf("%s.columns", indexPath),
+				Message:    "at least one column is required for index",
+				Suggestion: "specify column names to index",
+				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.indexes.%d.columns", i)),
+			})
+		}
+
+		// Validate column references
+		for _, colName := range index.Columns {
+			found := false
+			for _, field := range def.Spec.Fields {
+				if field.Name == colName {
+					found = true
+					break
+				}
+			}
+			if !found {
+				errors = append(errors, ValidationError{
+					Field:      fmt.Sprintf("%s.columns", indexPath),
+					Message:    fmt.Sprintf("column '%s' not found in fields", colName),
+					Suggestion: fmt.Sprintf("ensure '%s' is defined in spec.fields", colName),
+					Line:       getLineNumber(lineMap, fmt.Sprintf("spec.indexes.%d.columns", i)),
+				})
+			}
 		}
 	}
 

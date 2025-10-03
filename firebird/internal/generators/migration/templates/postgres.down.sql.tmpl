@@ -1,1 +1,7 @@
+{{- if .Indexes }}
+{{- range .Indexes }}
+DROP INDEX IF EXISTS {{ .Name }};
+{{- end }}
+
+{{- end }}
 DROP TABLE IF EXISTS {{ .TableName }};

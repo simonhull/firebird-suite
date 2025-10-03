@@ -28,9 +28,11 @@ type ColumnData struct {
 
 // IndexData represents an index definition
 type IndexData struct {
-	Name   string // Index name (e.g., "idx_users_email")
-	Column string // Column name
-	Unique bool   // Unique index?
+	Name    string   // Index name (e.g., "idx_users_email")
+	Columns []string // Column names
+	Unique  bool     // Unique index?
+	Where   string   // Partial index condition (PostgreSQL/SQLite only)
+	Type    string   // Index type (btree, hash, gin, gist, etc.)
 }
 
 // PrepareMigrationData transforms a schema definition into migration data
@@ -51,8 +53,10 @@ func PrepareMigrationData(def *schema.Definition, dialect DatabaseDialect) *Migr
 
 		// Note: We don't automatically generate indexes for UNIQUE constraints
 		// because the inline UNIQUE constraint already creates an index in most databases.
-		// In V0.2, we'll add support for explicit index definitions in the schema.
 	}
+
+	// Transform indexes
+	data.Indexes = transformIndexes(def.Spec.Indexes, tableName)
 
 	return data
 }
@@ -249,4 +253,42 @@ func formatDefaultValue(defaultVal any, fieldType string) string {
 	}
 
 	return strVal
+}
+
+// transformIndexes converts schema indexes to migration index data
+func transformIndexes(indexes []schema.Index, tableName string) []IndexData {
+	var result []IndexData
+
+	for _, idx := range indexes {
+		indexData := IndexData{
+			Name:    idx.Name,
+			Columns: make([]string, len(idx.Columns)),
+			Unique:  idx.Unique,
+			Where:   idx.Where,
+			Type:    idx.Type,
+		}
+
+		// Convert column names to snake_case
+		for i, col := range idx.Columns {
+			indexData.Columns[i] = generator.SnakeCase(col)
+		}
+
+		// Generate name if not provided
+		if indexData.Name == "" {
+			indexData.Name = generateIndexName(tableName, indexData.Columns, indexData.Unique)
+		}
+
+		result = append(result, indexData)
+	}
+
+	return result
+}
+
+// generateIndexName creates an index name from table name, columns, and uniqueness
+func generateIndexName(tableName string, columns []string, unique bool) string {
+	prefix := "idx"
+	if unique {
+		prefix = "uniq"
+	}
+	return fmt.Sprintf("%s_%s_%s", prefix, tableName, strings.Join(columns, "_"))
 }

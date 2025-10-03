@@ -11,6 +11,9 @@ CREATE TABLE {{ .TableName }} (
 {{- if .Indexes }}
 
 {{- range .Indexes }}
-CREATE {{ if .Unique }}UNIQUE {{ end }}INDEX {{ .Name }} ON {{ $.TableName }}({{ .Column }});
+CREATE {{ if .Unique }}UNIQUE {{ end }}INDEX {{ .Name }}
+ON {{ $.TableName }} ({{ join .Columns ", " }})
+{{- if .Type }} USING {{ .Type }}{{ end }}
+{{- if .Where }} WHERE {{ .Where }}{{ end }};
 {{- end }}
 {{- end }}

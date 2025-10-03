@@ -1,0 +1,16 @@
+CREATE TABLE {{ .TableName }} (
+{{- range $i, $col := .Columns }}
+{{- if $i }},{{ end }}
+    {{ $col.Name }} {{ $col.Type }}
+{{- if not $col.Nullable }} NOT NULL{{ end }}
+{{- if $col.PrimaryKey }} PRIMARY KEY{{ end }}
+{{- if and $col.Unique (not $col.PrimaryKey) }} UNIQUE{{ end }}
+{{- if $col.Default }} DEFAULT {{ $col.Default }}{{ end }}
+{{- end }}
+);
+{{- if .Indexes }}
+
+{{- range .Indexes }}
+CREATE {{ if .Unique }}UNIQUE {{ end }}INDEX {{ .Name }} ON {{ $.TableName }}({{ .Column }});
+{{- end }}
+{{- end }}

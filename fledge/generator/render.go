@@ -416,3 +416,9 @@ func Default(defaultVal, val any) any {
 
 	return val
 }
+
+// Pluralize converts a singular noun to plural form
+// This is exported so it can be used by generators outside of templates
+func Pluralize(s string) string {
+	return schema.Pluralize(s)
+}

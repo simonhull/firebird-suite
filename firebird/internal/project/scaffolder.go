@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/sqlc"
 	fledgeExec "github.com/simonhull/firebird-suite/fledge/exec"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 	"github.com/simonhull/firebird-suite/fledge/input"
@@ -241,6 +242,16 @@ func (s *Scaffolder) buildDatabaseOperations(projectPath string, data *ProjectDa
 		Content: []byte(databaseYML),
 		Mode:    0644,
 	})
+
+	// Initialize SQLC
+	output.Info("Initializing SQLC")
+	sqlcGen := sqlc.New(projectPath, data.Name, string(data.Database), data.Module)
+	sqlcOps, err := sqlcGen.Generate()
+	if err != nil {
+		return nil, fmt.Errorf("generating SQLC config: %w", err)
+	}
+	ops = append(ops, sqlcOps...)
+	output.Success("SQLC initialized")
 
 	return ops, nil
 }

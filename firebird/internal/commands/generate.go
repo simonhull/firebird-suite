@@ -19,6 +19,8 @@ func GenerateCmd() *cobra.Command {
 	var force, skip, diff, dryRun bool
 	var timestamps, softDeletes, generateAll bool
 	var intID bool // NEW: Use int64 instead of UUID for primary key
+	// Model generator flags
+	var modelOutput, modelPackage, modelSchema string
 
 	cmd := &cobra.Command{
 		Use:   "generate [type] [name] [field:type[:modifier]...]",
@@ -83,7 +85,18 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 			switch genType {
 			case "model":
 				gen := model.NewGenerator()
-				ops, err = gen.Generate(name)
+				// Use custom flags if provided
+				if modelSchema != "" || modelOutput != "" || modelPackage != "" {
+					opts := model.GenerateOptions{
+						Name:       name,
+						SchemaPath: modelSchema,
+						OutputPath: modelOutput,
+						Package:    modelPackage,
+					}
+					ops, err = gen.GenerateWithOptions(opts)
+				} else {
+					ops, err = gen.Generate(name)
+				}
 			case "migration":
 				gen := migration.NewGenerator()
 				ops, err = gen.Generate(name)
@@ -166,6 +179,10 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 	cmd.Flags().BoolVar(&softDeletes, "soft-deletes", false, "Add deleted_at field for soft deletes (scaffold only)")
 	cmd.Flags().BoolVar(&generateAll, "generate", false, "Also generate model and migration files (scaffold only)")
 	cmd.Flags().BoolVar(&intID, "int-id", false, "Use int64 with auto-increment instead of UUID for primary key (scaffold only)")
+	// Model generator flags
+	cmd.Flags().StringVar(&modelOutput, "output", "", "Custom output path for model file (model only)")
+	cmd.Flags().StringVar(&modelPackage, "package", "", "Custom package name for model (model only)")
+	cmd.Flags().StringVar(&modelSchema, "schema", "", "Custom schema file path (model only)")
 
 	return cmd
 }

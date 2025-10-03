@@ -11,6 +11,6 @@ import (
 // {{ .Name }} represents a {{ lower .Name }} resource
 type {{ .Name }} struct {
 {{- range .Fields }}
-	{{ .Name }} {{ .Type }} `json:"{{ .JSONTag }}"`
+	{{ .Name }} {{ .Type }} {{ .Tags }}
 {{- end }}
 }

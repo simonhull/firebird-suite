@@ -24,6 +24,7 @@ Examples:
   firebird migrate down            # Rollback last migration
   firebird migrate down 3          # Rollback last 3 migrations
   firebird migrate status          # Show current version
+  firebird migrate list            # List all migrations
   firebird migrate force 20250102  # Force version (recovery)
   firebird migrate create add_bio  # Create manual migration`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -39,6 +40,7 @@ Examples:
 	cmd.AddCommand(migrateUpCmd())
 	cmd.AddCommand(migrateDownCmd())
 	cmd.AddCommand(migrateStatusCmd())
+	cmd.AddCommand(migrateListCmd())
 	cmd.AddCommand(migrateForceCmd())
 	cmd.AddCommand(migrateCreateCmd())
 
@@ -141,6 +143,28 @@ Use with caution!`,
 			}
 
 			if err := migrator.Force(context.Background(), version); err != nil {
+				output.Error(err.Error())
+				os.Exit(1)
+			}
+		},
+	}
+}
+
+// migrateListCmd lists all migrations with their status
+func migrateListCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "list",
+		Short: "List all migrations",
+		Long:  "Shows all migrations in the migrations directory with their status (applied/pending).",
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			migrator, err := migrate.NewMigrator()
+			if err != nil {
+				output.Error(err.Error())
+				os.Exit(1)
+			}
+
+			if err := migrator.List(context.Background()); err != nil {
 				output.Error(err.Error())
 				os.Exit(1)
 			}

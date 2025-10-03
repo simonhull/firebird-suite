@@ -24,18 +24,20 @@ type Spec struct {
 
 // Field represents a single field in the resource
 type Field struct {
-	Name       string   `yaml:"name"`
-	Type       string   `yaml:"type"`
-	DBType     string   `yaml:"db_type"`
-	PrimaryKey bool     `yaml:"primary_key,omitempty"`
-	Unique     bool     `yaml:"unique,omitempty"`
-	Index      bool     `yaml:"index,omitempty"`
-	Nullable   bool     `yaml:"nullable,omitempty"`
-	Default    any      `yaml:"default,omitempty"`
-	Validation []string `yaml:"validation,omitempty"`
-	JSON       string   `yaml:"json,omitempty"`
-	AutoNowAdd bool     `yaml:"auto_now_add,omitempty"`
-	AutoNow    bool     `yaml:"auto_now,omitempty"`
+	Name       string            `yaml:"name"`
+	Type       string            `yaml:"type"`
+	DBType     string            `yaml:"db_type"`
+	PrimaryKey bool              `yaml:"primary_key,omitempty"`
+	Unique     bool              `yaml:"unique,omitempty"`
+	Index      bool              `yaml:"index,omitempty"`
+	Nullable   bool              `yaml:"nullable,omitempty"`
+	Required   bool              `yaml:"required,omitempty"`
+	Default    any               `yaml:"default,omitempty"`
+	Tags       map[string]string `yaml:"tags,omitempty"`
+	Validation []string          `yaml:"validation,omitempty"`
+	JSON       string            `yaml:"json,omitempty"`
+	AutoNowAdd bool              `yaml:"auto_now_add,omitempty"`
+	AutoNow    bool              `yaml:"auto_now,omitempty"`
 }
 
 // ValidationError represents a schema validation error with context

@@ -1,7 +1,9 @@
 package model
 
 import (
+	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/simonhull/firebird-suite/firebird/internal/schema"
 	"github.com/simonhull/firebird-suite/firebird/internal/types"
@@ -18,9 +20,9 @@ type ModelData struct {
 
 // FieldData represents a single struct field
 type FieldData struct {
-	Name    string // PascalCase field name (e.g., "Email")
-	Type    string // Go type (e.g., "string", "uuid.UUID")
-	JSONTag string // JSON tag value (e.g., "email")
+	Name string // PascalCase field name (e.g., "Email")
+	Type string // Go type (e.g., "string", "uuid.UUID")
+	Tags string // Complete tag string: `json:"email" db:"email"`
 }
 
 // PrepareModelData transforms a schema definition into template data
@@ -47,9 +49,9 @@ func PrepareModelData(def *schema.Definition, outputPath string) *ModelData {
 		}
 
 		data.Fields[i] = FieldData{
-			Name:    generator.PascalCase(field.Name),
-			Type:    goType,
-			JSONTag: generateJSONTag(field),
+			Name: generator.PascalCase(field.Name),
+			Type: goType,
+			Tags: buildTagString(field),
 		}
 	}
 
@@ -57,6 +59,57 @@ func PrepareModelData(def *schema.Definition, outputPath string) *ModelData {
 	data.Imports = types.CollectImports(typeNames)
 
 	return data
+}
+
+// buildTagString creates the complete struct tag string for a field
+func buildTagString(field schema.Field) string {
+	if len(field.Tags) == 0 {
+		// Default: just JSON tag
+		jsonTag := field.JSON
+		if jsonTag == "" {
+			jsonTag = generator.SnakeCase(field.Name)
+		}
+		return fmt.Sprintf("`json:\"%s\"`", jsonTag)
+	}
+
+	// Build custom tags
+	var parts []string
+
+	// Always include JSON if not specified
+	if _, ok := field.Tags["json"]; !ok {
+		jsonTag := field.JSON
+		if jsonTag == "" {
+			jsonTag = generator.SnakeCase(field.Name)
+		}
+		parts = append(parts, fmt.Sprintf("json:\"%s\"", jsonTag))
+	}
+
+	// Add custom tags in consistent order
+	tagOrder := []string{"json", "db", "validate", "xml", "yaml"}
+	for _, key := range tagOrder {
+		if val, ok := field.Tags[key]; ok {
+			parts = append(parts, fmt.Sprintf("%s:\"%s\"", key, val))
+		}
+	}
+
+	// Add any other tags not in the standard order
+	for key, val := range field.Tags {
+		if !contains(tagOrder, key) {
+			parts = append(parts, fmt.Sprintf("%s:\"%s\"", key, val))
+		}
+	}
+
+	return "`" + strings.Join(parts, " ") + "`"
+}
+
+// contains checks if a string slice contains a specific item
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
 
 // generateJSONTag creates a JSON tag for a field

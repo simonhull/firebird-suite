@@ -1,12 +1,15 @@
 package migrate
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
-	"github.com/simonhull/firebird-suite/fledge/exec"
+	fledgeexec "github.com/simonhull/firebird-suite/fledge/exec"
 	"github.com/simonhull/firebird-suite/fledge/output"
 )
 
@@ -15,7 +18,7 @@ const migrationsDir = "./migrations"
 // Migrator wraps golang-migrate commands
 type Migrator struct {
 	connectionString string
-	executor         *exec.Executor
+	executor         *fledgeexec.Executor
 }
 
 // NewMigrator creates a new migrator
@@ -34,7 +37,7 @@ func NewMigrator() (*Migrator, error) {
 
 	return &Migrator{
 		connectionString: connStr,
-		executor:         exec.NewExecutor(nil),
+		executor:         fledgeexec.NewExecutor(nil),
 	}, nil
 }
 
@@ -151,9 +154,123 @@ func (m *Migrator) maskPassword(connStr string) string {
 	return strings.Join(parts, ":")
 }
 
+// List shows all migrations with their status
+func (m *Migrator) List(ctx context.Context) error {
+	output.Info("Migration list:")
+	output.Verbose(fmt.Sprintf("Migrations directory: %s", migrationsDir))
+	output.Verbose(fmt.Sprintf("Database: %s", m.maskPassword(m.connectionString)))
+
+	// Get current version first using exec.Command to capture output
+	cmd := exec.Command("migrate",
+		"-path", migrationsDir,
+		"-database", m.connectionString,
+		"version",
+	)
+
+	var outBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = os.Stderr
+
+	currentVersion := "none"
+	if err := cmd.Run(); err == nil {
+		currentVersion = strings.TrimSpace(outBuf.String())
+	}
+
+	output.Verbose(fmt.Sprintf("Current version: %s", currentVersion))
+
+	// List all migrations using os.ReadDir
+	entries, err := os.ReadDir(migrationsDir)
+	if err != nil {
+		return fmt.Errorf("failed to read migrations directory: %w", err)
+	}
+
+	// Parse migration files
+	migrations := parseMigrationEntries(entries, currentVersion)
+
+	// Display migrations
+	if len(migrations) == 0 {
+		output.Info("No migrations found")
+		return nil
+	}
+
+	output.Info(fmt.Sprintf("Found %d migration(s):\n", len(migrations)/2))
+	for _, mig := range migrations {
+		if mig.Direction == "up" {
+			status := "pending"
+			symbol := "○"
+			if mig.Applied {
+				status = "applied"
+				symbol = "✓"
+			}
+			output.Info(fmt.Sprintf("  %s %s - %s", symbol, mig.Version, status))
+		}
+	}
+
+	return nil
+}
+
+// Migration represents a single migration file
+type Migration struct {
+	Version   string
+	Name      string
+	Direction string // "up" or "down"
+	Applied   bool
+}
+
+// parseMigrationEntries parses directory entries and determines which migrations are applied
+func parseMigrationEntries(entries []os.DirEntry, currentVersion string) []Migration {
+	var migrations []Migration
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		filename := entry.Name()
+
+		// Migration files are in format: {version}_{name}.{up|down}.sql
+		// Example: 20250102030405_create_users.up.sql
+		parts := strings.Split(filename, "_")
+		if len(parts) < 2 {
+			continue
+		}
+
+		version := parts[0]
+		rest := strings.Join(parts[1:], "_")
+
+		// Extract direction (up or down)
+		var direction string
+		if strings.HasSuffix(rest, ".up.sql") {
+			direction = "up"
+			rest = strings.TrimSuffix(rest, ".up.sql")
+		} else if strings.HasSuffix(rest, ".down.sql") {
+			direction = "down"
+			rest = strings.TrimSuffix(rest, ".down.sql")
+		} else {
+			continue
+		}
+
+		// Check if migration is applied
+		// Migration is applied if its version <= current version
+		applied := false
+		if currentVersion != "none" && version <= currentVersion {
+			applied = true
+		}
+
+		migrations = append(migrations, Migration{
+			Version:   version,
+			Name:      rest,
+			Direction: direction,
+			Applied:   applied,
+		})
+	}
+
+	return migrations
+}
+
 // CheckMigrateInstalled checks if golang-migrate is installed
 func CheckMigrateInstalled() error {
-	executor := exec.NewExecutor(nil)
+	executor := fledgeexec.NewExecutor(nil)
 	err := executor.Run(context.Background(), "migrate", "-version")
 	if err != nil {
 		return fmt.Errorf("golang-migrate not found. Install it with:\n  go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest")

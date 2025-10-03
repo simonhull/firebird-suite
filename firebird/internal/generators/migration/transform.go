@@ -1,6 +1,7 @@
 package migration
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/simonhull/firebird-suite/firebird/internal/schema"
@@ -58,9 +59,12 @@ func PrepareMigrationData(def *schema.Definition, dialect DatabaseDialect) *Migr
 
 // transformField converts a schema field to a SQL column definition
 func transformField(field schema.Field, dialect DatabaseDialect) ColumnData {
-	// Auto-detect nullable from pointer type
+	// Determine if column should be NOT NULL
+	// Priority: Required > PrimaryKey > Nullable flag > pointer type
 	nullable := field.Nullable
-	if strings.HasPrefix(field.Type, "*") {
+	if field.Required || field.PrimaryKey {
+		nullable = false
+	} else if strings.HasPrefix(field.Type, "*") {
 		nullable = true
 	}
 
@@ -175,6 +179,11 @@ func mapGoTypeToSQLite(goType string) string {
 
 // generateDefault creates a default value clause for a field
 func generateDefault(field schema.Field, dialect DatabaseDialect) string {
+	// Check for explicit default value
+	if field.Default != nil {
+		return formatDefaultValue(field.Default, field.Type)
+	}
+
 	// Check for auto_now_add (created_at)
 	if field.AutoNowAdd {
 		switch dialect {
@@ -208,4 +217,36 @@ func generateDefault(field schema.Field, dialect DatabaseDialect) string {
 	}
 
 	return ""
+}
+
+// formatDefaultValue formats a default value for SQL
+func formatDefaultValue(defaultVal any, fieldType string) string {
+	if defaultVal == nil {
+		return ""
+	}
+
+	// Convert to string
+	strVal := ""
+	switch v := defaultVal.(type) {
+	case string:
+		strVal = v
+	case bool:
+		if v {
+			return "true"
+		}
+		return "false"
+	case int, int8, int16, int32, int64:
+		return fmt.Sprintf("%v", v)
+	case float32, float64:
+		return fmt.Sprintf("%v", v)
+	default:
+		strVal = fmt.Sprintf("%v", v)
+	}
+
+	// Quote strings and text types
+	if fieldType == "string" || fieldType == "text" || strings.Contains(fieldType, "String") {
+		return fmt.Sprintf("'%s'", strVal)
+	}
+
+	return strVal
 }

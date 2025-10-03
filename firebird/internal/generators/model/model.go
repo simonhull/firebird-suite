@@ -18,6 +18,14 @@ type Generator struct {
 	renderer *generator.Renderer
 }
 
+// GenerateOptions holds custom options for model generation
+type GenerateOptions struct {
+	Name       string // Resource name
+	SchemaPath string // Custom schema file path (optional)
+	OutputPath string // Custom output file path (optional)
+	Package    string // Custom package name (optional)
+}
+
 // NewGenerator creates a new model generator
 func NewGenerator() *Generator {
 	return &Generator{
@@ -44,24 +52,61 @@ func (g *Generator) Generate(name string) ([]generator.Operation, error) {
 	}
 	output.Verbose(fmt.Sprintf("Parsed schema for: %s", def.Name))
 
-	return g.generateFromDefinition(name, def)
+	return g.generateFromDefinition(name, def, "", "")
 }
 
 // GenerateFromSchema generates a Go model struct from an in-memory schema definition
 // This is used by the scaffold generator with --generate flag
 func (g *Generator) GenerateFromSchema(name string, def *schema.Definition) ([]generator.Operation, error) {
 	output.Verbose(fmt.Sprintf("Generating model from in-memory schema: %s", name))
-	return g.generateFromDefinition(name, def)
+	return g.generateFromDefinition(name, def, "", "")
+}
+
+// GenerateWithOptions generates a Go model struct with custom options
+func (g *Generator) GenerateWithOptions(opts GenerateOptions) ([]generator.Operation, error) {
+	output.Verbose(fmt.Sprintf("Generating model with custom options: %s", opts.Name))
+
+	// 1. Find schema file (use custom path if provided)
+	schemaPath := opts.SchemaPath
+	if schemaPath == "" {
+		var err error
+		schemaPath, err = FindSchemaFile(opts.Name)
+		if err != nil {
+			return nil, err
+		}
+	}
+	output.Verbose(fmt.Sprintf("Using schema: %s", schemaPath))
+
+	// 2. Parse schema
+	def, err := schema.Parse(schemaPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse schema: %w", err)
+	}
+	output.Verbose(fmt.Sprintf("Parsed schema for: %s", def.Name))
+
+	// 3. Generate with custom output path and package
+	return g.generateFromDefinition(opts.Name, def, opts.OutputPath, opts.Package)
 }
 
 // generateFromDefinition is the common implementation for both Generate methods
-func (g *Generator) generateFromDefinition(name string, def *schema.Definition) ([]generator.Operation, error) {
+// customOutputPath and customPackage are optional - empty strings use defaults
+func (g *Generator) generateFromDefinition(name string, def *schema.Definition, customOutputPath, customPackage string) ([]generator.Operation, error) {
 	// 1. Determine output path
-	outputPath := filepath.Join("internal", "models", generator.SnakeCase(name)+".go")
+	outputPath := customOutputPath
+	if outputPath == "" {
+		outputPath = filepath.Join("internal", "models", generator.SnakeCase(name)+".go")
+	}
 	output.Verbose(fmt.Sprintf("Output path: %s", outputPath))
 
 	// 2. Transform schema to template data
 	data := PrepareModelData(def, outputPath)
+
+	// Override package if custom package provided
+	if customPackage != "" {
+		data.Package = customPackage
+		output.Verbose(fmt.Sprintf("Using custom package: %s", customPackage))
+	}
+
 	output.Verbose(fmt.Sprintf("Prepared data with %d fields", len(data.Fields)))
 
 	// 3. Render template

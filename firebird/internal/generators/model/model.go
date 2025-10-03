@@ -44,22 +44,34 @@ func (g *Generator) Generate(name string) ([]generator.Operation, error) {
 	}
 	output.Verbose(fmt.Sprintf("Parsed schema for: %s", def.Name))
 
-	// 3. Determine output path
+	return g.generateFromDefinition(name, def)
+}
+
+// GenerateFromSchema generates a Go model struct from an in-memory schema definition
+// This is used by the scaffold generator with --generate flag
+func (g *Generator) GenerateFromSchema(name string, def *schema.Definition) ([]generator.Operation, error) {
+	output.Verbose(fmt.Sprintf("Generating model from in-memory schema: %s", name))
+	return g.generateFromDefinition(name, def)
+}
+
+// generateFromDefinition is the common implementation for both Generate methods
+func (g *Generator) generateFromDefinition(name string, def *schema.Definition) ([]generator.Operation, error) {
+	// 1. Determine output path
 	outputPath := filepath.Join("internal", "models", generator.SnakeCase(name)+".go")
 	output.Verbose(fmt.Sprintf("Output path: %s", outputPath))
 
-	// 4. Transform schema to template data
+	// 2. Transform schema to template data
 	data := PrepareModelData(def, outputPath)
 	output.Verbose(fmt.Sprintf("Prepared data with %d fields", len(data.Fields)))
 
-	// 5. Render template
+	// 3. Render template
 	content, err := g.renderer.RenderFS(templatesFS, "templates/model.go.tmpl", data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render template: %w", err)
 	}
 	output.Verbose("Template rendered successfully")
 
-	// 6. Build operation
+	// 4. Build operation
 	var ops []generator.Operation
 	ops = append(ops, &generator.WriteFileOp{
 		Path:    outputPath,

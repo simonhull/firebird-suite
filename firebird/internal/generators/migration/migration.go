@@ -45,14 +45,26 @@ func (g *Generator) Generate(name string) ([]generator.Operation, error) {
 	}
 	output.Verbose(fmt.Sprintf("Parsed schema for: %s", def.Name))
 
-	// 3. Detect database dialect
+	return g.generateFromDefinition(name, def)
+}
+
+// GenerateFromSchema generates a SQL migration from an in-memory schema definition
+// This is used by the scaffold generator with --generate flag
+func (g *Generator) GenerateFromSchema(name string, def *schema.Definition) ([]generator.Operation, error) {
+	output.Verbose(fmt.Sprintf("Generating migration from in-memory schema: %s", name))
+	return g.generateFromDefinition(name, def)
+}
+
+// generateFromDefinition is the common implementation for both Generate methods
+func (g *Generator) generateFromDefinition(name string, def *schema.Definition) ([]generator.Operation, error) {
+	// 1. Detect database dialect
 	dialect, err := DetectDatabaseDialect()
 	if err != nil {
 		return nil, err
 	}
 	output.Verbose(fmt.Sprintf("Detected database dialect: %s", dialect))
 
-	// 4. Check if migration already exists
+	// 2. Check if migration already exists
 	migrationsDir := "migrations"
 	migrationName := "create_" + generator.SnakeCase(generator.Pluralize(name))
 	exists, err := MigrationExists(migrationsDir, migrationName)
@@ -63,19 +75,19 @@ func (g *Generator) Generate(name string) ([]generator.Operation, error) {
 		return nil, fmt.Errorf("migration for '%s' already exists. Migrations are immutable - create a new migration to modify the table", name)
 	}
 
-	// 5. Generate migration number
+	// 3. Generate migration number
 	number, err := GenerateMigrationNumber(TimestampNumbering, migrationsDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate migration number: %w", err)
 	}
 	output.Verbose(fmt.Sprintf("Generated migration number: %s", number))
 
-	// 6. Get migration filenames
+	// 4. Get migration filenames
 	upFile, downFile := GetMigrationFilenames(number, migrationName)
 	upPath := filepath.Join(migrationsDir, upFile)
 	downPath := filepath.Join(migrationsDir, downFile)
 
-	// 7. Transform schema to migration data
+	// 5. Transform schema to migration data
 	data := PrepareMigrationData(def, dialect)
 	output.Verbose(fmt.Sprintf("Prepared migration for table: %s (%d columns)", data.TableName, len(data.Columns)))
 
@@ -87,21 +99,21 @@ func (g *Generator) Generate(name string) ([]generator.Operation, error) {
 		}
 	}
 
-	// 8. Render up migration
+	// 6. Render up migration
 	upTemplate := fmt.Sprintf("templates/%s.up.sql.tmpl", dialect)
 	upContent, err := g.renderer.RenderFS(templatesFS, upTemplate, data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render up migration: %w", err)
 	}
 
-	// 9. Render down migration
+	// 7. Render down migration
 	downTemplate := fmt.Sprintf("templates/%s.down.sql.tmpl", dialect)
 	downContent, err := g.renderer.RenderFS(templatesFS, downTemplate, data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render down migration: %w", err)
 	}
 
-	// 10. Build operations
+	// 8. Build operations
 	var ops []generator.Operation
 	ops = append(ops, &generator.WriteFileOp{
 		Path:    upPath,

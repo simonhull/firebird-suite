@@ -1,8 +1,10 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/migration"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/model"
@@ -12,14 +14,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Generator is the interface that all atomic generators implement
-type Generator interface {
-	Generate(name string) error
-}
-
 // GenerateCmd creates and returns the 'generate' command for code generation
 func GenerateCmd() *cobra.Command {
-	var force, skip, diff bool
+	var force, skip, diff, dryRun bool
 
 	cmd := &cobra.Command{
 		Use:   "generate [type] [name]",
@@ -34,13 +31,17 @@ Available types:
 Examples:
   firebird generate scaffold User
   firebird generate model User
-  firebird generate migration User`,
+  firebird generate model User --dry-run
+  firebird generate migration User
+  firebird generate migration User --force`,
 		Args: cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
 			genType := args[0]
 			name := args[1]
 
-			// Validate mutually exclusive flags
+			// Validate mutually exclusive flags (force, skip, diff)
+			// Note: --dry-run can be combined with these
 			flagCount := 0
 			conflictingFlags := []string{}
 			if force {
@@ -61,24 +62,29 @@ Examples:
 				os.Exit(1)
 			}
 
-			// Create resolver with conflict resolution strategy
-			resolver, err := generator.NewResolver(force, skip, diff)
-			if err != nil {
-				output.Error(err.Error())
-				os.Exit(1)
-			}
-
-			output.Verbose(fmt.Sprintf("Generating %s: %s", genType, name))
+			output.Verbose(fmt.Sprintf("Generating %s: %s (dry-run=%v, force=%v)", genType, name, dryRun, force))
 
 			// Route to appropriate generator based on type
-			var gen Generator
+			var ops []generator.Operation
+			var err error
+
 			switch genType {
 			case "model":
-				gen = model.NewGenerator(resolver)
+				gen := model.NewGenerator()
+				ops, err = gen.Generate(name)
 			case "migration":
-				gen = migration.NewGenerator(resolver)
+				gen := migration.NewGenerator()
+				ops, err = gen.Generate(name)
 			case "scaffold":
-				gen = scaffold.NewGenerator()
+				// Scaffold generator still uses old pattern (writes directly)
+				// TODO: Update scaffold generator to return operations
+				gen := scaffold.NewGenerator()
+				if err := gen.Generate(name); err != nil {
+					output.Error(err.Error())
+					os.Exit(1)
+				}
+				output.Success(fmt.Sprintf("Generated %s: %s", genType, name))
+				return
 			default:
 				output.Error(fmt.Sprintf("Unknown generator type: %s", genType))
 				output.Info("Available types:")
@@ -88,16 +94,38 @@ Examples:
 				os.Exit(1)
 			}
 
-			// Generate
-			if err := gen.Generate(name); err != nil {
+			if err != nil {
 				output.Error(err.Error())
 				os.Exit(1)
 			}
 
-			output.Success(fmt.Sprintf("Generated %s: %s", genType, name))
+			// Execute operations through Fledge
+			writer := cmd.OutOrStdout()
+			if err := generator.Execute(ctx, ops, generator.ExecuteOptions{
+				DryRun: dryRun,
+				Force:  force,
+				Writer: writer,
+			}); err != nil {
+				// Enhance error messages at CLI layer
+				if strings.Contains(err.Error(), "already exists") && !force && !dryRun {
+					output.Error(err.Error())
+					output.Info("\nTip: Use --force to overwrite, --skip to skip, or --diff to review changes")
+					os.Exit(1)
+				}
+				output.Error(err.Error())
+				os.Exit(1)
+			}
+
+			// Add summary message
+			if dryRun {
+				fmt.Fprintln(writer, "\n✓ Dry-run complete. Run without --dry-run to create files.")
+			} else {
+				output.Success(fmt.Sprintf("Generated %s: %s", genType, name))
+			}
 		},
 	}
 
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be generated without creating files")
 	cmd.Flags().BoolVar(&force, "force", false, "Overwrite existing files without asking")
 	cmd.Flags().BoolVar(&skip, "skip", false, "Skip existing files without asking")
 	cmd.Flags().BoolVar(&diff, "diff", false, "Show diff before overwriting")

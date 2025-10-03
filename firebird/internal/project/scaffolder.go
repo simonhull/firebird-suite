@@ -30,6 +30,7 @@ type ScaffoldOptions struct {
 	Module      string
 	Path        string
 	SkipTidy    bool
+	Interactive bool // If false, skip interactive prompts
 }
 
 // NewScaffolder creates a new project scaffolder
@@ -40,46 +41,52 @@ func NewScaffolder() *Scaffolder {
 }
 
 // Scaffold creates a new Firebird project with the given options
-func (s *Scaffolder) Scaffold(opts *ScaffoldOptions) error {
+// Returns Operations to be executed by the caller, and post-execution metadata
+func (s *Scaffolder) Scaffold(opts *ScaffoldOptions) ([]generator.Operation, *ScaffoldResult, error) {
 	// 1. Resolve project path
 	projectPath := filepath.Join(opts.Path, opts.ProjectName)
 
-	// 2. Check if directory exists
+	// 2. Check if directory exists (early validation)
 	if _, err := os.Stat(projectPath); err == nil {
-		return fmt.Errorf("directory '%s' already exists. Choose a different name or location", opts.ProjectName)
+		return nil, nil, fmt.Errorf("directory '%s' already exists. Choose a different name or location", opts.ProjectName)
 	}
 
-	// 2.5. Warn if creating inside an existing Go module
-	if opts.Path == "." || opts.Path == "" {
-		parentGoMod := "go.mod"
-		if _, err := os.Stat(parentGoMod); err == nil {
-			output.Info("⚠️  Creating project inside an existing Go module")
-			output.Info("   Generated projects work best in their own directory")
-			output.Info("   Consider using: firebird new " + opts.ProjectName + " --path ~/projects")
-			output.Info("")
+	// 2.5. Warn if creating inside an existing Go module (only in interactive mode)
+	if opts.Interactive {
+		if opts.Path == "." || opts.Path == "" {
+			parentGoMod := "go.mod"
+			if _, err := os.Stat(parentGoMod); err == nil {
+				output.Info("⚠️  Creating project inside an existing Go module")
+				output.Info("   Generated projects work best in their own directory")
+				output.Info("   Consider using: firebird new " + opts.ProjectName + " --path ~/projects")
+				output.Info("")
 
-			// Give user a chance to cancel
-			if !input.Confirm("Continue anyway?", false) {
-				return fmt.Errorf("project creation cancelled")
+				// Give user a chance to cancel
+				if !input.Confirm("Continue anyway?", false) {
+					return nil, nil, fmt.Errorf("project creation cancelled")
+				}
+				output.Info("")
 			}
-			output.Info("")
-		}
-	} else if opts.Path != "" && opts.Path != "." {
-		// Check in the target path too
-		parentGoMod := filepath.Join(opts.Path, "go.mod")
-		if _, err := os.Stat(parentGoMod); err == nil {
-			output.Info("⚠️  Target directory contains a go.mod file")
-			output.Info("   Generated projects work best in their own directory")
-			output.Info("")
+		} else if opts.Path != "" && opts.Path != "." {
+			// Check in the target path too
+			parentGoMod := filepath.Join(opts.Path, "go.mod")
+			if _, err := os.Stat(parentGoMod); err == nil {
+				output.Info("⚠️  Target directory contains a go.mod file")
+				output.Info("   Generated projects work best in their own directory")
+				output.Info("")
+			}
 		}
 	}
 
 	// 3. Get module path (interactive or from flag)
 	modulePath := opts.Module
-	if modulePath == "" {
+	if modulePath == "" && opts.Interactive {
 		defaultModule := fmt.Sprintf("github.com/username/%s", opts.ProjectName)
 		modulePath = input.Prompt("Module path", defaultModule)
 		output.Verbose(fmt.Sprintf("Using module path: %s", modulePath))
+	} else if modulePath == "" {
+		// Non-interactive: use sensible default
+		modulePath = fmt.Sprintf("github.com/username/%s", opts.ProjectName)
 	}
 
 	// 4. Detect Go version
@@ -93,31 +100,32 @@ func (s *Scaffolder) Scaffold(opts *ScaffoldOptions) error {
 		GoVersion: goVersion,
 	}
 
-	// 6. Create directory structure
-	if err := s.createDirectories(projectPath); err != nil {
-		return fmt.Errorf("failed to create directories: %w", err)
-	}
-	output.Verbose("Created directory structure")
-
-	// 7. Generate files from templates
-	if err := s.generateFiles(projectPath, data); err != nil {
-		return fmt.Errorf("failed to generate files: %w", err)
-	}
-	output.Verbose("Generated project files")
-
-	// 8. Run go mod tidy (unless skipped)
-	if !opts.SkipTidy {
-		if input.Confirm("Run go mod tidy?", true) {
-			if err := s.runGoModTidy(projectPath); err != nil {
-				output.Error("Failed to run go mod tidy (you can run it manually later)")
-				output.Verbose(err.Error())
-			} else {
-				output.Verbose("Ran go mod tidy successfully")
-			}
-		}
+	// 6. Build operations for directory structure
+	ops, err := s.buildDirectoryOperations(projectPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to build directory operations: %w", err)
 	}
 
-	return nil
+	// 7. Build operations for files from templates
+	fileOps, err := s.buildFileOperations(projectPath, data)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to build file operations: %w", err)
+	}
+	ops = append(ops, fileOps...)
+
+	// 8. Prepare result metadata
+	result := &ScaffoldResult{
+		ProjectPath: projectPath,
+		ShouldRunTidy: !opts.SkipTidy && opts.Interactive && input.Confirm("Run go mod tidy?", true),
+	}
+
+	return ops, result, nil
+}
+
+// ScaffoldResult contains metadata about the scaffolding operation
+type ScaffoldResult struct {
+	ProjectPath   string
+	ShouldRunTidy bool
 }
 
 // ProjectData is the data passed to templates
@@ -127,30 +135,37 @@ type ProjectData struct {
 	GoVersion string // Go version (e.g., "1.25")
 }
 
-// createDirectories creates the standard Firebird project structure
-func (s *Scaffolder) createDirectories(projectPath string) error {
-	dirs := []string{
-		projectPath,
-		filepath.Join(projectPath, "cmd", "server"),
-		filepath.Join(projectPath, "internal", "config"),
+// buildDirectoryOperations creates operations for the standard Firebird project structure
+// Note: WriteFileOp handles parent directory creation automatically, so we create
+// .gitkeep files in each directory to ensure they exist
+func (s *Scaffolder) buildDirectoryOperations(projectPath string) ([]generator.Operation, error) {
+	var ops []generator.Operation
+
+	// Create .gitkeep files to ensure directories exist
+	// This is needed for migrations/ and internal/schemas/ which start empty
+	keepDirs := []string{
+		filepath.Join(projectPath, "migrations"),
+		filepath.Join(projectPath, "internal", "schemas"),
 		filepath.Join(projectPath, "internal", "models"),
 		filepath.Join(projectPath, "internal", "handlers"),
-		filepath.Join(projectPath, "internal", "routes"),
-		filepath.Join(projectPath, "internal", "schemas"),
-		filepath.Join(projectPath, "migrations"),
 	}
 
-	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return err
-		}
+	for _, dir := range keepDirs {
+		keepPath := filepath.Join(dir, ".gitkeep")
+		ops = append(ops, &generator.WriteFileOp{
+			Path:    keepPath,
+			Content: []byte{}, // Empty file
+			Mode:    0644,
+		})
 	}
 
-	return nil
+	return ops, nil
 }
 
-// generateFiles generates all project files from templates
-func (s *Scaffolder) generateFiles(projectPath string, data *ProjectData) error {
+// buildFileOperations generates operations for all project files from templates
+func (s *Scaffolder) buildFileOperations(projectPath string, data *ProjectData) ([]generator.Operation, error) {
+	var ops []generator.Operation
+
 	files := map[string]string{
 		"firebird.yml.tmpl": "firebird.yml",
 		"go.mod.tmpl":       "go.mod",
@@ -168,16 +183,18 @@ func (s *Scaffolder) generateFiles(projectPath string, data *ProjectData) error 
 		// Render template
 		content, err := s.renderer.RenderFS(templatesFS, "templates/"+tmplName, data)
 		if err != nil {
-			return fmt.Errorf("failed to render %s: %w", tmplName, err)
+			return nil, fmt.Errorf("failed to render %s: %w", tmplName, err)
 		}
 
-		// Write file
-		if err := os.WriteFile(fullPath, content, 0644); err != nil {
-			return fmt.Errorf("failed to write %s: %w", outputPath, err)
-		}
+		// Build operation
+		ops = append(ops, &generator.WriteFileOp{
+			Path:    fullPath,
+			Content: content,
+			Mode:    0644,
+		})
 	}
 
-	return nil
+	return ops, nil
 }
 
 // detectGoVersion detects the installed Go version
@@ -218,8 +235,9 @@ func detectGoVersion() string {
 	return "1.25" // Fallback
 }
 
-// runGoModTidy runs go mod tidy in the project directory
-func (s *Scaffolder) runGoModTidy(projectPath string) error {
+// RunGoModTidy runs go mod tidy in the project directory
+// This is exported so the CLI can call it after operations are executed
+func (s *Scaffolder) RunGoModTidy(projectPath string) error {
 	executor := fledgeExec.NewExecutor(&fledgeExec.Options{
 		Dir:    projectPath,
 		Stdout: os.Stdout,

@@ -2,9 +2,9 @@ package model
 
 import (
 	"path/filepath"
-	"strings"
 
 	"github.com/simonhull/firebird-suite/firebird/internal/schema"
+	"github.com/simonhull/firebird-suite/firebird/internal/types"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 )
 
@@ -31,48 +31,32 @@ func PrepareModelData(def *schema.Definition, outputPath string) *ModelData {
 		Fields:  make([]FieldData, len(def.Spec.Fields)),
 	}
 
+	// Collect type names for import gathering
+	var typeNames []string
+
 	// Transform fields
 	for i, field := range def.Spec.Fields {
+		// Look up type in registry to get the Go type
+		goType, _, err := types.GetGoType(field.Type)
+		if err != nil {
+			// Fallback: use field.Type as-is (custom types or unknown types)
+			goType = field.Type
+		} else {
+			// Track type name for imports
+			typeNames = append(typeNames, field.Type)
+		}
+
 		data.Fields[i] = FieldData{
 			Name:    generator.PascalCase(field.Name),
-			Type:    field.Type,
+			Type:    goType,
 			JSONTag: generateJSONTag(field),
 		}
 	}
 
-	// Detect required imports
-	data.Imports = detectImports(def.Spec.Fields)
+	// Collect imports from type registry
+	data.Imports = types.CollectImports(typeNames)
 
 	return data
-}
-
-// detectImports determines which packages need to be imported
-func detectImports(fields []schema.Field) []string {
-	imports := []string{}
-	needsTime := false
-	needsUUID := false
-
-	for _, field := range fields {
-		// Check for time.Time
-		if strings.Contains(field.Type, "time.Time") {
-			needsTime = true
-		}
-
-		// Check for uuid.UUID
-		if strings.Contains(field.Type, "uuid.UUID") {
-			needsUUID = true
-		}
-	}
-
-	// Add imports in alphabetical order
-	if needsTime {
-		imports = append(imports, "time")
-	}
-	if needsUUID {
-		imports = append(imports, "github.com/google/uuid")
-	}
-
-	return imports
 }
 
 // generateJSONTag creates a JSON tag for a field

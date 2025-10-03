@@ -18,6 +18,7 @@ import (
 func GenerateCmd() *cobra.Command {
 	var force, skip, diff, dryRun bool
 	var timestamps, softDeletes, generateAll bool
+	var intID bool // NEW: Use int64 instead of UUID for primary key
 
 	cmd := &cobra.Command{
 		Use:   "generate [type] [name] [field:type[:modifier]...]",
@@ -32,6 +33,7 @@ Available types:
 Examples:
   firebird generate scaffold Post title:string body:text
   firebird generate scaffold User email:string:unique name:string --timestamps
+  firebird generate scaffold Product name:string price:Decimal --int-id
   firebird generate scaffold Article title:string:unique published_at:timestamp:index --timestamps --generate
   firebird generate model User
   firebird generate model User --dry-run
@@ -40,7 +42,10 @@ Examples:
 
 Field syntax for scaffold: name:type[:modifier]
   Modifiers: index, unique
-  Supported types: string, text, int, int64, float64, bool, timestamp, date, time`,
+  Supported types: string, text, int, int64, float64, bool, timestamp, date, time
+  Third-party types: UUID, Decimal, NullString
+
+Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 		Args: cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
@@ -98,6 +103,7 @@ Field syntax for scaffold: name:type[:modifier]
 					Timestamps:  timestamps,
 					SoftDeletes: softDeletes,
 					Generate:    generateAll,
+					IntID:       intID, // NEW: Pass flag
 				}
 
 				// Generate operations
@@ -159,6 +165,7 @@ Field syntax for scaffold: name:type[:modifier]
 	cmd.Flags().BoolVar(&timestamps, "timestamps", false, "Add created_at and updated_at fields (scaffold only)")
 	cmd.Flags().BoolVar(&softDeletes, "soft-deletes", false, "Add deleted_at field for soft deletes (scaffold only)")
 	cmd.Flags().BoolVar(&generateAll, "generate", false, "Also generate model and migration files (scaffold only)")
+	cmd.Flags().BoolVar(&intID, "int-id", false, "Use int64 with auto-increment instead of UUID for primary key (scaffold only)")
 
 	return cmd
 }
@@ -203,6 +210,7 @@ func parseFields(fieldArgs []string) ([]scaffold.Field, error) {
 // isValidType checks if a field type is supported
 func isValidType(t string) bool {
 	valid := map[string]bool{
+		// Built-in types
 		"string":    true,
 		"text":      true,
 		"int":       true,
@@ -212,6 +220,10 @@ func isValidType(t string) bool {
 		"timestamp": true,
 		"date":      true,
 		"time":      true,
+		// Third-party types
+		"UUID":       true,
+		"Decimal":    true,
+		"NullString": true,
 	}
 	return valid[t]
 }

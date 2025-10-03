@@ -9,6 +9,7 @@ import (
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/migration"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/model"
 	"github.com/simonhull/firebird-suite/firebird/internal/schema"
+	"github.com/simonhull/firebird-suite/firebird/internal/types"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 	"github.com/simonhull/firebird-suite/fledge/output"
 	"gopkg.in/yaml.v3"
@@ -21,6 +22,7 @@ type Options struct {
 	Timestamps  bool    // --timestamps flag
 	SoftDeletes bool    // --soft-deletes flag
 	Generate    bool    // --generate flag (orchestrate model + migration)
+	IntID       bool    // Use int64 instead of UUID for primary key
 }
 
 // Field represents a single field specification from the command line
@@ -169,7 +171,7 @@ func buildSchema(opts Options, driver string) ([]byte, error) {
 		Name:       opts.Name,
 		Spec: Spec{
 			TableName: tableName,
-			Fields:    buildFields(opts.Fields, driver),
+			Fields:    buildFields(opts.Fields, driver, opts.IntID),
 		},
 	}
 
@@ -187,22 +189,44 @@ func buildSchema(opts Options, driver string) ([]byte, error) {
 }
 
 // buildFields converts parsed fields to schema fields with db_type
-func buildFields(fields []Field, driver string) []SchemaField {
+func buildFields(fields []Field, driver string, useIntID bool) []SchemaField {
+	// Determine primary key type
+	idType := "UUID" // Default to UUID
+	if useIntID {
+		idType = "int64"
+	}
+
+	// Get primary key DB type using type registry
+	pkDBType, err := types.GetPrimaryKeyType(idType, driver)
+	if err != nil {
+		// Fallback (should not happen with valid ID types)
+		output.Verbose(fmt.Sprintf("Warning: %v, using BIGINT as fallback", err))
+		pkDBType = "BIGINT"
+	}
+
 	result := []SchemaField{
 		// Always include ID field
 		{
 			Name:       "id",
-			Type:       "int64",
-			DBType:     getPrimaryKeyType(driver),
+			Type:       idType,
+			DBType:     pkDBType,
 			PrimaryKey: true,
 		},
 	}
 
 	for _, field := range fields {
+		// Use type registry for DB type lookup
+		dbType, err := types.GetDBType(field.Type, driver)
+		if err != nil {
+			// Fallback for unknown types
+			output.Verbose(fmt.Sprintf("Warning: %v, using TEXT as fallback", err))
+			dbType = "TEXT"
+		}
+
 		schemaField := SchemaField{
 			Name:     field.Name,
 			Type:     field.Type,
-			DBType:   getDBType(field.Type, driver),
+			DBType:   dbType,
 			Nullable: isNullableByDefault(field.Type),
 		}
 
@@ -218,81 +242,6 @@ func buildFields(fields []Field, driver string) []SchemaField {
 	}
 
 	return result
-}
-
-// getPrimaryKeyType returns the appropriate primary key type for the database
-func getPrimaryKeyType(driver string) string {
-	switch driver {
-	case "postgres":
-		return "BIGSERIAL"
-	case "mysql":
-		return "BIGINT AUTO_INCREMENT"
-	case "sqlite":
-		return "INTEGER"
-	default:
-		return "BIGINT"
-	}
-}
-
-// getDBType maps field type to database-specific type
-func getDBType(fieldType, driver string) string {
-	// Type mapping table from specification
-	mapping := map[string]map[string]string{
-		"string": {
-			"postgres": "VARCHAR(255)",
-			"mysql":    "VARCHAR(255)",
-			"sqlite":   "TEXT",
-		},
-		"text": {
-			"postgres": "TEXT",
-			"mysql":    "TEXT",
-			"sqlite":   "TEXT",
-		},
-		"int": {
-			"postgres": "INTEGER",
-			"mysql":    "INT",
-			"sqlite":   "INTEGER",
-		},
-		"int64": {
-			"postgres": "BIGINT",
-			"mysql":    "BIGINT",
-			"sqlite":   "INTEGER",
-		},
-		"float64": {
-			"postgres": "DOUBLE PRECISION",
-			"mysql":    "DOUBLE",
-			"sqlite":   "REAL",
-		},
-		"bool": {
-			"postgres": "BOOLEAN",
-			"mysql":    "TINYINT(1)",
-			"sqlite":   "INTEGER",
-		},
-		"timestamp": {
-			"postgres": "TIMESTAMP",
-			"mysql":    "TIMESTAMP",
-			"sqlite":   "DATETIME",
-		},
-		"date": {
-			"postgres": "DATE",
-			"mysql":    "DATE",
-			"sqlite":   "DATE",
-		},
-		"time": {
-			"postgres": "TIME",
-			"mysql":    "TIME",
-			"sqlite":   "TIME",
-		},
-	}
-
-	if types, ok := mapping[fieldType]; ok {
-		if dbType, ok := types[driver]; ok {
-			return dbType
-		}
-	}
-
-	// Fallback
-	return "TEXT"
 }
 
 // isNullableByDefault determines if a field type should be nullable

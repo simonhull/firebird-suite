@@ -72,7 +72,8 @@ func TestGenerate_PostgreSQLTypes(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	opts := scaffold.Options{
-		Name: "Product",
+		Name:  "Product",
+		IntID: true, // Use int64 for this test to verify type mappings
 		Fields: []scaffold.Field{
 			{Name: "name", Type: "string"},
 			{Name: "price", Type: "float64"},
@@ -125,7 +126,8 @@ func TestGenerate_MySQLTypes(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	opts := scaffold.Options{
-		Name: "Article",
+		Name:  "Article",
+		IntID: true, // Use int64 for this test
 		Fields: []scaffold.Field{
 			{Name: "title", Type: "string"},
 			{Name: "count", Type: "int"},
@@ -168,7 +170,8 @@ func TestGenerate_SQLiteTypes(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	opts := scaffold.Options{
-		Name: "Comment",
+		Name:  "Comment",
+		IntID: true, // Use int64 for this test
 		Fields: []scaffold.Field{
 			{Name: "content", Type: "text"},
 			{Name: "rating", Type: "float64"},
@@ -291,6 +294,169 @@ func TestGenerate_EmptyFields(t *testing.T) {
 
 	if schema.Spec.Fields[0].Name != "id" {
 		t.Errorf("expected first field to be 'id', got %s", schema.Spec.Fields[0].Name)
+	}
+}
+
+func TestGenerate_UUIDDefault(t *testing.T) {
+	tmpDir := setupTestProject(t, "postgres")
+	defer os.RemoveAll(tmpDir)
+
+	opts := scaffold.Options{
+		Name: "Product",
+		Fields: []scaffold.Field{
+			{Name: "name", Type: "string"},
+		},
+	}
+
+	gen := scaffold.NewGenerator()
+	ops, err := gen.Generate(opts)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Parse the generated schema
+	writeOp := ops[0].(*generator.WriteFileOp)
+	var schema scaffold.Schema
+	if err := yaml.Unmarshal(writeOp.Content, &schema); err != nil {
+		t.Fatalf("failed to parse generated schema: %v", err)
+	}
+
+	// Verify schema uses UUID for id
+	if len(schema.Spec.Fields) < 1 {
+		t.Fatal("expected at least 1 field (id)")
+	}
+
+	idField := schema.Spec.Fields[0]
+	if idField.Type != "UUID" {
+		t.Errorf("expected UUID primary key, got %s", idField.Type)
+	}
+
+	if idField.DBType != "UUID" {
+		t.Errorf("expected UUID db_type for postgres, got %s", idField.DBType)
+	}
+
+	if !idField.PrimaryKey {
+		t.Error("expected id field to be primary key")
+	}
+}
+
+func TestGenerate_IntIDFlag(t *testing.T) {
+	tmpDir := setupTestProject(t, "postgres")
+	defer os.RemoveAll(tmpDir)
+
+	opts := scaffold.Options{
+		Name:  "Article",
+		IntID: true, // Opt out of UUID
+		Fields: []scaffold.Field{
+			{Name: "title", Type: "string"},
+		},
+	}
+
+	gen := scaffold.NewGenerator()
+	ops, err := gen.Generate(opts)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Parse the generated schema
+	writeOp := ops[0].(*generator.WriteFileOp)
+	var schema scaffold.Schema
+	if err := yaml.Unmarshal(writeOp.Content, &schema); err != nil {
+		t.Fatalf("failed to parse generated schema: %v", err)
+	}
+
+	// Verify schema uses int64 for id
+	if len(schema.Spec.Fields) < 1 {
+		t.Fatal("expected at least 1 field (id)")
+	}
+
+	idField := schema.Spec.Fields[0]
+	if idField.Type != "int64" {
+		t.Errorf("expected int64 primary key with --int-id, got %s", idField.Type)
+	}
+
+	if idField.DBType != "BIGSERIAL" {
+		t.Errorf("expected BIGSERIAL db_type for postgres, got %s", idField.DBType)
+	}
+
+	if !idField.PrimaryKey {
+		t.Error("expected id field to be primary key")
+	}
+}
+
+func TestGenerate_UUIDMySQL(t *testing.T) {
+	tmpDir := setupTestProject(t, "mysql")
+	defer os.RemoveAll(tmpDir)
+
+	opts := scaffold.Options{
+		Name: "Order",
+		Fields: []scaffold.Field{
+			{Name: "total", Type: "Decimal"},
+		},
+	}
+
+	gen := scaffold.NewGenerator()
+	ops, err := gen.Generate(opts)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Parse the generated schema
+	writeOp := ops[0].(*generator.WriteFileOp)
+	var schema scaffold.Schema
+	if err := yaml.Unmarshal(writeOp.Content, &schema); err != nil {
+		t.Fatalf("failed to parse generated schema: %v", err)
+	}
+
+	// Verify UUID uses CHAR(36) for MySQL
+	idField := schema.Spec.Fields[0]
+	if idField.DBType != "CHAR(36)" {
+		t.Errorf("expected CHAR(36) db_type for mysql UUID, got %s", idField.DBType)
+	}
+
+	// Verify Decimal type
+	if len(schema.Spec.Fields) < 2 {
+		t.Fatal("expected at least 2 fields")
+	}
+
+	decimalField := schema.Spec.Fields[1]
+	if decimalField.Type != "Decimal" {
+		t.Errorf("expected Decimal type, got %s", decimalField.Type)
+	}
+
+	if decimalField.DBType != "DECIMAL(19,4)" {
+		t.Errorf("expected DECIMAL(19,4) db_type for mysql, got %s", decimalField.DBType)
+	}
+}
+
+func TestGenerate_UUIDSQLite(t *testing.T) {
+	tmpDir := setupTestProject(t, "sqlite")
+	defer os.RemoveAll(tmpDir)
+
+	opts := scaffold.Options{
+		Name: "Note",
+		Fields: []scaffold.Field{
+			{Name: "content", Type: "text"},
+		},
+	}
+
+	gen := scaffold.NewGenerator()
+	ops, err := gen.Generate(opts)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Parse the generated schema
+	writeOp := ops[0].(*generator.WriteFileOp)
+	var schema scaffold.Schema
+	if err := yaml.Unmarshal(writeOp.Content, &schema); err != nil {
+		t.Fatalf("failed to parse generated schema: %v", err)
+	}
+
+	// Verify UUID uses TEXT for SQLite
+	idField := schema.Spec.Fields[0]
+	if idField.DBType != "TEXT" {
+		t.Errorf("expected TEXT db_type for sqlite UUID, got %s", idField.DBType)
 	}
 }
 

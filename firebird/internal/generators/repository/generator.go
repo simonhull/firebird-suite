@@ -24,6 +24,23 @@ type Generator struct {
 	renderer    *generator.Renderer
 }
 
+// RelationshipMethodData holds data for generating repository relationship methods
+type RelationshipMethodData struct {
+	Name             string // Relationship name (e.g., "Author", "Comments")
+	Type             string // "belongs_to" or "has_many"
+	Model            string // Target model (e.g., "User", "Comment")
+	ForeignKey       string // FK field name snake_case (e.g., "author_id")
+	ForeignKeyField  string // FK field name PascalCase (e.g., "AuthorID")
+	LoadMethod       string // Method name (e.g., "LoadAuthor")
+	LoadManyMethod   string // Batch method name (e.g., "LoadCommentsForMany")
+	GetQueryName     string // SQLC query name (e.g., "GetPostAuthor")
+	GetManyQueryName string // SQLC batch query (e.g., "GetCommentsForPosts")
+	ModelType        string // Go type (e.g., "db.User")
+	ForeignKeyType   string // FK Go type (e.g., "uuid.UUID", "int64")
+	IsSingle         bool   // belongs_to flag
+	IsMany           bool   // has_many flag
+}
+
 // New creates a new repository generator.
 func New(projectPath, schemaPath, modulePath string) *Generator {
 	return &Generator{
@@ -182,13 +199,65 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 		}
 	}
 
+	// Prepare relationship data
+	relationships := prepareRelationshipMethods(def)
+
 	return map[string]interface{}{
 		"ModelName":      modelName,
 		"TableName":      tableName,
 		"ModulePath":     g.modulePath,
 		"SoftDeletes":    def.Spec.SoftDeletes,
 		"PrimaryKeyType": pkType,
+		"Relationships":  relationships,
 	}
+}
+
+// prepareRelationshipMethods transforms relationships into repository method data
+func prepareRelationshipMethods(def *schema.Definition) []RelationshipMethodData {
+	var result []RelationshipMethodData
+
+	for _, rel := range def.Spec.Relationships {
+		// Find FK field to determine type
+		fkType := findForeignKeyType(def, rel.ForeignKey)
+
+		data := RelationshipMethodData{
+			Name:            rel.Name,
+			Type:            rel.Type,
+			Model:           rel.Model,
+			ForeignKey:      rel.ForeignKey,
+			ForeignKeyField: generator.PascalCase(rel.ForeignKey),
+
+			// Method names
+			LoadMethod:     fmt.Sprintf("Load%s", rel.Name),
+			LoadManyMethod: fmt.Sprintf("Load%sForMany", rel.Name),
+
+			// SQLC query names (must match Phase 3 generation)
+			GetQueryName:     fmt.Sprintf("Get%s%s", def.Name, rel.Name),
+			GetManyQueryName: fmt.Sprintf("Get%sFor%s", generator.Pluralize(rel.Model), generator.Pluralize(def.Name)),
+
+			// Go types
+			ModelType:      fmt.Sprintf("db.%s", rel.Model),
+			ForeignKeyType: fkType,
+
+			// For return types
+			IsSingle: rel.Type == "belongs_to",
+			IsMany:   rel.Type == "has_many",
+		}
+
+		result = append(result, data)
+	}
+
+	return result
+}
+
+// findForeignKeyType returns the Go type for the foreign key field
+func findForeignKeyType(def *schema.Definition, fkName string) string {
+	for _, field := range def.Spec.Fields {
+		if field.Name == fkName {
+			return strings.TrimPrefix(field.Type, "*") // Remove pointer if present
+		}
+	}
+	return "int64" // Fallback
 }
 
 // WriteFileIfNotExistsOp creates a file only if it doesn't already exist.

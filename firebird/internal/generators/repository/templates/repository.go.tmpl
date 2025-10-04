@@ -20,6 +20,19 @@ import (
 //   - Restore(ctx, id) error
 {{- end }}
 //   - WithTx(ctx, fn) error
+{{- if .Relationships }}
+//
+// Relationship loading:
+{{- range .Relationships }}
+{{- if .IsSingle }}
+//   - {{ .LoadMethod }}(ctx, entity) (*db.{{ .Model }}, error)
+{{- end }}
+{{- if .IsMany }}
+//   - {{ .LoadMethod }}(ctx, entity) ([]db.{{ .Model }}, error)
+//   - {{ .LoadManyMethod }}(ctx, entities) (map[ID][]db.{{ .Model }}, error)
+{{- end }}
+{{- end }}
+{{- end }}
 //
 // Add custom queries and business logic below.
 type {{ .ModelName }}Repository struct {

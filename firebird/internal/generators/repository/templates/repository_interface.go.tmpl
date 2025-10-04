@@ -23,4 +23,17 @@ type {{ .ModelName }}Repository interface {
 
 	// Transaction support
 	WithTx(ctx context.Context, fn func({{ .ModelName }}Repository) error) error
+{{- if .Relationships }}
+
+	// Relationship loading
+{{- range .Relationships }}
+{{- if .IsSingle }}
+	{{ .LoadMethod }}(ctx context.Context, entity *db.{{ $.ModelName }}) (*{{ .ModelType }}, error)
+{{- end }}
+{{- if .IsMany }}
+	{{ .LoadMethod }}(ctx context.Context, entity *db.{{ $.ModelName }}) ([]{{ .ModelType }}, error)
+	{{ .LoadManyMethod }}(ctx context.Context, entities []db.{{ $.ModelName }}) (map[{{ .ForeignKeyType }}][]{{ .ModelType }}, error)
+{{- end }}
+{{- end }}
+{{- end }}
 }

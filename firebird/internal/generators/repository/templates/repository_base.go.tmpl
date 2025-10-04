@@ -335,3 +335,133 @@ func (r *{{ .ModelName }}RepositoryBase) WithTx(ctx context.Context, fn func({{ 
 	fnErr = fn(txRepo)
 	return fnErr
 }
+{{- if .Relationships }}
+
+// ==========================================
+// Relationship Loading Methods
+// ==========================================
+{{- range .Relationships }}
+
+{{- if .IsSingle }}
+// {{ .LoadMethod }} loads the related {{ .Model }} for this {{ $.ModelName }}.
+func (r *{{ $.ModelName }}RepositoryBase) {{ .LoadMethod }}(ctx context.Context, entity *db.{{ $.ModelName }}) (*{{ .ModelType }}, error) {
+	start := time.Now()
+
+	result, err := r.queries.{{ .GetQueryName }}(ctx, entity.{{ .ForeignKeyField }})
+
+	duration := time.Since(start)
+
+	if err != nil && err != sql.ErrNoRows {
+		r.logger.ErrorContext(ctx, "failed to load {{ .Name }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .LoadMethod }}"),
+			slog.Any("{{ $.ModelName | lower }}_id", entity.ID),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return nil, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .LoadMethod }}"),
+			slog.String("model", "{{ $.ModelName }}"),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	return &result, nil
+}
+{{- end }}
+
+{{- if .IsMany }}
+// {{ .LoadMethod }} loads all related {{ .Model }}s for this {{ $.ModelName }}.
+func (r *{{ $.ModelName }}RepositoryBase) {{ .LoadMethod }}(ctx context.Context, entity *db.{{ $.ModelName }}) ([]{{ .ModelType }}, error) {
+	start := time.Now()
+
+	result, err := r.queries.{{ .GetQueryName }}(ctx, entity.ID)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to load {{ .Name }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .LoadMethod }}"),
+			slog.Any("{{ $.ModelName | lower }}_id", entity.ID),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return nil, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .LoadMethod }}"),
+			slog.String("model", "{{ $.ModelName }}"),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return result, nil
+}
+
+// {{ .LoadManyMethod }} batch loads {{ .Model }}s for multiple {{ $.ModelName }}s.
+// Returns a map keyed by {{ $.ModelName }} ID for easy association.
+func (r *{{ $.ModelName }}RepositoryBase) {{ .LoadManyMethod }}(ctx context.Context, entities []db.{{ $.ModelName }}) (map[{{ .ForeignKeyType }}][]{{ .ModelType }}, error) {
+	if len(entities) == 0 {
+		return make(map[{{ .ForeignKeyType }}][]{{ .ModelType }}), nil
+	}
+
+	start := time.Now()
+
+	// Extract IDs
+	ids := make([]{{ .ForeignKeyType }}, len(entities))
+	for i, entity := range entities {
+		ids[i] = entity.ID
+	}
+
+	// Batch query
+	results, err := r.queries.{{ .GetManyQueryName }}(ctx, ids)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to batch load {{ .Name }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .LoadManyMethod }}"),
+			slog.Int("entity_count", len(entities)),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return nil, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .LoadManyMethod }}"),
+			slog.String("model", "{{ $.ModelName }}"),
+			slog.Int("entity_count", len(entities)),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	// Group by foreign key
+	grouped := make(map[{{ .ForeignKeyType }}][]{{ .ModelType }})
+	for _, result := range results {
+		fk := result.{{ .ForeignKeyField }}
+		grouped[fk] = append(grouped[fk], result)
+	}
+
+	return grouped, nil
+}
+{{- end }}
+
+{{- end }}
+{{- end }}

@@ -1,0 +1,443 @@
+package repositories
+
+import (
+	"context"
+	"database/sql"
+	"os"
+	"testing"
+
+	"{{ .ModulePath }}/internal/db"
+	_ "github.com/lib/pq" // PostgreSQL driver
+{{- if eq .PrimaryKeyType "uuid.UUID" }}
+	"github.com/google/uuid"
+{{- end }}
+)
+
+// getTestDB returns a test database connection.
+// Set TEST_DATABASE_URL environment variable to configure.
+func getTestDB(t *testing.T) *db.DB {
+	dbURL := os.Getenv("TEST_DATABASE_URL")
+	if dbURL == "" {
+		t.Skip("TEST_DATABASE_URL not set - skipping integration tests")
+	}
+
+	database, err := db.New(dbURL)
+	if err != nil {
+		t.Fatalf("failed to connect to test database: %v", err)
+	}
+
+	return database
+}
+
+// setup{{ .ModelName }}Test creates a test repository and returns cleanup function.
+func setup{{ .ModelName }}Test(t *testing.T) (*{{ .ModelName }}Repository, func()) {
+	database := getTestDB(t)
+	repo := New{{ .ModelName }}Repository(database)
+
+	// Cleanup function to run after test
+	cleanup := func() {
+		// Clean up test data
+		ctx := context.Background()
+		_, _ = database.DB().ExecContext(ctx, "DELETE FROM {{ .TableName }}")
+		database.Close()
+	}
+
+	return repo, cleanup
+}
+
+// Test{{ .ModelName }}Create verifies creating a {{ .ModelName }}.
+func Test{{ .ModelName }}Create(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	params := db.Create{{ .ModelName }}Params{
+		// TODO: Fill in required fields based on your schema
+		// Example for a Post model:
+		// Title: "Test Post",
+		// Body:  "Test content",
+	}
+
+	created, err := repo.Create(ctx, params)
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
+
+	if created == nil {
+		t.Fatal("Create returned nil")
+	}
+
+	// Verify ID was assigned
+	var zeroID {{ .PrimaryKeyType }}
+	if created.ID == zeroID {
+		t.Error("Created {{ .ModelName }} has zero ID")
+	}
+}
+
+// Test{{ .ModelName }}GetByID verifies retrieving a {{ .ModelName }} by ID.
+func Test{{ .ModelName }}GetByID(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Create test {{ .ModelName }}
+	params := db.Create{{ .ModelName }}Params{
+		// TODO: Fill in required fields
+	}
+	created, err := repo.Create(ctx, params)
+	if err != nil {
+		t.Fatalf("Setup failed: %v", err)
+	}
+
+	// Retrieve by ID
+	result, err := repo.GetByID(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("GetByID failed: %v", err)
+	}
+
+	if result.ID != created.ID {
+		t.Errorf("GetByID returned wrong {{ .ModelName }}: got ID %v, want %v", result.ID, created.ID)
+	}
+}
+
+// Test{{ .ModelName }}GetByIDNotFound verifies error when {{ .ModelName }} doesn't exist.
+func Test{{ .ModelName }}GetByIDNotFound(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Try to get non-existent {{ .ModelName }}
+	var nonExistentID {{ .PrimaryKeyType }}
+{{- if eq .PrimaryKeyType "int64" }}
+	nonExistentID = 99999
+{{- else if eq .PrimaryKeyType "uuid.UUID" }}
+	nonExistentID = uuid.New()
+{{- else }}
+	nonExistentID = {{ .PrimaryKeyType }}("nonexistent")
+{{- end }}
+
+	_, err := repo.GetByID(ctx, nonExistentID)
+	if err == nil {
+		t.Error("GetByID should return error for non-existent {{ .ModelName }}")
+	}
+	if err != sql.ErrNoRows {
+		t.Errorf("GetByID should return sql.ErrNoRows, got: %v", err)
+	}
+}
+
+// Test{{ .ModelName }}List verifies listing all {{ .ModelName }}s.
+func Test{{ .ModelName }}List(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Create multiple test {{ .ModelName }}s
+	for i := 0; i < 3; i++ {
+		params := db.Create{{ .ModelName }}Params{
+			// TODO: Fill in required fields
+		}
+		_, err := repo.Create(ctx, params)
+		if err != nil {
+			t.Fatalf("Setup failed: %v", err)
+		}
+	}
+
+	// List all
+	results, err := repo.List(ctx)
+	if err != nil {
+		t.Fatalf("List failed: %v", err)
+	}
+
+	if len(results) < 3 {
+		t.Errorf("List returned %d {{ .ModelName }}s, want at least 3", len(results))
+	}
+}
+
+// Test{{ .ModelName }}ListPaginated verifies paginated listing.
+func Test{{ .ModelName }}ListPaginated(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Create test {{ .ModelName }}s
+	for i := 0; i < 5; i++ {
+		params := db.Create{{ .ModelName }}Params{
+			// TODO: Fill in required fields
+		}
+		_, err := repo.Create(ctx, params)
+		if err != nil {
+			t.Fatalf("Setup failed: %v", err)
+		}
+	}
+
+	// Get first page (limit 2)
+	page1, err := repo.ListPaginated(ctx, 2, 0)
+	if err != nil {
+		t.Fatalf("ListPaginated failed: %v", err)
+	}
+
+	if len(page1) != 2 {
+		t.Errorf("ListPaginated returned %d results, want 2", len(page1))
+	}
+
+	// Get second page (limit 2, offset 2)
+	page2, err := repo.ListPaginated(ctx, 2, 2)
+	if err != nil {
+		t.Fatalf("ListPaginated failed: %v", err)
+	}
+
+	if len(page2) != 2 {
+		t.Errorf("ListPaginated returned %d results, want 2", len(page2))
+	}
+
+	// Verify different results
+	if page1[0].ID == page2[0].ID {
+		t.Error("ListPaginated pages contain duplicate IDs")
+	}
+}
+
+// Test{{ .ModelName }}Count verifies counting {{ .ModelName }}s.
+func Test{{ .ModelName }}Count(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Count should be 0 initially
+	count, err := repo.Count(ctx)
+	if err != nil {
+		t.Fatalf("Count failed: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("Initial count = %d, want 0", count)
+	}
+
+	// Create test {{ .ModelName }}s
+	for i := 0; i < 3; i++ {
+		params := db.Create{{ .ModelName }}Params{
+			// TODO: Fill in required fields
+		}
+		_, err := repo.Create(ctx, params)
+		if err != nil {
+			t.Fatalf("Setup failed: %v", err)
+		}
+	}
+
+	// Count should be 3
+	count, err = repo.Count(ctx)
+	if err != nil {
+		t.Fatalf("Count failed: %v", err)
+	}
+	if count != 3 {
+		t.Errorf("Count = %d, want 3", count)
+	}
+}
+
+// Test{{ .ModelName }}Update verifies updating a {{ .ModelName }}.
+func Test{{ .ModelName }}Update(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Create test {{ .ModelName }}
+	createParams := db.Create{{ .ModelName }}Params{
+		// TODO: Fill in required fields
+	}
+	created, err := repo.Create(ctx, createParams)
+	if err != nil {
+		t.Fatalf("Setup failed: %v", err)
+	}
+
+	// Update
+	updateParams := db.Update{{ .ModelName }}Params{
+		ID: created.ID,
+		// TODO: Fill in fields to update
+	}
+	updated, err := repo.Update(ctx, updateParams)
+	if err != nil {
+		t.Fatalf("Update failed: %v", err)
+	}
+
+	if updated.ID != created.ID {
+		t.Errorf("Update returned wrong {{ .ModelName }}: got ID %v, want %v", updated.ID, created.ID)
+	}
+
+	// TODO: Verify updated fields changed
+}
+
+// Test{{ .ModelName }}Delete verifies deleting a {{ .ModelName }}.
+func Test{{ .ModelName }}Delete(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Create test {{ .ModelName }}
+	params := db.Create{{ .ModelName }}Params{
+		// TODO: Fill in required fields
+	}
+	created, err := repo.Create(ctx, params)
+	if err != nil {
+		t.Fatalf("Setup failed: %v", err)
+	}
+
+	// Delete
+	err = repo.Delete(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("Delete failed: %v", err)
+	}
+
+{{- if .SoftDeletes }}
+	// With soft deletes: GetByID should not find it (filtered by deleted_at)
+	_, err = repo.GetByID(ctx, created.ID)
+	if err == nil {
+		t.Error("GetByID should not find soft-deleted {{ .ModelName }}")
+	}
+{{- else }}
+	// With hard deletes: GetByID should return not found error
+	_, err = repo.GetByID(ctx, created.ID)
+	if err != sql.ErrNoRows {
+		t.Errorf("GetByID after delete should return sql.ErrNoRows, got: %v", err)
+	}
+{{- end }}
+}
+
+{{- if .SoftDeletes }}
+
+// Test{{ .ModelName }}Restore verifies restoring a soft-deleted {{ .ModelName }}.
+func Test{{ .ModelName }}Restore(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Create and delete
+	params := db.Create{{ .ModelName }}Params{
+		// TODO: Fill in required fields
+	}
+	created, err := repo.Create(ctx, params)
+	if err != nil {
+		t.Fatalf("Setup failed: %v", err)
+	}
+
+	err = repo.Delete(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("Delete failed: %v", err)
+	}
+
+	// Restore
+	err = repo.Restore(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("Restore failed: %v", err)
+	}
+
+	// Verify restored (should be found now)
+	restored, err := repo.GetByID(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("GetByID after restore failed: %v", err)
+	}
+
+	if restored.ID != created.ID {
+		t.Errorf("Restored {{ .ModelName }} has wrong ID: got %v, want %v", restored.ID, created.ID)
+	}
+}
+{{- end }}
+
+// Test{{ .ModelName }}TransactionCommit verifies transaction commit.
+func Test{{ .ModelName }}TransactionCommit(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Count before
+	countBefore, _ := repo.Count(ctx)
+
+	// Transaction that succeeds
+	err := repo.WithTx(ctx, func(txRepo {{ .ModelName }}Repository) error {
+		params := db.Create{{ .ModelName }}Params{
+			// TODO: Fill in required fields
+		}
+		_, err := txRepo.Create(ctx, params)
+		return err
+	})
+
+	if err != nil {
+		t.Fatalf("Transaction failed: %v", err)
+	}
+
+	// Count after - should be +1
+	countAfter, _ := repo.Count(ctx)
+	if countAfter != countBefore+1 {
+		t.Errorf("Transaction commit: count = %d, want %d", countAfter, countBefore+1)
+	}
+}
+
+// Test{{ .ModelName }}TransactionRollback verifies transaction rollback on error.
+func Test{{ .ModelName }}TransactionRollback(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Count before
+	countBefore, _ := repo.Count(ctx)
+
+	// Transaction that fails
+	err := repo.WithTx(ctx, func(txRepo {{ .ModelName }}Repository) error {
+		params := db.Create{{ .ModelName }}Params{
+			// TODO: Fill in required fields
+		}
+		_, _ = txRepo.Create(ctx, params)
+		return sql.ErrConnDone // Force rollback
+	})
+
+	if err == nil {
+		t.Fatal("Transaction should return error")
+	}
+
+	// Count after - should be unchanged
+	countAfter, _ := repo.Count(ctx)
+	if countAfter != countBefore {
+		t.Errorf("Transaction rollback: count = %d, want %d", countAfter, countBefore)
+	}
+}
+
+// Test{{ .ModelName }}TransactionPanic verifies rollback on panic.
+func Test{{ .ModelName }}TransactionPanic(t *testing.T) {
+	repo, cleanup := setup{{ .ModelName }}Test(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	countBefore, _ := repo.Count(ctx)
+
+	// Transaction that panics
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("Expected panic")
+			}
+		}()
+
+		_ = repo.WithTx(ctx, func(txRepo {{ .ModelName }}Repository) error {
+			params := db.Create{{ .ModelName }}Params{
+				// TODO: Fill in required fields
+			}
+			_, _ = txRepo.Create(ctx, params)
+			panic("test panic") // Should rollback
+		})
+	}()
+
+	// Count after - should be unchanged (rollback worked)
+	countAfter, _ := repo.Count(ctx)
+	if countAfter != countBefore {
+		t.Errorf("Transaction panic rollback: count = %d, want %d", countAfter, countBefore)
+	}
+}

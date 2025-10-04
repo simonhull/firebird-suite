@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"{{ .ModulePath }}/db"
+	"{{ .ModulePath }}/internal/db"
 )
 
 // {{ .ModelName }}Repository handles {{ .ModelName }} data access.
@@ -17,6 +17,7 @@ import (
 {{- if .SoftDeletes }}
 //   - Restore(ctx, id) error
 {{- end }}
+//   - WithTx(ctx, fn) error
 //
 // Add custom queries and business logic below.
 type {{ .ModelName }}Repository struct {
@@ -24,9 +25,12 @@ type {{ .ModelName }}Repository struct {
 }
 
 // New{{ .ModelName }}Repository creates a new {{ .ModelName }} repository.
-func New{{ .ModelName }}Repository(queries *db.Queries) *{{ .ModelName }}Repository {
+func New{{ .ModelName }}Repository(database *db.DB) *{{ .ModelName }}Repository {
 	return &{{ .ModelName }}Repository{
-		{{ .ModelName }}RepositoryBase: {{ .ModelName }}RepositoryBase{queries: queries},
+		{{ .ModelName }}RepositoryBase: {{ .ModelName }}RepositoryBase{
+			queries: database.Queries(),
+			db:      database,
+		},
 	}
 }
 

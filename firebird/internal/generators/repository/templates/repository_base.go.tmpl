@@ -5,14 +5,16 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 
-	"{{ .ModulePath }}/db"
+	"{{ .ModulePath }}/internal/db"
 )
 
 // {{ .ModelName }}RepositoryBase provides generated CRUD operations.
 // Embed this in your {{ .ModelName }}Repository to inherit these methods.
 type {{ .ModelName }}RepositoryBase struct {
 	queries *db.Queries
+	db      *db.DB
 }
 
 // Create creates a new {{ .ModelName }}.
@@ -62,3 +64,59 @@ func (r *{{ .ModelName }}RepositoryBase) Restore(ctx context.Context, id {{ .Pri
 	return r.queries.Restore{{ .ModelName }}(ctx, id)
 }
 {{- end }}
+
+// WithTx executes a function within a database transaction.
+// If the function returns an error, the transaction is rolled back.
+// If the function panics, the transaction is rolled back and the panic is re-raised.
+// Otherwise, the transaction is committed.
+//
+// Example:
+//   err := repo.WithTx(ctx, func(txRepo {{ .ModelName }}Repository) error {
+//       _, err := txRepo.Create(ctx, createParams)
+//       if err != nil {
+//           return err
+//       }
+//       // More operations...
+//       return nil
+//   })
+func (r *{{ .ModelName }}RepositoryBase) WithTx(ctx context.Context, fn func({{ .ModelName }}Repository) error) error {
+	// Begin transaction
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+
+	// Create new queries instance bound to transaction
+	txQueries := r.queries.WithTx(tx)
+
+	// Create new repository instance with transaction-bound queries
+	txRepo := &{{ .ModelName }}Repository{
+		{{ .ModelName }}RepositoryBase: {{ .ModelName }}RepositoryBase{
+			queries: txQueries,
+			db:      r.db,
+		},
+	}
+
+	// Handle panic and errors with proper cleanup
+	var fnErr error
+	defer func() {
+		if p := recover(); p != nil {
+			// Rollback on panic
+			_ = tx.Rollback()
+			panic(p) // Re-raise panic
+		} else if fnErr != nil {
+			// Rollback on error
+			_ = tx.Rollback()
+		} else {
+			// Commit on success
+			fnErr = tx.Commit()
+			if fnErr != nil {
+				fnErr = fmt.Errorf("commit transaction: %w", fnErr)
+			}
+		}
+	}()
+
+	// Execute function
+	fnErr = fn(txRepo)
+	return fnErr
+}

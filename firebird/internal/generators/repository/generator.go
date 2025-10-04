@@ -34,7 +34,7 @@ func New(projectPath, schemaPath, modulePath string) *Generator {
 	}
 }
 
-// Generate creates repository files (base + user).
+// Generate creates repository files (base + interface + user + tests).
 func (g *Generator) Generate() ([]generator.Operation, error) {
 	// Parse schema
 	spec, err := schema.Parse(g.schemaPath)
@@ -54,12 +54,26 @@ func (g *Generator) Generate() ([]generator.Operation, error) {
 	}
 	ops = append(ops, baseOp)
 
+	// Generate interface (always regenerated)
+	interfaceOp, err := g.generateInterface(data)
+	if err != nil {
+		return nil, fmt.Errorf("generating repository interface: %w", err)
+	}
+	ops = append(ops, interfaceOp)
+
 	// Generate user repository (created once, never touched)
 	userOp, err := g.generateUser(data)
 	if err != nil {
 		return nil, fmt.Errorf("generating user repository: %w", err)
 	}
 	ops = append(ops, userOp)
+
+	// Generate tests (always regenerated)
+	testOp, err := g.generateTests(data)
+	if err != nil {
+		return nil, fmt.Errorf("generating repository tests: %w", err)
+	}
+	ops = append(ops, testOp)
 
 	return ops, nil
 }
@@ -86,6 +100,27 @@ func (g *Generator) generateBase(data map[string]interface{}) (generator.Operati
 	}, nil
 }
 
+func (g *Generator) generateInterface(data map[string]interface{}) (generator.Operation, error) {
+	modelName := data["ModelName"].(string)
+	interfacePath := filepath.Join(
+		g.projectPath,
+		"internal",
+		"repositories",
+		strings.ToLower(modelName)+"_repository_interface.go",
+	)
+
+	content, err := g.renderer.RenderFS(templatesFS, "templates/repository_interface.go.tmpl", data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &generator.WriteFileOp{
+		Path:    interfacePath,
+		Content: content,
+		Mode:    0644,
+	}, nil
+}
+
 func (g *Generator) generateUser(data map[string]interface{}) (generator.Operation, error) {
 	modelName := data["ModelName"].(string)
 	userPath := filepath.Join(
@@ -102,6 +137,27 @@ func (g *Generator) generateUser(data map[string]interface{}) (generator.Operati
 
 	return &WriteFileIfNotExistsOp{
 		Path:    userPath,
+		Content: content,
+		Mode:    0644,
+	}, nil
+}
+
+func (g *Generator) generateTests(data map[string]interface{}) (generator.Operation, error) {
+	modelName := data["ModelName"].(string)
+	testPath := filepath.Join(
+		g.projectPath,
+		"internal",
+		"repositories",
+		strings.ToLower(modelName)+"_repository_test.go",
+	)
+
+	content, err := g.renderer.RenderFS(templatesFS, "templates/repository_test.go.tmpl", data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &generator.WriteFileOp{
+		Path:    testPath,
 		Content: content,
 		Mode:    0644,
 	}, nil

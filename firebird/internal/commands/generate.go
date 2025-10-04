@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/dto"
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/helpers"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/migration"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/model"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/query"
@@ -112,6 +113,34 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 					ops, err = gen.GenerateWithOptions(opts)
 				} else {
 					ops, err = gen.Generate(name)
+				}
+
+				// Generate helpers infrastructure (once per project)
+				if err == nil && !dryRun {
+					// Get module path
+					modulePath, modErr := getModulePath(".")
+					if modErr == nil {
+						output.Info("Generating helpers infrastructure")
+
+						helpersGen := helpers.New(".", modulePath)
+						helpersOps, helpersErr := helpersGen.Generate()
+						if helpersErr != nil {
+							output.Error(fmt.Sprintf("Failed to generate helpers: %v", helpersErr))
+							os.Exit(1)
+						}
+
+						// Execute helpers operations
+						if err := generator.Execute(ctx, helpersOps, generator.ExecuteOptions{
+							DryRun: dryRun,
+							Force:  force,
+							Writer: cmd.OutOrStdout(),
+						}); err != nil {
+							output.Error(fmt.Sprintf("Failed to create helpers files: %v", err))
+							os.Exit(1)
+						}
+
+						output.Success("Created helpers infrastructure")
+					}
 				}
 
 				// Generate queries (unless --skip-queries flag is set)

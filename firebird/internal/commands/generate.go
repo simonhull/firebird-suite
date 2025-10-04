@@ -9,6 +9,7 @@ import (
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/migration"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/model"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/query"
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/repository"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/scaffold"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 	"github.com/simonhull/firebird-suite/fledge/output"
@@ -20,7 +21,7 @@ func GenerateCmd() *cobra.Command {
 	var force, skip, diff, dryRun bool
 	var timestamps, softDeletes, generateAll bool
 	var intID bool // NEW: Use int64 instead of UUID for primary key
-	var skipQueries bool
+	var skipQueries, skipRepository bool
 	// Model generator flags
 	var modelOutput, modelPackage, modelSchema string
 
@@ -136,6 +137,37 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 					output.Success("Created queries")
 					output.Info("💡 Run 'firebird db generate' to compile queries")
 				}
+
+				// Generate repository (unless --skip-repository flag is set)
+				if err == nil && !skipRepository && !dryRun {
+					output.Info("Generating repository")
+
+					// Get module path
+					modulePath, modErr := getModulePath(".")
+					if modErr != nil {
+						output.Error(fmt.Sprintf("Failed to detect module path: %v", modErr))
+						os.Exit(1)
+					}
+
+					repoGen := repository.New(".", schemaPath, modulePath)
+					repoOps, repoErr := repoGen.Generate()
+					if repoErr != nil {
+						output.Error(fmt.Sprintf("Failed to generate repository: %v", repoErr))
+						os.Exit(1)
+					}
+
+					// Execute repository operations
+					if err := generator.Execute(ctx, repoOps, generator.ExecuteOptions{
+						DryRun: dryRun,
+						Force:  force,
+						Writer: cmd.OutOrStdout(),
+					}); err != nil {
+						output.Error(fmt.Sprintf("Failed to create repository files: %v", err))
+						os.Exit(1)
+					}
+
+					output.Success("Created repository")
+				}
 			case "migration":
 				gen := migration.NewGenerator()
 				ops, err = gen.Generate(name)
@@ -219,6 +251,7 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 	cmd.Flags().BoolVar(&generateAll, "generate", false, "Also generate model and migration files (scaffold only)")
 	cmd.Flags().BoolVar(&intID, "int-id", false, "Use int64 with auto-increment instead of UUID for primary key (scaffold only)")
 	cmd.Flags().BoolVar(&skipQueries, "skip-queries", false, "Skip query generation (model only)")
+	cmd.Flags().BoolVar(&skipRepository, "skip-repository", false, "Skip repository generation (model only)")
 	// Model generator flags
 	cmd.Flags().StringVar(&modelOutput, "output", "", "Custom output path for model file (model only)")
 	cmd.Flags().StringVar(&modelPackage, "package", "", "Custom package name for model (model only)")

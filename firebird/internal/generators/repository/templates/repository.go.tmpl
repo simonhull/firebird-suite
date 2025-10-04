@@ -1,0 +1,33 @@
+package repositories
+
+import (
+	"{{ .ModulePath }}/db"
+)
+
+// {{ .ModelName }}Repository handles {{ .ModelName }} data access.
+//
+// Generated methods (via {{ .ModelName }}RepositoryBase):
+//   - Create(ctx, params) (*db.{{ .ModelName }}, error)
+//   - GetByID(ctx, id) (*db.{{ .ModelName }}, error)
+//   - List(ctx) ([]db.{{ .ModelName }}, error)
+//   - ListPaginated(ctx, limit, offset) ([]db.{{ .ModelName }}, error)
+//   - Count(ctx) (int64, error)
+//   - Update(ctx, params) (*db.{{ .ModelName }}, error)
+//   - Delete(ctx, id) error
+{{- if .SoftDeletes }}
+//   - Restore(ctx, id) error
+{{- end }}
+//
+// Add custom queries and business logic below.
+type {{ .ModelName }}Repository struct {
+	{{ .ModelName }}RepositoryBase
+}
+
+// New{{ .ModelName }}Repository creates a new {{ .ModelName }} repository.
+func New{{ .ModelName }}Repository(queries *db.Queries) *{{ .ModelName }}Repository {
+	return &{{ .ModelName }}Repository{
+		{{ .ModelName }}RepositoryBase: {{ .ModelName }}RepositoryBase{queries: queries},
+	}
+}
+
+// Add custom methods here:

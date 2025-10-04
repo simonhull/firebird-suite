@@ -1,0 +1,208 @@
+package services
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"log/slog"
+
+	"github.com/go-playground/validator/v10"
+	"{{ .ModulePath }}/internal/db"
+	"{{ .ModulePath }}/internal/dto"
+	"{{ .ModulePath }}/internal/repositories"
+{{- if eq .PrimaryKeyType "uuid.UUID" }}
+	"github.com/google/uuid"
+{{- end }}
+)
+
+// {{ .ModelName }}ServiceImpl implements {{ .ModelName }}Service
+type {{ .ModelName }}ServiceImpl struct {
+	{{ .RepoFieldName }} repositories.{{ .ModelName }}Repository
+	db                   *db.DB
+	logger               *slog.Logger
+	validator            *validator.Validate
+}
+
+// New{{ .ModelName }}Service creates a new {{ .ModelName }} service
+func New{{ .ModelName }}Service(
+	{{ .RepoFieldName }} repositories.{{ .ModelName }}Repository,
+	database *db.DB,
+	logger *slog.Logger,
+	validator *validator.Validate,
+) {{ .ModelName }}Service {
+	return &{{ .ModelName }}ServiceImpl{
+		{{ .RepoFieldName }}: {{ .RepoFieldName }},
+		db:                   database,
+		logger:               logger.With(slog.String("service", "{{ .ModelName }}")),
+		validator:            validator,
+	}
+}
+
+// Create creates a new {{ .ModelName }}
+func (s *{{ .ModelName }}ServiceImpl) Create(ctx context.Context, input dto.Create{{ .ModelName }}Input) (*dto.{{ .ModelName }}Response, error) {
+	s.logger.InfoContext(ctx, "creating {{ .ModelNameLower }}")
+
+	// Validate input structure
+	if err := s.validator.Struct(input); err != nil {
+		s.logger.WarnContext(ctx, "validation failed", slog.Any("errors", err))
+		return nil, NewValidationError(err)
+	}
+
+	// TODO: Add custom business validation here
+	// Example:
+	// if err := s.validateBusinessRules(ctx, input); err != nil {
+	//     return nil, err
+	// }
+
+	// Convert DTO to DB params
+	params := db.Create{{ .ModelName }}Params{
+{{- range .CreateFields }}
+		{{ .DBField }}: input.{{ .DTOField }},
+{{- end }}
+	}
+
+	// Create via repository
+	model, err := s.{{ .RepoFieldName }}.Create(ctx, params)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "failed to create {{ .ModelNameLower }}", slog.String("error", err.Error()))
+		return nil, fmt.Errorf("create {{ .ModelNameLower }}: %w", err)
+	}
+
+	s.logger.InfoContext(ctx, "{{ .ModelNameLower }} created", slog.Any("id", model.ID))
+
+	return dto.From{{ .ModelName }}(model), nil
+}
+
+// GetByID retrieves a {{ .ModelName }} by ID
+func (s *{{ .ModelName }}ServiceImpl) GetByID(ctx context.Context, id {{ .PrimaryKeyType }}) (*dto.{{ .ModelName }}Response, error) {
+	model, err := s.{{ .RepoFieldName }}.GetByID(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
+		s.logger.ErrorContext(ctx, "failed to get {{ .ModelNameLower }}", slog.Any("id", id), slog.String("error", err.Error()))
+		return nil, fmt.Errorf("get {{ .ModelNameLower }}: %w", err)
+	}
+
+	return dto.From{{ .ModelName }}(model), nil
+}
+
+// List retrieves paginated {{ .ModelName }}s
+func (s *{{ .ModelName }}ServiceImpl) List(ctx context.Context, page Pagination) (*ListResult[*dto.{{ .ModelName }}Response], error) {
+	// Get items
+	models, err := s.{{ .RepoFieldName }}.ListPaginated(ctx, int32(page.PerPage), int32(page.Offset()))
+	if err != nil {
+		s.logger.ErrorContext(ctx, "failed to list {{ .ModelNameLower }}s", slog.String("error", err.Error()))
+		return nil, fmt.Errorf("list {{ .ModelNameLower }}s: %w", err)
+	}
+
+	// Get total count
+	total, err := s.{{ .RepoFieldName }}.Count(ctx)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "failed to count {{ .ModelNameLower }}s", slog.String("error", err.Error()))
+		return nil, fmt.Errorf("count {{ .ModelNameLower }}s: %w", err)
+	}
+
+	// Convert to DTOs
+	responses := dto.From{{ .ModelName }}List(models)
+
+	return NewListResult(responses, total, page), nil
+}
+
+// Update updates a {{ .ModelName }}
+func (s *{{ .ModelName }}ServiceImpl) Update(ctx context.Context, id {{ .PrimaryKeyType }}, input dto.Update{{ .ModelName }}Input) (*dto.{{ .ModelName }}Response, error) {
+	s.logger.InfoContext(ctx, "updating {{ .ModelNameLower }}", slog.Any("id", id))
+
+	// Validate input structure
+	if err := s.validator.Struct(input); err != nil {
+		s.logger.WarnContext(ctx, "validation failed", slog.Any("errors", err))
+		return nil, NewValidationError(err)
+	}
+
+	// TODO: Add custom business validation here
+	// Example:
+	// if err := s.validateUpdateRules(ctx, id, input); err != nil {
+	//     return nil, err
+	// }
+
+	// Convert DTO to DB params
+	params := db.Update{{ .ModelName }}Params{
+		ID: id,
+	}
+
+	// Only set fields that are not nil (partial updates)
+{{- range .UpdateFields }}
+	if input.{{ .DTOField }} != nil {
+		params.{{ .DBField }} = *input.{{ .DTOField }}
+	}
+{{- end }}
+
+	// Update via repository
+	model, err := s.{{ .RepoFieldName }}.Update(ctx, params)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
+		s.logger.ErrorContext(ctx, "failed to update {{ .ModelNameLower }}", slog.Any("id", id), slog.String("error", err.Error()))
+		return nil, fmt.Errorf("update {{ .ModelNameLower }}: %w", err)
+	}
+
+	s.logger.InfoContext(ctx, "{{ .ModelNameLower }} updated", slog.Any("id", id))
+
+	return dto.From{{ .ModelName }}(model), nil
+}
+
+// Delete deletes a {{ .ModelName }}
+func (s *{{ .ModelName }}ServiceImpl) Delete(ctx context.Context, id {{ .PrimaryKeyType }}) error {
+	s.logger.InfoContext(ctx, "deleting {{ .ModelNameLower }}", slog.Any("id", id))
+
+	// TODO: Add pre-delete validation or cascade logic here
+	// Example:
+	// if err := s.validateDelete(ctx, id); err != nil {
+	//     return err
+	// }
+
+	err := s.{{ .RepoFieldName }}.Delete(ctx, id)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "failed to delete {{ .ModelNameLower }}", slog.Any("id", id), slog.String("error", err.Error()))
+		return fmt.Errorf("delete {{ .ModelNameLower }}: %w", err)
+	}
+
+	s.logger.InfoContext(ctx, "{{ .ModelNameLower }} deleted", slog.Any("id", id))
+
+	return nil
+}
+{{- if .SoftDeletes }}
+
+// Restore restores a soft-deleted {{ .ModelName }}
+func (s *{{ .ModelName }}ServiceImpl) Restore(ctx context.Context, id {{ .PrimaryKeyType }}) error {
+	s.logger.InfoContext(ctx, "restoring {{ .ModelNameLower }}", slog.Any("id", id))
+
+	err := s.{{ .RepoFieldName }}.Restore(ctx, id)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "failed to restore {{ .ModelNameLower }}", slog.Any("id", id), slog.String("error", err.Error()))
+		return fmt.Errorf("restore {{ .ModelNameLower }}: %w", err)
+	}
+
+	s.logger.InfoContext(ctx, "{{ .ModelNameLower }} restored", slog.Any("id", id))
+
+	return nil
+}
+{{- end }}
+
+// Add custom methods below:
+//
+// Example: Business validation
+// func (s *{{ .ModelName }}ServiceImpl) validateBusinessRules(ctx context.Context, input dto.Create{{ .ModelName }}Input) error {
+//     // Check uniqueness, relationships, state, etc.
+//     return nil
+// }
+//
+// Example: Multi-repo transaction
+// func (s *{{ .ModelName }}ServiceImpl) CreateWithRelated(ctx context.Context, input CustomInput) error {
+//     return s.db.WithTx(ctx, func(tx *sql.Tx) error {
+//         {{ .RepoFieldName }} := s.{{ .RepoFieldName }}.WithTx(tx)
+//         // Use transaction-scoped repo
+//         return nil
+//     })
+// }

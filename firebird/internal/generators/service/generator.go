@@ -34,7 +34,7 @@ func New(projectPath, schemaPath, modulePath string) *Generator {
 	}
 }
 
-// Generate creates service files (interface, base, user, test, shared)
+// Generate creates service files (interface, implementation, helpers, test, shared)
 func (g *Generator) Generate() ([]generator.Operation, error) {
 	// Parse schema
 	spec, err := schema.Parse(g.schemaPath)
@@ -51,28 +51,30 @@ func (g *Generator) Generate() ([]generator.Operation, error) {
 	}
 	ops = append(ops, sharedOps...)
 
-	// Generate service interface
+	// Generate service interface (always regenerated)
 	interfaceOp, err := g.generateInterface(spec)
 	if err != nil {
 		return nil, fmt.Errorf("generating interface: %w", err)
 	}
 	ops = append(ops, interfaceOp)
 
-	// Generate service base
-	baseOp, err := g.generateBase(spec)
-	if err != nil {
-		return nil, fmt.Errorf("generating base: %w", err)
-	}
-	ops = append(ops, baseOp)
-
-	// Generate user service file
+	// Generate user service implementation (created once, user-owned)
 	serviceOp, err := g.generateService(spec)
 	if err != nil {
 		return nil, fmt.Errorf("generating service: %w", err)
 	}
 	ops = append(ops, serviceOp)
 
-	// Generate test file
+	// Generate helpers if relationships exist (always regenerated)
+	if len(spec.Spec.Relationships) > 0 {
+		helpersOp, err := g.generateHelpers(spec)
+		if err != nil {
+			return nil, fmt.Errorf("generating helpers: %w", err)
+		}
+		ops = append(ops, helpersOp)
+	}
+
+	// Generate test file (always regenerated)
 	testOp, err := g.generateTest(spec)
 	if err != nil {
 		return nil, fmt.Errorf("generating test: %w", err)
@@ -134,7 +136,7 @@ func (g *Generator) generateInterface(def *schema.Definition) (generator.Operati
 	}, nil
 }
 
-func (g *Generator) generateBase(def *schema.Definition) (generator.Operation, error) {
+func (g *Generator) generateHelpers(def *schema.Definition) (generator.Operation, error) {
 	data := g.prepareTemplateData(def)
 
 	path := filepath.Join(
@@ -142,10 +144,10 @@ func (g *Generator) generateBase(def *schema.Definition) (generator.Operation, e
 		"internal",
 		"services",
 		"generated",
-		fmt.Sprintf("%s_service_base.go", strings.ToLower(def.Name)),
+		fmt.Sprintf("%s_service_helpers.go", strings.ToLower(def.Name)),
 	)
 
-	content, err := g.renderer.RenderFS(templatesFS, "templates/service_base.go.tmpl", data)
+	content, err := g.renderer.RenderFS(templatesFS, "templates/service_helpers.go.tmpl", data)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +169,7 @@ func (g *Generator) generateService(def *schema.Definition) (generator.Operation
 		fmt.Sprintf("%s_service.go", strings.ToLower(def.Name)),
 	)
 
-	content, err := g.renderer.RenderFS(templatesFS, "templates/service.go.tmpl", data)
+	content, err := g.renderer.RenderFS(templatesFS, "templates/service_impl.go.tmpl", data)
 	if err != nil {
 		return nil, err
 	}
@@ -211,6 +213,9 @@ func (g *Generator) prepareTemplateData(def *schema.Definition) ServiceTemplateD
 	createFields := g.buildFieldMappings(def, false)
 	updateFields := g.buildFieldMappings(def, true)
 
+	// Prepare relationship data
+	relationships := prepareRelationshipHelpers(def)
+
 	return ServiceTemplateData{
 		ModelName:      modelName,
 		ModelNameLower: modelNameLower,
@@ -220,6 +225,7 @@ func (g *Generator) prepareTemplateData(def *schema.Definition) ServiceTemplateD
 		SoftDeletes:    def.Spec.SoftDeletes,
 		CreateFields:   createFields,
 		UpdateFields:   updateFields,
+		Relationships:  relationships,
 	}
 }
 
@@ -272,6 +278,26 @@ func cleanType(t string) string {
 	return strings.TrimPrefix(t, "*")
 }
 
+// prepareRelationshipHelpers transforms relationships into helper method data
+func prepareRelationshipHelpers(def *schema.Definition) []RelationshipHelperData {
+	var result []RelationshipHelperData
+
+	for _, rel := range def.Spec.Relationships {
+		data := RelationshipHelperData{
+			Name:           rel.Name,
+			Type:           rel.Type,
+			Model:          rel.Model,
+			LoadMethod:     fmt.Sprintf("Load%s", rel.Name),
+			LoadManyMethod: fmt.Sprintf("Load%sForMany", rel.Name),
+			IsSingle:       rel.Type == "belongs_to",
+			IsMany:         rel.Type == "has_many",
+		}
+		result = append(result, data)
+	}
+
+	return result
+}
+
 // Template data structures
 
 type ServiceTemplateData struct {
@@ -283,11 +309,22 @@ type ServiceTemplateData struct {
 	SoftDeletes    bool
 	CreateFields   []FieldMapping
 	UpdateFields   []FieldMapping
+	Relationships  []RelationshipHelperData
 }
 
 type FieldMapping struct {
 	DTOField string // Field name in DTO
 	DBField  string // Field name in DB params
+}
+
+type RelationshipHelperData struct {
+	Name           string // Relationship name (e.g., "Author", "Posts")
+	Type           string // "belongs_to" or "has_many"
+	Model          string // Target model (e.g., "User", "Post")
+	LoadMethod     string // Method name (e.g., "LoadAuthor")
+	LoadManyMethod string // Batch method name (e.g., "LoadPostsForMany")
+	IsSingle       bool   // belongs_to flag
+	IsMany         bool   // has_many flag
 }
 
 // WriteFileIfNotExistsOp is a custom operation that only creates files if they don't exist

@@ -16,6 +16,7 @@ func main() {
 	// Only register database commands if database is configured
 	if commands.HasDatabaseConfigured() {
 		rootCmd.AddCommand(commands.MigrateCmd())
+		rootCmd.AddCommand(commands.DBCmd())
 	}
 
 	if err := rootCmd.Execute(); err != nil {

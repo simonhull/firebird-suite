@@ -8,6 +8,7 @@ import (
 
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/migration"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/model"
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/query"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/scaffold"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 	"github.com/simonhull/firebird-suite/fledge/output"
@@ -19,6 +20,7 @@ func GenerateCmd() *cobra.Command {
 	var force, skip, diff, dryRun bool
 	var timestamps, softDeletes, generateAll bool
 	var intID bool // NEW: Use int64 instead of UUID for primary key
+	var skipQueries bool
 	// Model generator flags
 	var modelOutput, modelPackage, modelSchema string
 
@@ -85,6 +87,17 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 			switch genType {
 			case "model":
 				gen := model.NewGenerator()
+				// Determine schema path for query generation
+				schemaPath := modelSchema
+				if schemaPath == "" {
+					// Find schema file
+					schemaPath, err = model.FindSchemaFile(name)
+					if err != nil {
+						output.Error(err.Error())
+						os.Exit(1)
+					}
+				}
+
 				// Use custom flags if provided
 				if modelSchema != "" || modelOutput != "" || modelPackage != "" {
 					opts := model.GenerateOptions{
@@ -96,6 +109,32 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 					ops, err = gen.GenerateWithOptions(opts)
 				} else {
 					ops, err = gen.Generate(name)
+				}
+
+				// Generate queries (unless --skip-queries flag is set)
+				if err == nil && !skipQueries && !dryRun {
+					output.Info("Generating queries")
+
+					queryGen := query.New(".", schemaPath)
+					queryOps, queryErr := queryGen.Generate()
+					if queryErr != nil {
+						output.Error(fmt.Sprintf("Failed to generate queries: %v", queryErr))
+						os.Exit(1)
+					}
+
+					// Execute query operations
+					if err := generator.Execute(ctx, queryOps, generator.ExecuteOptions{
+						DryRun: dryRun,
+						Force:  force,
+						Writer: cmd.OutOrStdout(),
+					}); err != nil {
+						output.Error(fmt.Sprintf("Failed to create query file: %v", err))
+						os.Exit(1)
+					}
+
+					// Get query count from template data
+					output.Success("Created queries")
+					output.Info("💡 Run 'firebird db generate' to compile queries")
 				}
 			case "migration":
 				gen := migration.NewGenerator()
@@ -179,6 +218,7 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 	cmd.Flags().BoolVar(&softDeletes, "soft-deletes", false, "Add deleted_at field for soft deletes (scaffold only)")
 	cmd.Flags().BoolVar(&generateAll, "generate", false, "Also generate model and migration files (scaffold only)")
 	cmd.Flags().BoolVar(&intID, "int-id", false, "Use int64 with auto-increment instead of UUID for primary key (scaffold only)")
+	cmd.Flags().BoolVar(&skipQueries, "skip-queries", false, "Skip query generation (model only)")
 	// Model generator flags
 	cmd.Flags().StringVar(&modelOutput, "output", "", "Custom output path for model file (model only)")
 	cmd.Flags().StringVar(&modelPackage, "package", "", "Custom package name for model (model only)")

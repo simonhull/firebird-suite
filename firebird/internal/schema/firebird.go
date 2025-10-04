@@ -18,9 +18,11 @@ type Definition struct {
 
 // Spec contains the resource specification
 type Spec struct {
-	TableName string  `yaml:"table_name,omitempty"`
-	Fields    []Field `yaml:"fields"`
-	Indexes   []Index `yaml:"indexes,omitempty"`
+	TableName   string  `yaml:"table_name,omitempty"`
+	Fields      []Field `yaml:"fields"`
+	Indexes     []Index `yaml:"indexes,omitempty"`
+	Timestamps  bool    `yaml:"timestamps,omitempty"`
+	SoftDeletes bool    `yaml:"soft_deletes,omitempty"`
 }
 
 // Field represents a single field in the resource

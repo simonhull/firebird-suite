@@ -55,6 +55,34 @@ func PrepareMigrationData(def *schema.Definition, dialect DatabaseDialect) *Migr
 		// because the inline UNIQUE constraint already creates an index in most databases.
 	}
 
+	// Add timestamps if enabled
+	if def.Spec.Timestamps {
+		data.Columns = append(data.Columns,
+			ColumnData{
+				Name:     "created_at",
+				Type:     getTimestampType(dialect),
+				Nullable: false,
+				Default:  getTimestampDefault(dialect, "created_at"),
+			},
+			ColumnData{
+				Name:     "updated_at",
+				Type:     getTimestampType(dialect),
+				Nullable: false,
+				Default:  getTimestampDefault(dialect, "updated_at"),
+			},
+		)
+	}
+
+	// Add soft deletes if enabled
+	if def.Spec.SoftDeletes {
+		data.Columns = append(data.Columns, ColumnData{
+			Name:     "deleted_at",
+			Type:     getTimestampType(dialect),
+			Nullable: true, // Nullable - NULL means not deleted
+			Default:  "",   // No default
+		})
+	}
+
 	// Transform indexes
 	data.Indexes = transformIndexes(def.Spec.Indexes, tableName)
 
@@ -291,4 +319,35 @@ func generateIndexName(tableName string, columns []string, unique bool) string {
 		prefix = "uniq"
 	}
 	return fmt.Sprintf("%s_%s_%s", prefix, tableName, strings.Join(columns, "_"))
+}
+
+// getTimestampType returns the appropriate timestamp type for the dialect
+func getTimestampType(dialect DatabaseDialect) string {
+	switch dialect {
+	case PostgreSQL:
+		return "TIMESTAMPTZ"
+	case MySQL:
+		return "TIMESTAMP"
+	case SQLite:
+		return "TEXT"
+	default:
+		return "TIMESTAMP"
+	}
+}
+
+// getTimestampDefault returns the appropriate default value for timestamp columns
+func getTimestampDefault(dialect DatabaseDialect, columnName string) string {
+	switch dialect {
+	case PostgreSQL:
+		return "NOW()"
+	case MySQL:
+		if columnName == "updated_at" {
+			return "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+		}
+		return "CURRENT_TIMESTAMP"
+	case SQLite:
+		return "CURRENT_TIMESTAMP"
+	default:
+		return "CURRENT_TIMESTAMP"
+	}
 }

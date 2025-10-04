@@ -30,14 +30,14 @@ func PrepareModelData(def *schema.Definition, outputPath string) *ModelData {
 	data := &ModelData{
 		Package: inferPackage(outputPath),
 		Name:    def.Name,
-		Fields:  make([]FieldData, len(def.Spec.Fields)),
+		Fields:  make([]FieldData, 0, len(def.Spec.Fields)+3), // +3 for potential timestamps and soft deletes
 	}
 
 	// Collect type names for import gathering
 	var typeNames []string
 
 	// Transform fields
-	for i, field := range def.Spec.Fields {
+	for _, field := range def.Spec.Fields {
 		// Look up type in registry to get the Go type
 		goType, _, err := types.GetGoType(field.Type)
 		if err != nil {
@@ -48,11 +48,44 @@ func PrepareModelData(def *schema.Definition, outputPath string) *ModelData {
 			typeNames = append(typeNames, field.Type)
 		}
 
-		data.Fields[i] = FieldData{
+		data.Fields = append(data.Fields, FieldData{
 			Name: generator.PascalCase(field.Name),
 			Type: goType,
 			Tags: buildTagString(field),
+		})
+	}
+
+	// Add timestamps if enabled
+	if def.Spec.Timestamps {
+		// Add timestamp to typeNames for import collection (registry key is "timestamp", not "time.Time")
+		if !containsString(typeNames, "timestamp") {
+			typeNames = append(typeNames, "timestamp")
 		}
+		data.Fields = append(data.Fields,
+			FieldData{
+				Name: "CreatedAt",
+				Type: "time.Time",
+				Tags: "`json:\"created_at\" db:\"created_at\"`",
+			},
+			FieldData{
+				Name: "UpdatedAt",
+				Type: "time.Time",
+				Tags: "`json:\"updated_at\" db:\"updated_at\"`",
+			},
+		)
+	}
+
+	// Add soft deletes if enabled
+	if def.Spec.SoftDeletes {
+		// Add timestamp to typeNames for import collection (registry key is "timestamp", not "time.Time")
+		if !containsString(typeNames, "timestamp") {
+			typeNames = append(typeNames, "timestamp")
+		}
+		data.Fields = append(data.Fields, FieldData{
+			Name: "DeletedAt",
+			Type: "*time.Time",
+			Tags: "`json:\"deleted_at,omitempty\" db:\"deleted_at\"`",
+		})
 	}
 
 	// Collect imports from type registry
@@ -110,6 +143,11 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// containsString checks if a string slice contains a specific item (alias for contains)
+func containsString(slice []string, item string) bool {
+	return contains(slice, item)
 }
 
 // generateJSONTag creates a JSON tag for a field

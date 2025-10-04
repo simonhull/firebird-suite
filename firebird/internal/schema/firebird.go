@@ -18,11 +18,12 @@ type Definition struct {
 
 // Spec contains the resource specification
 type Spec struct {
-	TableName   string  `yaml:"table_name,omitempty"`
-	Fields      []Field `yaml:"fields"`
-	Indexes     []Index `yaml:"indexes,omitempty"`
-	Timestamps  bool    `yaml:"timestamps,omitempty"`
-	SoftDeletes bool    `yaml:"soft_deletes,omitempty"`
+	TableName     string         `yaml:"table_name,omitempty"`
+	Fields        []Field        `yaml:"fields"`
+	Indexes       []Index        `yaml:"indexes,omitempty"`
+	Relationships []Relationship `yaml:"relationships,omitempty"`
+	Timestamps    bool           `yaml:"timestamps,omitempty"`
+	SoftDeletes   bool           `yaml:"soft_deletes,omitempty"`
 }
 
 // Field represents a single field in the resource
@@ -50,6 +51,14 @@ type Index struct {
 	Unique  bool     `yaml:"unique,omitempty"`  // Unique constraint
 	Where   string   `yaml:"where,omitempty"`   // Partial index condition (PostgreSQL/SQLite only)
 	Type    string   `yaml:"type,omitempty"`    // Index type: btree, hash, gin, gist (PostgreSQL only)
+}
+
+// Relationship represents a relationship between resources
+type Relationship struct {
+	Name       string `yaml:"name"`        // Relationship name (e.g., "Author", "Comments")
+	Type       string `yaml:"type"`        // Relationship type: "belongs_to" or "has_many"
+	Model      string `yaml:"model"`       // Target model name (e.g., "User", "Comment")
+	ForeignKey string `yaml:"foreign_key"` // Foreign key field name (e.g., "author_id", "post_id")
 }
 
 // ValidationError represents a schema validation error with context
@@ -317,6 +326,137 @@ func ValidateWithLineNumbers(def *Definition, lineMap map[string]int) error {
 					Suggestion: fmt.Sprintf("ensure '%s' is defined in spec.fields", colName),
 					Line:       getLineNumber(lineMap, fmt.Sprintf("spec.indexes.%d.columns", i)),
 				})
+			}
+		}
+	}
+
+	// Validate relationships
+	for i, rel := range def.Spec.Relationships {
+		relPath := fmt.Sprintf("spec.relationships[%d]", i)
+
+		// 1. Validate name
+		if rel.Name == "" {
+			errors = append(errors, ValidationError{
+				Field:   fmt.Sprintf("%s.name", relPath),
+				Message: "relationship name is required",
+				Line:    getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.name", i)),
+			})
+		} else if !isPascalCase(rel.Name) {
+			errors = append(errors, ValidationError{
+				Field:      fmt.Sprintf("%s.name", relPath),
+				Message:    fmt.Sprintf("relationship name '%s' should be in PascalCase", rel.Name),
+				Suggestion: "use PascalCase like 'Author' or 'Comments'",
+				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.name", i)),
+			})
+		}
+
+		// 2. Validate type
+		if rel.Type == "" {
+			errors = append(errors, ValidationError{
+				Field:      fmt.Sprintf("%s.type", relPath),
+				Message:    "relationship type is required",
+				Suggestion: "use 'belongs_to' or 'has_many'",
+				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.type", i)),
+			})
+		} else if !ValidateRelationshipType(rel.Type) {
+			errors = append(errors, ValidationError{
+				Field:      fmt.Sprintf("%s.type", relPath),
+				Message:    fmt.Sprintf("invalid relationship type '%s'", rel.Type),
+				Suggestion: "use 'belongs_to' or 'has_many'",
+				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.type", i)),
+			})
+		}
+
+		// 3. Validate model
+		if rel.Model == "" {
+			errors = append(errors, ValidationError{
+				Field:      fmt.Sprintf("%s.model", relPath),
+				Message:    "relationship model is required",
+				Suggestion: "specify the target model name (e.g., 'User', 'Comment')",
+				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.model", i)),
+			})
+		} else if !isPascalCase(rel.Model) {
+			errors = append(errors, ValidationError{
+				Field:      fmt.Sprintf("%s.model", relPath),
+				Message:    fmt.Sprintf("model name '%s' should be in PascalCase", rel.Model),
+				Suggestion: "use PascalCase like 'User' or 'Comment'",
+				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.model", i)),
+			})
+		}
+
+		// 4. Validate foreign_key
+		if rel.ForeignKey == "" {
+			errors = append(errors, ValidationError{
+				Field:      fmt.Sprintf("%s.foreign_key", relPath),
+				Message:    "foreign_key is required",
+				Suggestion: "specify the foreign key field name (e.g., 'author_id', 'post_id')",
+				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.foreign_key", i)),
+			})
+		}
+
+		// 5. For belongs_to: validate FK field exists in this model
+		if rel.Type == "belongs_to" && rel.ForeignKey != "" {
+			fkExists := false
+			for _, field := range def.Spec.Fields {
+				if field.Name == rel.ForeignKey {
+					fkExists = true
+					break
+				}
+			}
+
+			if !fkExists {
+				errors = append(errors, ValidationError{
+					Field:      fmt.Sprintf("%s.foreign_key", relPath),
+					Message:    fmt.Sprintf("foreign key field '%s' not found in fields", rel.ForeignKey),
+					Suggestion: fmt.Sprintf("add a field named '%s' to spec.fields before defining this relationship", rel.ForeignKey),
+					Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.foreign_key", i)),
+				})
+			}
+			// TODO(relationships-phase3): Validate FK type matches target model's primary key type
+			// This requires loading the target schema file and comparing types
+		}
+
+		// 6. For has_many: FK field lives in the related model
+		// We can't validate this without loading the related schema
+		// Document this as a limitation for Phase 1
+		// TODO(relationships-phase3): Optionally validate related model's schema exists and has FK field
+		// For has_many, the FK field lives in the related model, which we can't validate without loading that schema
+	}
+
+	// Check for duplicate relationship names
+	relationshipNames := make(map[string]int)
+	for i, rel := range def.Spec.Relationships {
+		if rel.Name == "" {
+			continue // Already validated above
+		}
+
+		if firstIndex, exists := relationshipNames[rel.Name]; exists {
+			errors = append(errors, ValidationError{
+				Field:      fmt.Sprintf("spec.relationships[%d].name", i),
+				Message:    fmt.Sprintf("duplicate relationship name '%s' (first defined at relationships[%d])", rel.Name, firstIndex),
+				Suggestion: "each relationship must have a unique name",
+				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.name", i)),
+			})
+		} else {
+			relationshipNames[rel.Name] = i
+		}
+	}
+
+	// Check for relationship name conflicts with field names
+	for i, rel := range def.Spec.Relationships {
+		if rel.Name == "" {
+			continue // Already validated above
+		}
+
+		for _, field := range def.Spec.Fields {
+			if field.Name == rel.Name {
+				errors = append(errors, ValidationError{
+					Field:      fmt.Sprintf("spec.relationships[%d].name", i),
+					Message:    fmt.Sprintf("relationship name '%s' conflicts with field name", rel.Name),
+					Suggestion: "choose a different relationship name or rename the field",
+					Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.name", i)),
+				})
+				break
 			}
 		}
 	}

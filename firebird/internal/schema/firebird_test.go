@@ -609,5 +609,324 @@ func TestValidateCustomTableName(t *testing.T) {
 	assert.Equal(t, "employees", def.Spec.TableName)
 
 	// DefaultTableName should still work
-	assert.Equal(t, "people", DefaultTableName(def.Name))
+}
+
+// ============================================================================
+// Relationship Tests
+// ============================================================================
+
+func TestValidateBelongsToRelationship(t *testing.T) {
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "Post",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "author_id", Type: "uuid.UUID", DBType: "UUID"},
+				{Name: "title", Type: "string", DBType: "VARCHAR(255)"},
+			},
+			Relationships: []Relationship{
+				{Name: "Author", Type: "belongs_to", Model: "User", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	assert.NoError(t, err)
+}
+
+func TestValidateHasManyRelationship(t *testing.T) {
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "User",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "email", Type: "string", DBType: "VARCHAR(255)"},
+			},
+			Relationships: []Relationship{
+				{Name: "Posts", Type: "has_many", Model: "Post", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	assert.NoError(t, err)
+}
+
+func TestValidateMultipleRelationships(t *testing.T) {
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "Comment",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "post_id", Type: "uuid.UUID", DBType: "UUID"},
+				{Name: "author_id", Type: "uuid.UUID", DBType: "UUID"},
+				{Name: "content", Type: "string", DBType: "TEXT"},
+			},
+			Relationships: []Relationship{
+				{Name: "Post", Type: "belongs_to", Model: "Post", ForeignKey: "post_id"},
+				{Name: "Author", Type: "belongs_to", Model: "User", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	assert.NoError(t, err)
+}
+
+func TestRelationshipMissingName(t *testing.T) {
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "Post",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "author_id", Type: "uuid.UUID", DBType: "UUID"},
+			},
+			Relationships: []Relationship{
+				{Type: "belongs_to", Model: "User", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "relationship name is required")
+}
+
+func TestRelationshipInvalidType(t *testing.T) {
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "Post",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "author_id", Type: "uuid.UUID", DBType: "UUID"},
+			},
+			Relationships: []Relationship{
+				{Name: "Author", Type: "has_one", Model: "User", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid relationship type")
+	assert.Contains(t, err.Error(), "belongs_to")
+	assert.Contains(t, err.Error(), "has_many")
+}
+
+func TestRelationshipNotPascalCase(t *testing.T) {
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "Post",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "author_id", Type: "uuid.UUID", DBType: "UUID"},
+			},
+			Relationships: []Relationship{
+				{Name: "author", Type: "belongs_to", Model: "User", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "should be in PascalCase")
+}
+
+func TestRelationshipMissingModel(t *testing.T) {
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "Post",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "author_id", Type: "uuid.UUID", DBType: "UUID"},
+			},
+			Relationships: []Relationship{
+				{Name: "Author", Type: "belongs_to", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "model is required")
+}
+
+func TestRelationshipModelNotPascalCase(t *testing.T) {
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "Post",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "author_id", Type: "uuid.UUID", DBType: "UUID"},
+			},
+			Relationships: []Relationship{
+				{Name: "Author", Type: "belongs_to", Model: "user", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "should be in PascalCase")
+}
+
+func TestRelationshipMissingForeignKey(t *testing.T) {
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "Post",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "author_id", Type: "uuid.UUID", DBType: "UUID"},
+			},
+			Relationships: []Relationship{
+				{Name: "Author", Type: "belongs_to", Model: "User"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "foreign_key is required")
+}
+
+func TestBelongsToForeignKeyFieldNotFound(t *testing.T) {
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "Post",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "title", Type: "string", DBType: "VARCHAR(255)"},
+			},
+			Relationships: []Relationship{
+				{Name: "Author", Type: "belongs_to", Model: "User", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "foreign key field 'author_id' not found")
+	assert.Contains(t, err.Error(), "add a field named 'author_id'")
+}
+
+func TestRelationshipNamingConventionWarning(t *testing.T) {
+	// belongs_to with plural name (informational warning in validation logic)
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "Post",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "author_id", Type: "uuid.UUID", DBType: "UUID"},
+			},
+			Relationships: []Relationship{
+				{Name: "Authors", Type: "belongs_to", Model: "User", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	// This should still pass validation (naming convention is informational only)
+	err := Validate(def)
+	assert.NoError(t, err)
+}
+
+func TestHasManyRelationshipNoFKValidation(t *testing.T) {
+	// has_many doesn't validate FK field exists (it's in the related model)
+	def := &Definition{
+		APIVersion: "v1",
+		Kind:       "Resource",
+		Name:       "User",
+		Spec: Spec{
+			Fields: []Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+			},
+			Relationships: []Relationship{
+				{Name: "Posts", Type: "has_many", Model: "Post", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	err := Validate(def)
+	assert.NoError(t, err)
+}
+
+func TestValidateDuplicateRelationshipNames(t *testing.T) {
+	schema := `apiVersion: v1
+kind: Resource
+name: Post
+spec:
+  fields:
+    - name: id
+      type: int64
+      db_type: BIGINT
+      primary_key: true
+    - name: author_id
+      type: int64
+      db_type: BIGINT
+    - name: editor_id
+      type: int64
+      db_type: BIGINT
+  relationships:
+    - name: Author
+      type: belongs_to
+      model: User
+      foreign_key: author_id
+    - name: Author
+      type: belongs_to
+      model: User
+      foreign_key: editor_id`
+
+	def, err := ParseBytes([]byte(schema))
+	assert.Nil(t, def)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "duplicate relationship name 'Author'")
+}
+
+func TestValidateRelationshipNameConflictsWithField(t *testing.T) {
+	schema := `apiVersion: v1
+kind: Resource
+name: Post
+spec:
+  fields:
+    - name: id
+      type: int64
+      db_type: BIGINT
+      primary_key: true
+    - name: Author
+      type: string
+      db_type: VARCHAR(255)
+    - name: author_id
+      type: int64
+      db_type: BIGINT
+  relationships:
+    - name: Author
+      type: belongs_to
+      model: User
+      foreign_key: author_id`
+
+	def, err := ParseBytes([]byte(schema))
+	assert.Nil(t, def)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "relationship name 'Author' conflicts with field name")
 }

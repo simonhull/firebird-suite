@@ -143,3 +143,8 @@ func isValidCustomValidator(s string) bool {
 	}
 	return true
 }
+
+// ValidateRelationshipType checks if a relationship type is valid
+func ValidateRelationshipType(relType string) bool {
+	return relType == "belongs_to" || relType == "has_many"
+}

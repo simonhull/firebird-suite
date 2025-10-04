@@ -23,6 +23,7 @@ func NewCmd() *cobra.Command {
 	var dryRun bool
 	var force bool
 	var database string
+	var router string
 
 	cmd := &cobra.Command{
 		Use:   "new [project-name]",
@@ -68,6 +69,23 @@ Example:
 				dbDriver = project.DatabasePostgreSQL
 			}
 
+			// Get router choice
+			var routerType project.RouterType
+			if router != "" {
+				// Non-interactive: use flag
+				routerType = project.RouterType(router)
+				if err := validateRouterChoice(routerType); err != nil {
+					output.Error(err.Error())
+					os.Exit(1)
+				}
+			} else if !dryRun {
+				// Interactive: prompt user
+				routerType = promptForRouter(writer)
+			} else {
+				// Dry-run without flag: default to stdlib
+				routerType = project.RouterStdlib
+			}
+
 			scaffolder := project.NewScaffolder()
 
 			// Create scaffold options
@@ -78,6 +96,7 @@ Example:
 				SkipTidy:    skipTidy,
 				Interactive: !dryRun, // Disable prompts in dry-run mode
 				Database:    dbDriver,
+				Router:      routerType,
 			}
 
 			ops, result, err := scaffolder.Scaffold(opts)
@@ -130,6 +149,7 @@ Example:
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be generated without creating files")
 	cmd.Flags().BoolVar(&force, "force", false, "Overwrite existing files without prompting")
 	cmd.Flags().StringVar(&database, "database", "", "Database driver: postgres, mysql, sqlite, none")
+	cmd.Flags().StringVar(&router, "router", "", "HTTP router: stdlib, chi, gin, echo, none")
 
 	return cmd
 }
@@ -170,6 +190,42 @@ func validateDatabaseChoice(db project.DatabaseDriver) error {
 
 	if !valid[db] {
 		return fmt.Errorf("invalid database: %s (valid: postgres, mysql, sqlite, none)", db)
+	}
+	return nil
+}
+
+// promptForRouter prompts the user to select an HTTP router
+func promptForRouter(writer io.Writer) project.RouterType {
+	fmt.Fprintln(writer, "\n🌐 Select HTTP router:")
+	fmt.Fprintln(writer, "  1. Go 1.22+ stdlib (net/http.ServeMux) - recommended")
+	fmt.Fprintln(writer, "  2. Chi - lightweight and idiomatic")
+	fmt.Fprintln(writer, "  3. Gin - fast and popular")
+	fmt.Fprintln(writer, "  4. Echo - high performance")
+	fmt.Fprintln(writer, "  5. None - I'll write my own handlers")
+
+	choiceStr := input.Prompt("\nChoice [1-5]", "1")
+
+	switch choiceStr {
+	case "1":
+		return project.RouterStdlib
+	case "2":
+		return project.RouterChi
+	case "3":
+		return project.RouterGin
+	case "4":
+		return project.RouterEcho
+	case "5":
+		return project.RouterNone
+	default:
+		fmt.Fprintln(writer, "Invalid choice, defaulting to stdlib")
+		return project.RouterStdlib
+	}
+}
+
+// validateRouterChoice validates the router type string
+func validateRouterChoice(r project.RouterType) error {
+	if !r.IsValid() {
+		return fmt.Errorf("invalid router: %s (valid: stdlib, chi, gin, echo, none)", r)
 	}
 	return nil
 }

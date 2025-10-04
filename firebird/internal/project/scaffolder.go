@@ -33,6 +33,45 @@ const (
 	DatabaseNone       DatabaseDriver = "none"
 )
 
+// RouterType represents the HTTP router choice
+type RouterType string
+
+const (
+	RouterStdlib RouterType = "stdlib"
+	RouterChi    RouterType = "chi"
+	RouterGin    RouterType = "gin"
+	RouterEcho   RouterType = "echo"
+	RouterNone   RouterType = "none"
+)
+
+// IsValid checks if router type is valid
+func (r RouterType) IsValid() bool {
+	switch r {
+	case RouterStdlib, RouterChi, RouterGin, RouterEcho, RouterNone:
+		return true
+	default:
+		return false
+	}
+}
+
+// Description returns human-readable description
+func (r RouterType) Description() string {
+	switch r {
+	case RouterStdlib:
+		return "Go 1.22+ standard library (net/http.ServeMux) - recommended"
+	case RouterChi:
+		return "Chi - lightweight and idiomatic"
+	case RouterGin:
+		return "Gin - fast and popular"
+	case RouterEcho:
+		return "Echo - high performance"
+	case RouterNone:
+		return "None - I'll write my own handlers"
+	default:
+		return string(r)
+	}
+}
+
 // Scaffolder scaffolds new Firebird projects
 type Scaffolder struct {
 	renderer *generator.Renderer
@@ -46,6 +85,7 @@ type ScaffoldOptions struct {
 	SkipTidy    bool
 	Interactive bool           // If false, skip interactive prompts
 	Database    DatabaseDriver // Database driver choice
+	Router      RouterType     // HTTP router choice
 }
 
 // NewScaffolder creates a new project scaffolder
@@ -114,6 +154,7 @@ func (s *Scaffolder) Scaffold(opts *ScaffoldOptions) ([]generator.Operation, *Sc
 		Module:    modulePath,
 		GoVersion: goVersion,
 		Database:  opts.Database,
+		Router:    opts.Router,
 	}
 
 	// 6. Build operations for core directory structure
@@ -172,6 +213,7 @@ type ProjectData struct {
 	Module    string         // Go module path (e.g., "github.com/username/myapp")
 	GoVersion string         // Go version (e.g., "1.25")
 	Database  DatabaseDriver // Database driver
+	Router    RouterType     // HTTP router
 }
 
 // buildCoreDirectoryOperations creates operations for core directories (always created)

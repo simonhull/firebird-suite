@@ -8,8 +8,21 @@ CREATE TABLE {{ .TableName }} (
 {{- if $col.Default }} DEFAULT {{ $col.Default }}{{ end }}
 {{- end }}
 );
+{{- if .ForeignKeys }}
+
+-- Foreign key constraints
+{{- range .ForeignKeys }}
+ALTER TABLE {{ $.TableName }}
+    ADD CONSTRAINT {{ .Name }}
+    FOREIGN KEY ({{ .Column }})
+    REFERENCES {{ .ReferenceTable }}({{ .ReferenceColumn }})
+    ON DELETE {{ .OnDelete }}
+    ON UPDATE {{ .OnUpdate }};
+{{- end }}
+{{- end }}
 {{- if .Indexes }}
 
+-- Indexes
 {{- range .Indexes }}
 CREATE {{ if .Unique }}UNIQUE {{ end }}INDEX {{ .Name }}
 ON {{ $.TableName }} ({{ join .Columns ", " }})

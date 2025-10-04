@@ -10,10 +10,11 @@ import (
 
 // MigrationData is the data passed to templates
 type MigrationData struct {
-	TableName string          // Snake_case table name (e.g., "users")
-	Columns   []ColumnData    // Column definitions
-	Indexes   []IndexData     // Index definitions
-	Dialect   DatabaseDialect // Database dialect
+	TableName   string          // Snake_case table name (e.g., "users")
+	Columns     []ColumnData    // Column definitions
+	Indexes     []IndexData     // Index definitions
+	ForeignKeys []ForeignKeyData // Foreign key constraints
+	Dialect     DatabaseDialect // Database dialect
 }
 
 // ColumnData represents a single column definition
@@ -35,15 +36,26 @@ type IndexData struct {
 	Type    string   // Index type (btree, hash, gin, gist, etc.)
 }
 
+// ForeignKeyData represents a foreign key constraint
+type ForeignKeyData struct {
+	Name            string // Constraint name (e.g., "fk_posts_author_id")
+	Column          string // Source column (e.g., "author_id")
+	ReferenceTable  string // Target table (e.g., "users")
+	ReferenceColumn string // Target column (e.g., "id")
+	OnDelete        string // CASCADE, SET NULL, RESTRICT, etc.
+	OnUpdate        string // CASCADE, SET NULL, RESTRICT, etc.
+}
+
 // PrepareMigrationData transforms a schema definition into migration data
 func PrepareMigrationData(def *schema.Definition, dialect DatabaseDialect) *MigrationData {
 	tableName := generator.SnakeCase(generator.Pluralize(def.Name))
 
 	data := &MigrationData{
-		TableName: tableName,
-		Columns:   make([]ColumnData, 0, len(def.Spec.Fields)),
-		Indexes:   make([]IndexData, 0),
-		Dialect:   dialect,
+		TableName:   tableName,
+		Columns:     make([]ColumnData, 0, len(def.Spec.Fields)),
+		Indexes:     make([]IndexData, 0),
+		ForeignKeys: make([]ForeignKeyData, 0),
+		Dialect:     dialect,
 	}
 
 	// Transform fields to columns
@@ -85,6 +97,17 @@ func PrepareMigrationData(def *schema.Definition, dialect DatabaseDialect) *Migr
 
 	// Transform indexes
 	data.Indexes = transformIndexes(def.Spec.Indexes, tableName)
+
+	// Transform relationships to foreign keys
+	for _, rel := range def.Spec.Relationships {
+		// Only belongs_to creates FK constraints in this table
+		if rel.Type != "belongs_to" {
+			continue
+		}
+
+		fk := transformRelationshipToFK(rel, tableName, def)
+		data.ForeignKeys = append(data.ForeignKeys, fk)
+	}
 
 	return data
 }
@@ -349,5 +372,31 @@ func getTimestampDefault(dialect DatabaseDialect, columnName string) string {
 		return "CURRENT_TIMESTAMP"
 	default:
 		return "CURRENT_TIMESTAMP"
+	}
+}
+
+// transformRelationshipToFK converts a belongs_to relationship to FK data
+func transformRelationshipToFK(rel schema.Relationship, tableName string, def *schema.Definition) ForeignKeyData {
+	// Generate constraint name: fk_posts_author_id
+	constraintName := fmt.Sprintf("fk_%s_%s", tableName, generator.SnakeCase(rel.ForeignKey))
+
+	// Reference table: pluralized snake_case model name
+	refTable := generator.SnakeCase(generator.Pluralize(rel.Model))
+
+	// Reference column: assume "id" (we'll validate this in Phase 3)
+	refColumn := "id"
+
+	// Default ON DELETE/UPDATE behavior
+	// TODO(relationships-phase3): Make this configurable in schema
+	onDelete := "CASCADE"
+	onUpdate := "CASCADE"
+
+	return ForeignKeyData{
+		Name:            constraintName,
+		Column:          generator.SnakeCase(rel.ForeignKey),
+		ReferenceTable:  refTable,
+		ReferenceColumn: refColumn,
+		OnDelete:        onDelete,
+		OnUpdate:        onUpdate,
 	}
 }

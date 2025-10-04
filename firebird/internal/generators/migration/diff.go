@@ -91,6 +91,11 @@ func DiffSchemas(oldDef, newDef *schema.Definition, dialect DatabaseDialect) (up
 	upStatements = append(upStatements, indexUp...)
 	downStatements = append(downStatements, indexDown...)
 
+	// 6. Check for foreign key changes
+	fkUp, fkDown := diffForeignKeys(oldDef, newDef, tableName, dialect)
+	upStatements = append(upStatements, fkUp...)
+	downStatements = append(downStatements, fkDown...)
+
 	// Error if no changes detected
 	if len(upStatements) == 0 {
 		return "", "", fmt.Errorf("no schema changes detected - migration would be empty")
@@ -389,4 +394,79 @@ func indexExists(def *schema.Definition, index schema.Index) bool {
 		}
 	}
 	return false
+}
+
+// diffForeignKeys compares relationships and generates FK ALTER statements
+func diffForeignKeys(oldDef, newDef *schema.Definition, tableName string, dialect DatabaseDialect) (up, down []string) {
+	oldFKs := extractBelongsToRelationships(oldDef)
+	newFKs := extractBelongsToRelationships(newDef)
+
+	// Detect added FKs
+	for _, newFK := range newFKs {
+		found := false
+		for _, oldFK := range oldFKs {
+			if newFK.ForeignKey == oldFK.ForeignKey && newFK.Model == oldFK.Model {
+				found = true
+				break
+			}
+		}
+		if !found {
+			fkData := transformRelationshipToFK(newFK, tableName, newDef)
+			upSQL := generateAddForeignKey(tableName, fkData, dialect)
+			downSQL := generateDropForeignKey(tableName, fkData, dialect)
+			up = append(up, upSQL)
+			down = append(down, downSQL)
+		}
+	}
+
+	// Detect removed FKs
+	for _, oldFK := range oldFKs {
+		found := false
+		for _, newFK := range newFKs {
+			if oldFK.ForeignKey == newFK.ForeignKey && oldFK.Model == newFK.Model {
+				found = true
+				break
+			}
+		}
+		if !found {
+			fkData := transformRelationshipToFK(oldFK, tableName, oldDef)
+			upSQL := generateDropForeignKey(tableName, fkData, dialect)
+			downSQL := generateAddForeignKey(tableName, fkData, dialect)
+			up = append(up, upSQL)
+			down = append(down, downSQL)
+		}
+	}
+
+	return up, down
+}
+
+// extractBelongsToRelationships filters relationships to only belongs_to
+func extractBelongsToRelationships(def *schema.Definition) []schema.Relationship {
+	var result []schema.Relationship
+	for _, rel := range def.Spec.Relationships {
+		if rel.Type == "belongs_to" {
+			result = append(result, rel)
+		}
+	}
+	return result
+}
+
+// generateAddForeignKey creates ALTER TABLE ADD CONSTRAINT statement
+func generateAddForeignKey(tableName string, fk ForeignKeyData, dialect DatabaseDialect) string {
+	return fmt.Sprintf(`ALTER TABLE %s
+    ADD CONSTRAINT %s
+    FOREIGN KEY (%s)
+    REFERENCES %s(%s)
+    ON DELETE %s
+    ON UPDATE %s;`,
+		tableName, fk.Name, fk.Column, fk.ReferenceTable, fk.ReferenceColumn, fk.OnDelete, fk.OnUpdate)
+}
+
+// generateDropForeignKey creates ALTER TABLE DROP CONSTRAINT statement
+func generateDropForeignKey(tableName string, fk ForeignKeyData, dialect DatabaseDialect) string {
+	dropKeyword := "CONSTRAINT"
+	if dialect == MySQL {
+		dropKeyword = "FOREIGN KEY"
+	}
+	return fmt.Sprintf("ALTER TABLE %s DROP %s %s;", tableName, dropKeyword, fk.Name)
 }

@@ -213,3 +213,92 @@ func TestGenerateIndexName(t *testing.T) {
 		})
 	}
 }
+
+func TestTransformRelationshipToFK(t *testing.T) {
+	rel := schema.Relationship{
+		Name:       "Author",
+		Type:       "belongs_to",
+		Model:      "User",
+		ForeignKey: "author_id",
+	}
+
+	def := &schema.Definition{Name: "Post"}
+	fk := transformRelationshipToFK(rel, "posts", def)
+
+	if fk.Name != "fk_posts_author_id" {
+		t.Errorf("fk.Name = %q, want %q", fk.Name, "fk_posts_author_id")
+	}
+	if fk.Column != "author_id" {
+		t.Errorf("fk.Column = %q, want %q", fk.Column, "author_id")
+	}
+	if fk.ReferenceTable != "users" {
+		t.Errorf("fk.ReferenceTable = %q, want %q", fk.ReferenceTable, "users")
+	}
+	if fk.ReferenceColumn != "id" {
+		t.Errorf("fk.ReferenceColumn = %q, want %q", fk.ReferenceColumn, "id")
+	}
+	if fk.OnDelete != "CASCADE" {
+		t.Errorf("fk.OnDelete = %q, want %q", fk.OnDelete, "CASCADE")
+	}
+	if fk.OnUpdate != "CASCADE" {
+		t.Errorf("fk.OnUpdate = %q, want %q", fk.OnUpdate, "CASCADE")
+	}
+}
+
+func TestPrepareMigrationDataWithForeignKeys(t *testing.T) {
+	def := &schema.Definition{
+		Name: "Post",
+		Spec: schema.Spec{
+			Fields: []schema.Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+				{Name: "author_id", Type: "uuid.UUID", DBType: "UUID"},
+				{Name: "title", Type: "string", DBType: "VARCHAR(255)"},
+			},
+			Relationships: []schema.Relationship{
+				{Name: "Author", Type: "belongs_to", Model: "User", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	data := PrepareMigrationData(def, PostgreSQL)
+
+	if data.TableName != "posts" {
+		t.Errorf("TableName = %q, want %q", data.TableName, "posts")
+	}
+
+	if len(data.ForeignKeys) != 1 {
+		t.Fatalf("len(ForeignKeys) = %d, want 1", len(data.ForeignKeys))
+	}
+
+	fk := data.ForeignKeys[0]
+	if fk.Name != "fk_posts_author_id" {
+		t.Errorf("fk.Name = %q, want %q", fk.Name, "fk_posts_author_id")
+	}
+	if fk.Column != "author_id" {
+		t.Errorf("fk.Column = %q, want %q", fk.Column, "author_id")
+	}
+	if fk.ReferenceTable != "users" {
+		t.Errorf("fk.ReferenceTable = %q, want %q", fk.ReferenceTable, "users")
+	}
+}
+
+func TestPrepareMigrationDataWithoutBelongsTo(t *testing.T) {
+	def := &schema.Definition{
+		Name: "User",
+		Spec: schema.Spec{
+			Fields: []schema.Field{
+				{Name: "id", Type: "uuid.UUID", DBType: "UUID", PrimaryKey: true},
+			},
+			Relationships: []schema.Relationship{
+				{Name: "Posts", Type: "has_many", Model: "Post", ForeignKey: "author_id"},
+			},
+		},
+	}
+
+	data := PrepareMigrationData(def, PostgreSQL)
+
+	// has_many should not create FK constraints in this table
+	if len(data.ForeignKeys) != 0 {
+		t.Errorf("len(ForeignKeys) = %d, want 0 (has_many should not create FKs in this table)", len(data.ForeignKeys))
+	}
+}

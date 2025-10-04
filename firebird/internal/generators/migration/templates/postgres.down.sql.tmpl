@@ -1,3 +1,10 @@
+{{- if .ForeignKeys }}
+-- Drop foreign key constraints
+{{- range .ForeignKeys }}
+ALTER TABLE {{ $.TableName }} DROP CONSTRAINT IF EXISTS {{ .Name }};
+{{- end }}
+
+{{- end }}
 {{- if .Indexes }}
 {{- range .Indexes }}
 DROP INDEX IF EXISTS {{ .Name }};

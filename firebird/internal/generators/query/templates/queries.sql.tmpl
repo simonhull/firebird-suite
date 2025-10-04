@@ -66,3 +66,36 @@ WHERE id = $1;
 DELETE FROM {{ .TableName }}
 WHERE id = $1;
 {{- end }}
+{{- if .Relationships }}
+
+-- ==========================================
+-- Relationship Loading Queries
+-- ==========================================
+{{- range .Relationships }}
+
+{{- if eq .Type "belongs_to" }}
+-- name: {{ .GetSingleQueryName }} :one
+SELECT * FROM {{ .TargetTable }}
+WHERE id = $1;
+{{- end }}
+
+{{- if eq .Type "has_many" }}
+-- name: {{ .GetSingleQueryName }} :many
+SELECT * FROM {{ .TargetTable }}
+WHERE {{ .ForeignKey }} = $1
+{{- if $.SoftDeletes }}
+  AND deleted_at IS NULL
+{{- end }}
+ORDER BY created_at DESC;
+
+-- name: {{ .GetManyQueryName }} :many
+SELECT * FROM {{ .TargetTable }}
+WHERE {{ .ForeignKey }} = ANY($1::{{ .PrimaryKeyType }}[])
+{{- if $.SoftDeletes }}
+  AND deleted_at IS NULL
+{{- end }}
+ORDER BY {{ .ForeignKey }}, created_at DESC;
+{{- end }}
+
+{{- end }}
+{{- end }}

@@ -20,6 +20,19 @@ type Generator struct {
 	renderer    *generator.Renderer
 }
 
+// RelationshipQueryData holds data for generating relationship queries
+type RelationshipQueryData struct {
+	Name               string // Relationship name (e.g., "Author", "Comments")
+	Type               string // "belongs_to" or "has_many"
+	Model              string // Target model name (e.g., "User", "Comment")
+	ForeignKey         string // Snake_case FK field (e.g., "author_id")
+	PrimaryKeyType     string // PostgreSQL array type (e.g., "uuid", "bigint")
+	GetSingleQueryName string // Query name for single fetch (e.g., "GetPostAuthor")
+	GetManyQueryName   string // Query name for batch fetch (e.g., "GetCommentsForPosts")
+	SourceTable        string // Source table name (e.g., "posts")
+	TargetTable        string // Target table name (e.g., "users")
+}
+
 // New creates a new query generator.
 func New(projectPath, schemaPath string) *Generator {
 	return &Generator{
@@ -142,6 +155,9 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 		queryCount = 8 // +1 for Restore
 	}
 
+	// Prepare relationship data
+	relationships := prepareRelationshipData(def)
+
 	return map[string]interface{}{
 		"ModelName":         modelName,
 		"TableName":         tableName,
@@ -154,5 +170,67 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 		"SoftDeleteWhere":   softDeleteWhere,
 		"HasTimestamps":     def.Spec.Timestamps,
 		"QueryCount":        queryCount,
+		"Relationships":     relationships,
 	}
+}
+
+// prepareRelationshipData transforms schema relationships into template data
+func prepareRelationshipData(def *schema.Definition) []RelationshipQueryData {
+	var result []RelationshipQueryData
+
+	// Find primary key type for batch query generation
+	pkType := getPrimaryKeyDBType(def)
+
+	// Determine table name
+	sourceTable := def.Spec.TableName
+	if sourceTable == "" {
+		sourceTable = generator.SnakeCase(generator.Pluralize(def.Name))
+	}
+
+	for _, rel := range def.Spec.Relationships {
+		data := RelationshipQueryData{
+			Name:           rel.Name,
+			Type:           rel.Type,
+			Model:          rel.Model,
+			ForeignKey:     generator.SnakeCase(rel.ForeignKey),
+			PrimaryKeyType: pkType,
+			SourceTable:    sourceTable,
+			TargetTable:    generator.SnakeCase(generator.Pluralize(rel.Model)),
+		}
+
+		// Generate query names
+		if rel.Type == "belongs_to" {
+			// GetPostAuthor
+			data.GetSingleQueryName = fmt.Sprintf("Get%s%s", def.Name, rel.Name)
+		} else if rel.Type == "has_many" {
+			// GetPostComments
+			data.GetSingleQueryName = fmt.Sprintf("Get%s%s", def.Name, rel.Name)
+			// GetCommentsForPosts
+			data.GetManyQueryName = fmt.Sprintf("Get%sFor%s", generator.Pluralize(rel.Model), generator.Pluralize(def.Name))
+		}
+
+		result = append(result, data)
+	}
+
+	return result
+}
+
+// getPrimaryKeyDBType returns the DB type for the primary key field
+func getPrimaryKeyDBType(def *schema.Definition) string {
+	for _, field := range def.Spec.Fields {
+		if field.PrimaryKey {
+			// Map Go types to PostgreSQL array types
+			switch field.DBType {
+			case "UUID":
+				return "uuid"
+			case "BIGINT", "BIGSERIAL":
+				return "bigint"
+			case "INTEGER", "SERIAL":
+				return "integer"
+			default:
+				return "bigint" // Safe default
+			}
+		}
+	}
+	return "bigint" // Fallback
 }

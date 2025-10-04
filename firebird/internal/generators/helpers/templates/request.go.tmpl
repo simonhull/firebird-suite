@@ -39,6 +39,21 @@ func ParseInt64ID(s string) (int64, error) {
 	return strconv.ParseInt(s, 10, 64)
 }
 
+// GetPathValue extracts path parameters from the request
+func GetPathValue(r *http.Request, key string) string {
+	return r.PathValue(key)
+}
+
+// GetPathUUID extracts and validates a UUID from path parameters
+func GetPathUUID(r *http.Request, key string) (uuid.UUID, error) {
+	return ParseUUID(r.PathValue(key))
+}
+
+// GetPathInt64 extracts and validates an int64 from path parameters
+func GetPathInt64(r *http.Request, key string) (int64, error) {
+	return ParseInt64ID(r.PathValue(key))
+}
+
 // TODO: Add custom parsing helpers here
 // Examples:
 //

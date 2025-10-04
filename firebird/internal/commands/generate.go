@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/dto"
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/handler"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/helpers"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/migration"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/model"
@@ -24,7 +25,7 @@ func GenerateCmd() *cobra.Command {
 	var force, skip, diff, dryRun bool
 	var timestamps, softDeletes, generateAll bool
 	var intID bool // NEW: Use int64 instead of UUID for primary key
-	var skipQueries, skipRepository, skipServices bool
+	var skipQueries, skipRepository, skipServices, skipHandlers bool
 	// Model generator flags
 	var modelOutput, modelPackage, modelSchema string
 
@@ -261,6 +262,37 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 
 					output.Success("Created services")
 				}
+
+				// Generate Handlers (unless --skip-handlers flag is set)
+				if err == nil && !skipHandlers && !dryRun {
+					output.Info("Generating handlers")
+
+					// Get module path (already retrieved above)
+					modulePath, modErr := getModulePath(".")
+					if modErr != nil {
+						output.Error(fmt.Sprintf("Failed to detect module path: %v", modErr))
+						os.Exit(1)
+					}
+
+					handlerGen := handler.New(".", schemaPath, modulePath)
+					handlerOps, handlerErr := handlerGen.Generate()
+					if handlerErr != nil {
+						output.Error(fmt.Sprintf("Failed to generate handlers: %v", handlerErr))
+						os.Exit(1)
+					}
+
+					// Execute handler operations
+					if err := generator.Execute(ctx, handlerOps, generator.ExecuteOptions{
+						DryRun: dryRun,
+						Force:  force,
+						Writer: cmd.OutOrStdout(),
+					}); err != nil {
+						output.Error(fmt.Sprintf("Failed to create handler files: %v", err))
+						os.Exit(1)
+					}
+
+					output.Success("Created handlers")
+				}
 			case "migration":
 				gen := migration.NewGenerator()
 				ops, err = gen.Generate(name)
@@ -346,6 +378,7 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 	cmd.Flags().BoolVar(&skipQueries, "skip-queries", false, "Skip query generation (model only)")
 	cmd.Flags().BoolVar(&skipRepository, "skip-repository", false, "Skip repository generation (model only)")
 	cmd.Flags().BoolVar(&skipServices, "skip-services", false, "Skip service generation (model only)")
+	cmd.Flags().BoolVar(&skipHandlers, "skip-handlers", false, "Skip handler generation (model only)")
 	// Model generator flags
 	cmd.Flags().StringVar(&modelOutput, "output", "", "Custom output path for model file (model only)")
 	cmd.Flags().StringVar(&modelPackage, "package", "", "Custom package name for model (model only)")

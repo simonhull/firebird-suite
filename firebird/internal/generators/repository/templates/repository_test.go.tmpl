@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"log/slog"
 	"os"
 	"testing"
 
@@ -29,10 +30,24 @@ func getTestDB(t *testing.T) *db.DB {
 	return database
 }
 
+// getTestLogger creates a logger for tests.
+// Set TEST_VERBOSE=1 to see debug logs during tests.
+func getTestLogger() *slog.Logger {
+	level := slog.LevelError
+	if os.Getenv("TEST_VERBOSE") == "1" {
+		level = slog.LevelDebug
+	}
+
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: level,
+	}))
+}
+
 // setup{{ .ModelName }}Test creates a test repository and returns cleanup function.
 func setup{{ .ModelName }}Test(t *testing.T) (*{{ .ModelName }}Repository, func()) {
 	database := getTestDB(t)
-	repo := New{{ .ModelName }}Repository(database)
+	logger := getTestLogger()
+	repo := New{{ .ModelName }}Repository(database, logger)
 
 	// Cleanup function to run after test
 	cleanup := func() {

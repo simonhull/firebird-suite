@@ -1,0 +1,195 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"{{ .ModulePath }}/internal/db"
+	"{{ .ModulePath }}/internal/logging"
+	"{{ .ModulePath }}/internal/middleware"
+	"{{ .ModulePath }}/internal/repositories"
+)
+
+func main() {
+	// Setup logger
+	logger := setupLogger()
+
+	logger.Info("starting application",
+		slog.String("env", getEnv("APP_ENV", "development")),
+		slog.String("version", "0.3.0"),
+	)
+
+	// Setup database
+	database, err := setupDatabase(logger)
+	if err != nil {
+		logger.Error("failed to setup database", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	defer database.Close()
+
+	logger.Info("database connected")
+
+	// Setup repositories
+	repos := setupRepositories(database, logger)
+	_ = repos // Will be used when services are added
+
+	// Setup HTTP server
+	mux := http.NewServeMux()
+
+	// Health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "OK")
+	})
+
+	// Wrap with middleware
+	handler := middleware.Logging(logger)(mux)
+	handler = middleware.Recovery(logger)(handler)
+
+	// Create server
+	addr := getEnv("HTTP_ADDR", ":8080")
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      handler,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	// Start server in goroutine
+	serverErrors := make(chan error, 1)
+	go func() {
+		logger.Info("server listening", slog.String("addr", addr))
+		serverErrors <- server.ListenAndServe()
+	}()
+
+	// Wait for interrupt signal
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case err := <-serverErrors:
+		logger.Error("server error", slog.String("error", err.Error()))
+		os.Exit(1)
+
+	case sig := <-shutdown:
+		logger.Info("shutdown signal received",
+			slog.String("signal", sig.String()))
+
+		// Graceful shutdown with timeout
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(ctx); err != nil {
+			logger.Error("graceful shutdown failed",
+				slog.String("error", err.Error()))
+			if err := server.Close(); err != nil {
+				logger.Error("force shutdown failed",
+					slog.String("error", err.Error()))
+			}
+			os.Exit(1)
+		}
+
+		logger.Info("shutdown complete")
+	}
+}
+
+// setupLogger creates and configures the logger based on environment
+func setupLogger() *slog.Logger {
+	env := getEnv("APP_ENV", "development")
+	logLevel := getEnv("LOG_LEVEL", "info")
+
+	// Parse log level
+	var level slog.Level
+	switch logLevel {
+	case "debug":
+		level = slog.LevelDebug
+	case "info":
+		level = slog.LevelInfo
+	case "warn":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
+	}
+
+	// Choose handler based on environment
+	var handler slog.Handler
+	if env == "production" {
+		// JSON output for production
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: level,
+		})
+	} else {
+		// Beautiful console output for development
+		handler = logging.NewConsoleHandler(os.Stdout, &logging.HandlerOptions{
+			Level:     level,
+			AddSource: true,
+			NoColor:   false,
+		})
+	}
+
+	return slog.New(handler)
+}
+
+// setupDatabase connects to the database
+func setupDatabase(logger *slog.Logger) (*db.DB, error) {
+	dbURL := getEnv("DATABASE_URL", "")
+	if dbURL == "" {
+		return nil, fmt.Errorf("DATABASE_URL environment variable is required")
+	}
+
+	logger.Debug("connecting to database", slog.String("url", maskDatabaseURL(dbURL)))
+
+	database, err := db.New(dbURL)
+	if err != nil {
+		return nil, fmt.Errorf("database connection failed: %w", err)
+	}
+
+	return database, nil
+}
+
+// setupRepositories initializes all repositories
+func setupRepositories(database *db.DB, logger *slog.Logger) *Repositories {
+	repoLogger := logger.With(slog.String("layer", "repository"))
+
+	return &Repositories{
+		// Add repositories as they are generated
+		// Example:
+		// Posts: repositories.NewPostRepository(database, repoLogger),
+		_ : struct{}{}, // Remove this when you add your first repository
+	}
+}
+
+// Repositories holds all repository instances
+type Repositories struct {
+	// Add repository fields here as they are generated
+	// Example:
+	// Posts *repositories.PostRepository
+	_ struct{} // Remove this when you add your first repository
+}
+
+// getEnv retrieves an environment variable with a fallback default
+func getEnv(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
+}
+
+// maskDatabaseURL masks sensitive parts of the database URL for logging
+func maskDatabaseURL(url string) string {
+	// Simple masking - just show the protocol and host
+	// Full implementation would use url.Parse and mask password
+	if len(url) > 20 {
+		return url[:20] + "***"
+	}
+	return "***"
+}

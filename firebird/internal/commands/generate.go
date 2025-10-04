@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/dto"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/migration"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/model"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/query"
@@ -167,6 +168,37 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 					}
 
 					output.Success("Created repository")
+				}
+
+				// Generate DTOs (unless --skip-repository flag is set)
+				if err == nil && !skipRepository && !dryRun {
+					output.Info("Generating DTOs")
+
+					// Get module path (already retrieved above)
+					modulePath, modErr := getModulePath(".")
+					if modErr != nil {
+						output.Error(fmt.Sprintf("Failed to detect module path: %v", modErr))
+						os.Exit(1)
+					}
+
+					dtoGen := dto.New(".", schemaPath, modulePath)
+					dtoOps, dtoErr := dtoGen.Generate()
+					if dtoErr != nil {
+						output.Error(fmt.Sprintf("Failed to generate DTOs: %v", dtoErr))
+						os.Exit(1)
+					}
+
+					// Execute DTO operations
+					if err := generator.Execute(ctx, dtoOps, generator.ExecuteOptions{
+						DryRun: dryRun,
+						Force:  force,
+						Writer: cmd.OutOrStdout(),
+					}); err != nil {
+						output.Error(fmt.Sprintf("Failed to create DTO files: %v", err))
+						os.Exit(1)
+					}
+
+					output.Success("Created DTOs")
 				}
 			case "migration":
 				gen := migration.NewGenerator()

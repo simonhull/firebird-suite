@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log/slog"
+
 	"{{ .ModulePath }}/internal/db"
 )
 
@@ -25,11 +27,12 @@ type {{ .ModelName }}Repository struct {
 }
 
 // New{{ .ModelName }}Repository creates a new {{ .ModelName }} repository.
-func New{{ .ModelName }}Repository(database *db.DB) *{{ .ModelName }}Repository {
+func New{{ .ModelName }}Repository(database *db.DB, logger *slog.Logger) *{{ .ModelName }}Repository {
 	return &{{ .ModelName }}Repository{
 		{{ .ModelName }}RepositoryBase: {{ .ModelName }}RepositoryBase{
 			queries: database.Queries(),
 			db:      database,
+			logger:  logger.With(slog.String("repository", "{{ .ModelName }}")),
 		},
 	}
 }

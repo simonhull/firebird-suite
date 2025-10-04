@@ -10,6 +10,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/logging"
+	appgen "github.com/simonhull/firebird-suite/firebird/internal/generators/main"
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/middleware"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/sqlc"
 	fledgeExec "github.com/simonhull/firebird-suite/fledge/exec"
 	"github.com/simonhull/firebird-suite/fledge/generator"
@@ -134,6 +137,13 @@ func (s *Scaffolder) Scaffold(opts *ScaffoldOptions) ([]generator.Operation, *Sc
 		}
 		ops = append(ops, dbOps...)
 	}
+
+	// 8.5. Generate logging, middleware, and main
+	loggingOps, err := s.buildLoggingOperations(projectPath, data)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to build logging operations: %w", err)
+	}
+	ops = append(ops, loggingOps...)
 
 	// 9. Prepare result metadata
 	result := &ScaffoldResult{
@@ -360,6 +370,43 @@ func detectGoVersion() string {
 	}
 
 	return "1.25" // Fallback
+}
+
+// buildLoggingOperations generates operations for logging, middleware, and main
+func (s *Scaffolder) buildLoggingOperations(projectPath string, data *ProjectData) ([]generator.Operation, error) {
+	var ops []generator.Operation
+
+	// Generate logging package
+	output.Info("Generating logging package")
+	loggingGen := logging.New(projectPath)
+	loggingOps, err := loggingGen.Generate()
+	if err != nil {
+		return nil, fmt.Errorf("generating logging: %w", err)
+	}
+	ops = append(ops, loggingOps...)
+	output.Success("Logging package generated")
+
+	// Generate middleware package
+	output.Info("Generating middleware package")
+	middlewareGen := middleware.New(projectPath)
+	middlewareOps, err := middlewareGen.Generate()
+	if err != nil {
+		return nil, fmt.Errorf("generating middleware: %w", err)
+	}
+	ops = append(ops, middlewareOps...)
+	output.Success("Middleware package generated")
+
+	// Generate main.go
+	output.Info("Generating main.go")
+	mainGenerator := appgen.New(projectPath, data.Module)
+	mainOps, err := mainGenerator.Generate()
+	if err != nil {
+		return nil, fmt.Errorf("generating main.go: %w", err)
+	}
+	ops = append(ops, mainOps...)
+	output.Success("Main.go generated")
+
+	return ops, nil
 }
 
 // RunGoModTidy runs go mod tidy in the project directory

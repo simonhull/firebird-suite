@@ -5,7 +5,10 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"{{ .ModulePath }}/internal/db"
 )
@@ -15,39 +18,196 @@ import (
 type {{ .ModelName }}RepositoryBase struct {
 	queries *db.Queries
 	db      *db.DB
+	logger  *slog.Logger
 }
 
 // Create creates a new {{ .ModelName }}.
 func (r *{{ .ModelName }}RepositoryBase) Create(ctx context.Context, params db.Create{{ .ModelName }}Params) (*db.{{ .ModelName }}, error) {
-	return r.queries.Create{{ .ModelName }}(ctx, params)
+	start := time.Now()
+
+	result, err := r.queries.Create{{ .ModelName }}(ctx, params)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to create {{ .ModelName }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "Create"),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return nil, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "Create"),
+			slog.String("model", "{{ .ModelName }}"),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return result, nil
 }
 
 // GetByID retrieves a {{ .ModelName }} by ID.
 func (r *{{ .ModelName }}RepositoryBase) GetByID(ctx context.Context, id {{ .PrimaryKeyType }}) (*db.{{ .ModelName }}, error) {
-	return r.queries.Get{{ .ModelName }}(ctx, id)
+	start := time.Now()
+
+	result, err := r.queries.Get{{ .ModelName }}(ctx, id)
+
+	duration := time.Since(start)
+
+	if err != nil && err != sql.ErrNoRows {
+		r.logger.ErrorContext(ctx, "failed to get {{ .ModelName }} by ID",
+			slog.String("layer", "repository"),
+			slog.String("operation", "GetByID"),
+			slog.Any("id", id),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return nil, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "GetByID"),
+			slog.String("model", "{{ .ModelName }}"),
+			slog.Any("id", id),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return result, err
 }
 
 // List retrieves all {{ .ModelName }}s.
 func (r *{{ .ModelName }}RepositoryBase) List(ctx context.Context) ([]db.{{ .ModelName }}, error) {
-	return r.queries.List{{ .ModelName }}s(ctx)
+	start := time.Now()
+
+	result, err := r.queries.List{{ .ModelName }}s(ctx)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to list {{ .ModelName }}s",
+			slog.String("layer", "repository"),
+			slog.String("operation", "List"),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return nil, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "List"),
+			slog.String("model", "{{ .ModelName }}"),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return result, nil
 }
 
 // ListPaginated retrieves {{ .ModelName }}s with pagination.
 func (r *{{ .ModelName }}RepositoryBase) ListPaginated(ctx context.Context, limit, offset int32) ([]db.{{ .ModelName }}, error) {
-	return r.queries.List{{ .ModelName }}sPaginated(ctx, db.List{{ .ModelName }}sPaginatedParams{
+	start := time.Now()
+
+	result, err := r.queries.List{{ .ModelName }}sPaginated(ctx, db.List{{ .ModelName }}sPaginatedParams{
 		Limit:  limit,
 		Offset: offset,
 	})
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to list {{ .ModelName }}s paginated",
+			slog.String("layer", "repository"),
+			slog.String("operation", "ListPaginated"),
+			slog.Int("limit", int(limit)),
+			slog.Int("offset", int(offset)),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return nil, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "ListPaginated"),
+			slog.String("model", "{{ .ModelName }}"),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return result, nil
 }
 
 // Count returns the total number of {{ .ModelName }}s.
 func (r *{{ .ModelName }}RepositoryBase) Count(ctx context.Context) (int64, error) {
-	return r.queries.Count{{ .ModelName }}s(ctx)
+	start := time.Now()
+
+	result, err := r.queries.Count{{ .ModelName }}s(ctx)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to count {{ .ModelName }}s",
+			slog.String("layer", "repository"),
+			slog.String("operation", "Count"),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return 0, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "Count"),
+			slog.String("model", "{{ .ModelName }}"),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return result, nil
 }
 
 // Update updates a {{ .ModelName }}.
 func (r *{{ .ModelName }}RepositoryBase) Update(ctx context.Context, params db.Update{{ .ModelName }}Params) (*db.{{ .ModelName }}, error) {
-	return r.queries.Update{{ .ModelName }}(ctx, params)
+	start := time.Now()
+
+	result, err := r.queries.Update{{ .ModelName }}(ctx, params)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to update {{ .ModelName }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "Update"),
+			slog.Any("id", params.ID),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return nil, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "Update"),
+			slog.String("model", "{{ .ModelName }}"),
+			slog.Any("id", params.ID),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return result, nil
 }
 
 // Delete deletes a {{ .ModelName }}.
@@ -55,13 +215,67 @@ func (r *{{ .ModelName }}RepositoryBase) Update(ctx context.Context, params db.U
 // Note: This performs a soft delete (sets deleted_at timestamp).
 {{- end }}
 func (r *{{ .ModelName }}RepositoryBase) Delete(ctx context.Context, id {{ .PrimaryKeyType }}) error {
-	return r.queries.Delete{{ .ModelName }}(ctx, id)
+	start := time.Now()
+
+	err := r.queries.Delete{{ .ModelName }}(ctx, id)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to delete {{ .ModelName }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "Delete"),
+			slog.Any("id", id),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "Delete"),
+			slog.String("model", "{{ .ModelName }}"),
+			slog.Any("id", id),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return nil
 }
 {{- if .SoftDeletes }}
 
 // Restore restores a soft-deleted {{ .ModelName }}.
 func (r *{{ .ModelName }}RepositoryBase) Restore(ctx context.Context, id {{ .PrimaryKeyType }}) error {
-	return r.queries.Restore{{ .ModelName }}(ctx, id)
+	start := time.Now()
+
+	err := r.queries.Restore{{ .ModelName }}(ctx, id)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to restore {{ .ModelName }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "Restore"),
+			slog.Any("id", id),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "Restore"),
+			slog.String("model", "{{ .ModelName }}"),
+			slog.Any("id", id),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return nil
 }
 {{- end }}
 
@@ -94,6 +308,7 @@ func (r *{{ .ModelName }}RepositoryBase) WithTx(ctx context.Context, fn func({{ 
 		{{ .ModelName }}RepositoryBase: {{ .ModelName }}RepositoryBase{
 			queries: txQueries,
 			db:      r.db,
+			logger:  r.logger,
 		},
 	}
 

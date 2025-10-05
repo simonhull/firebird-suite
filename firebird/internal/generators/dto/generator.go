@@ -257,6 +257,9 @@ func (g *Generator) prepareResponseData(def *schema.Definition) ResponseData {
 		)
 	}
 
+	// Prepare relationship fields
+	relationships := prepareRelationshipFields(def)
+
 	return ResponseData{
 		ModelName:      def.Name,
 		ModulePath:     g.modulePath,
@@ -264,6 +267,7 @@ func (g *Generator) prepareResponseData(def *schema.Definition) ResponseData {
 		HasTime:        hasTimeInResponse(fields),
 		ExcludedFields: excluded,
 		Fields:         fields,
+		Relationships:  relationships,
 	}
 }
 
@@ -376,6 +380,47 @@ func hasTimeInResponse(fields []ResponseFieldData) bool {
 	return false
 }
 
+// prepareRelationshipFields transforms relationships into DTO field data
+func prepareRelationshipFields(def *schema.Definition) []RelationshipFieldData {
+	var result []RelationshipFieldData
+
+	for _, rel := range def.Spec.Relationships {
+		field := RelationshipFieldData{
+			Name:    rel.Name,
+			JSONTag: toSnakeCase(rel.Name),
+		}
+
+		// Determine response type
+		if rel.Type == "belongs_to" {
+			// Single relationship - pointer to allow nil
+			field.ResponseType = fmt.Sprintf("*%sResponse", rel.Model)
+		} else {
+			// Collection relationship - slice
+			field.ResponseType = fmt.Sprintf("[]*%sResponse", rel.Model)
+		}
+
+		result = append(result, field)
+	}
+
+	return result
+}
+
+// toSnakeCase converts PascalCase to snake_case
+func toSnakeCase(s string) string {
+	var result []rune
+	for i, r := range s {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			result = append(result, '_')
+		}
+		if r >= 'A' && r <= 'Z' {
+			result = append(result, r-'A'+'a')
+		} else {
+			result = append(result, r)
+		}
+	}
+	return string(result)
+}
+
 // Template data structures
 
 type CreateInputData struct {
@@ -403,6 +448,7 @@ type ResponseData struct {
 	HasTime        bool
 	ExcludedFields []string
 	Fields         []ResponseFieldData
+	Relationships  []RelationshipFieldData
 }
 
 type FieldData struct {
@@ -418,6 +464,12 @@ type ResponseFieldData struct {
 	JSONTag     string
 	DBFieldName string
 	Omitempty   bool
+}
+
+type RelationshipFieldData struct {
+	Name         string // Field name (e.g., "Author", "Posts")
+	JSONTag      string // JSON tag (e.g., "author", "posts")
+	ResponseType string // Go type (e.g., "*UserResponse", "[]*PostResponse")
 }
 
 // WriteFileIfNotExistsOp is a custom operation that only creates files if they don't exist

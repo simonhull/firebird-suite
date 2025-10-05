@@ -85,17 +85,21 @@ func (g *Generator) prepareTemplateData(def *schema.Definition) HandlerTemplateD
 	// Check for soft deletes
 	hasSoftDelete := def.Spec.SoftDeletes
 
+	// Check for relationships
+	hasRelationships := len(def.Spec.Relationships) > 0
+
 	// Determine primary key type
 	pkType := detectPrimaryKeyType(def)
 
 	return HandlerTemplateData{
-		ModulePath:     g.modulePath,
-		ModelName:      modelName,
-		ModelNameLower: modelNameLower,
-		ModelPlural:    modelPlural,
-		Package:        "handlers",
-		HasSoftDelete:  hasSoftDelete,
-		PrimaryKeyType: pkType,
+		ModulePath:       g.modulePath,
+		ModelName:        modelName,
+		ModelNameLower:   modelNameLower,
+		ModelPlural:      modelPlural,
+		Package:          "handlers",
+		HasSoftDelete:    hasSoftDelete,
+		HasRelationships: hasRelationships,
+		PrimaryKeyType:   pkType,
 	}
 }
 
@@ -160,13 +164,14 @@ func cleanType(t string) string {
 // Template data structures
 
 type HandlerTemplateData struct {
-	ModulePath     string
-	ModelName      string
-	ModelNameLower string
-	ModelPlural    string
-	Package        string
-	HasSoftDelete  bool
-	PrimaryKeyType string
+	ModulePath       string
+	ModelName        string
+	ModelNameLower   string
+	ModelPlural      string
+	Package          string
+	HasSoftDelete    bool
+	HasRelationships bool
+	PrimaryKeyType   string
 }
 
 // WriteFileIfNotExistsOp is a custom operation that only creates files if they don't exist

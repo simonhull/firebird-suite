@@ -70,6 +70,9 @@ func (h *{{ .ModelName }}Handler) Store(w http.ResponseWriter, r *http.Request) 
 }
 
 // Show handles GET /{{ .ModelPlural }}/{id} - Get single {{ .ModelNameLower }}
+{{- if .HasRelationships }}
+// Supports ?include=relationship1,relationship2 for eager loading
+{{- end }}
 func (h *{{ .ModelName }}Handler) Show(w http.ResponseWriter, r *http.Request) {
 	id, err := GetPath{{ if eq .PrimaryKeyType "uuid.UUID" }}UUID{{ else }}Int64{{ end }}(r, "id")
 	if err != nil {
@@ -77,11 +80,35 @@ func (h *{{ .ModelName }}Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+{{- if .HasRelationships }}
+	// Check for relationship includes
+	includes := ParseIncludes(r)
+
 	{{ .ModelNameLower }}, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
 		RespondServiceError(w, err)
 		return
 	}
+
+	// TODO: Load relationships based on includes parameter
+	// Example:
+	// for _, include := range includes {
+	//     switch include {
+	//     case "author":
+	//         author, _ := h.service.Helpers().LoadAuthor(r.Context(), {{ .ModelNameLower }})
+	//         {{ .ModelNameLower }}.Author = author
+	//     case "comments":
+	//         comments, _ := h.service.Helpers().LoadComments(r.Context(), {{ .ModelNameLower }})
+	//         {{ .ModelNameLower }}.Comments = comments
+	//     }
+	// }
+{{- else }}
+	{{ .ModelNameLower }}, err := h.service.GetByID(r.Context(), id)
+	if err != nil {
+		RespondServiceError(w, err)
+		return
+	}
+{{- end }}
 
 	RespondSuccess(w, http.StatusOK, {{ .ModelNameLower }})
 }

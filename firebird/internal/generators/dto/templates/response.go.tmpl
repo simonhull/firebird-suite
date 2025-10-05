@@ -24,6 +24,13 @@ type {{ .ModelName }}Response struct {
 {{- range .Fields }}
 	{{ .Name }} {{ .Type }} `json:"{{ .JSONTag }}{{ if .Omitempty }},omitempty{{ end }}"`
 {{- end }}
+{{- if .Relationships }}
+
+	// Relationships (loaded on demand via ?include parameter)
+{{- range .Relationships }}
+	{{ .Name }} {{ .ResponseType }} `json:"{{ .JSONTag }},omitempty"`
+{{- end }}
+{{- end }}
 }
 
 // From{{ .ModelName }} converts a database model to a response DTO.
@@ -35,6 +42,9 @@ func From{{ .ModelName }}(model *db.{{ .ModelName }}) *{{ .ModelName }}Response 
 	return &{{ .ModelName }}Response{
 {{- range .Fields }}
 		{{ .Name }}: model.{{ .DBFieldName }},
+{{- end }}
+{{- if .Relationships }}
+		// Relationships are nil by default, populated via Load functions
 {{- end }}
 	}
 }

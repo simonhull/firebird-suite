@@ -4,6 +4,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"{{ .ModulePath }}/internal/services"
@@ -52,6 +53,28 @@ func GetPathUUID(r *http.Request, key string) (uuid.UUID, error) {
 // GetPathInt64 extracts and validates an int64 from path parameters
 func GetPathInt64(r *http.Request, key string) (int64, error) {
 	return ParseInt64ID(r.PathValue(key))
+}
+
+// ParseIncludes extracts relationship includes from ?include query parameter.
+// Supports comma-separated values: ?include=author,comments
+func ParseIncludes(r *http.Request) []string {
+	includeParam := r.URL.Query().Get("include")
+	if includeParam == "" {
+		return nil
+	}
+
+	// Split by comma and trim whitespace
+	includes := strings.Split(includeParam, ",")
+	result := make([]string, 0, len(includes))
+
+	for _, inc := range includes {
+		trimmed := strings.TrimSpace(inc)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+
+	return result
 }
 
 // TODO: Add custom parsing helpers here

@@ -465,3 +465,41 @@ func (r *{{ $.ModelName }}RepositoryBase) {{ .LoadManyMethod }}(ctx context.Cont
 
 {{- end }}
 {{- end }}
+{{- if .HasAPILoadableRelationships }}
+
+// ==========================================
+// Relationship Validation
+// ==========================================
+
+// ValidateIncludes checks if requested includes are allowed by schema.
+// Only relationships with api_loadable: true can be loaded via API.
+// Returns an error if any requested relationship is not API loadable.
+func (r *{{ .ModelName }}RepositoryBase) ValidateIncludes(includes []string) error {
+	if len(includes) == 0 {
+		return nil
+	}
+
+	// Whitelist generated from schema (only relationships with api_loadable: true)
+	allowed := map[string]bool{
+{{- range .Relationships }}
+{{- if .APILoadable }}
+		"{{ .Name | lower }}": true,
+{{- end }}
+{{- end }}
+	}
+
+	for _, inc := range includes {
+		// Normalize to lowercase for case-insensitive matching
+		normalized := strings.ToLower(strings.TrimSpace(inc))
+		if normalized == "" {
+			continue
+		}
+
+		if !allowed[normalized] {
+			return fmt.Errorf("relationship '%s' is not available for API loading", inc)
+		}
+	}
+
+	return nil
+}
+{{- end }}

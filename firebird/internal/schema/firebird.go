@@ -55,10 +55,11 @@ type Index struct {
 
 // Relationship represents a relationship between resources
 type Relationship struct {
-	Name       string `yaml:"name"`        // Relationship name (e.g., "Author", "Comments")
-	Type       string `yaml:"type"`        // Relationship type: "belongs_to" or "has_many"
-	Model      string `yaml:"model"`       // Target model name (e.g., "User", "Comment")
-	ForeignKey string `yaml:"foreign_key"` // Foreign key field name (e.g., "author_id", "post_id")
+	Name        string `yaml:"name"`         // Relationship name (e.g., "Author", "Comments")
+	Type        string `yaml:"type"`         // Relationship type: "belongs_to" or "has_many"
+	Model       string `yaml:"model"`        // Target model name (e.g., "User", "Comment")
+	ForeignKey  string `yaml:"foreign_key"`  // Foreign key field name (e.g., "author_id", "post_id")
+	APILoadable bool   `yaml:"api_loadable"` // Allow loading via API includes (default: false, secure by default)
 }
 
 // ValidationError represents a schema validation error with context

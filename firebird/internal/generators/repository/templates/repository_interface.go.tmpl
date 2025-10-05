@@ -21,8 +21,6 @@ type {{ .ModelName }}Repository interface {
 	Restore(ctx context.Context, id {{ .PrimaryKeyType }}) error
 {{- end }}
 
-	// Transaction support
-	WithTx(ctx context.Context, fn func({{ .ModelName }}Repository) error) error
 {{- if .Relationships }}
 
 	// Relationship loading
@@ -36,4 +34,12 @@ type {{ .ModelName }}Repository interface {
 {{- end }}
 {{- end }}
 {{- end }}
+{{- if .HasAPILoadableRelationships }}
+
+	// Relationship validation
+	ValidateIncludes(includes []string) error
+{{- end }}
+
+	// Transaction support
+	WithTx(ctx context.Context, fn func({{ .ModelName }}Repository) error) error
 }

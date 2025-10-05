@@ -39,6 +39,7 @@ type RelationshipMethodData struct {
 	ForeignKeyType   string // FK Go type (e.g., "uuid.UUID", "int64")
 	IsSingle         bool   // belongs_to flag
 	IsMany           bool   // has_many flag
+	APILoadable      bool   // Allow loading via API includes (from schema)
 }
 
 // New creates a new repository generator.
@@ -202,13 +203,23 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 	// Prepare relationship data
 	relationships := prepareRelationshipMethods(def)
 
+	// Check if any relationships are API loadable
+	hasAPILoadable := false
+	for _, rel := range def.Spec.Relationships {
+		if rel.APILoadable {
+			hasAPILoadable = true
+			break
+		}
+	}
+
 	return map[string]interface{}{
-		"ModelName":      modelName,
-		"TableName":      tableName,
-		"ModulePath":     g.modulePath,
-		"SoftDeletes":    def.Spec.SoftDeletes,
-		"PrimaryKeyType": pkType,
-		"Relationships":  relationships,
+		"ModelName":                   modelName,
+		"TableName":                   tableName,
+		"ModulePath":                  g.modulePath,
+		"SoftDeletes":                 def.Spec.SoftDeletes,
+		"PrimaryKeyType":              pkType,
+		"Relationships":               relationships,
+		"HasAPILoadableRelationships": hasAPILoadable,
 	}
 }
 
@@ -242,6 +253,9 @@ func prepareRelationshipMethods(def *schema.Definition) []RelationshipMethodData
 			// For return types
 			IsSingle: rel.Type == "belongs_to",
 			IsMany:   rel.Type == "has_many",
+
+			// API access control
+			APILoadable: rel.APILoadable,
 		}
 
 		result = append(result, data)

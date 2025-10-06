@@ -20,13 +20,16 @@ func MigrateCmd() *cobra.Command {
 Firebird automatically configures migrations from firebird.yml.
 
 Examples:
-  firebird migrate up              # Apply all pending migrations
-  firebird migrate down            # Rollback last migration
-  firebird migrate down 3          # Rollback last 3 migrations
-  firebird migrate status          # Show current version
-  firebird migrate list            # List all migrations
-  firebird migrate force 20250102  # Force version (recovery)
-  firebird migrate create add_bio  # Create manual migration`,
+  firebird migrate up                 # Apply all pending migrations
+  firebird migrate up --dry-run       # Preview SQL without executing
+  firebird migrate down               # Rollback last migration
+  firebird migrate down 3             # Rollback last 3 migrations
+  firebird migrate rollback           # Rollback last migration (alias)
+  firebird migrate rollback --steps=2 # Rollback last 2 migrations
+  firebird migrate status             # Show current version
+  firebird migrate list               # List all migrations
+  firebird migrate force 20250102     # Force version (recovery)
+  firebird migrate create add_bio     # Create manual migration`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Check if golang-migrate is installed
 			if err := migrate.CheckMigrateInstalled(); err != nil {
@@ -39,6 +42,7 @@ Examples:
 	// Add subcommands
 	cmd.AddCommand(migrateUpCmd())
 	cmd.AddCommand(migrateDownCmd())
+	cmd.AddCommand(migrateRollbackCmd())
 	cmd.AddCommand(migrateStatusCmd())
 	cmd.AddCommand(migrateListCmd())
 	cmd.AddCommand(migrateForceCmd())
@@ -49,7 +53,9 @@ Examples:
 
 // migrateUpCmd applies all pending migrations
 func migrateUpCmd() *cobra.Command {
-	return &cobra.Command{
+	var dryRun bool
+
+	cmd := &cobra.Command{
 		Use:   "up",
 		Short: "Apply all pending migrations",
 		Long:  "Applies all pending migrations to the database.",
@@ -61,12 +67,25 @@ func migrateUpCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
+			// Handle dry-run flag
+			if dryRun {
+				if err := migrator.DryRun(context.Background()); err != nil {
+					output.Error(err.Error())
+					os.Exit(1)
+				}
+				return
+			}
+
 			if err := migrator.Up(context.Background()); err != nil {
 				output.Error(err.Error())
 				os.Exit(1)
 			}
 		},
 	}
+
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Preview SQL without executing")
+
+	return cmd
 }
 
 // migrateDownCmd rolls back migrations
@@ -99,6 +118,39 @@ func migrateDownCmd() *cobra.Command {
 			}
 		},
 	}
+}
+
+// migrateRollbackCmd is an alias for down command with --steps flag
+func migrateRollbackCmd() *cobra.Command {
+	var steps int
+
+	cmd := &cobra.Command{
+		Use:   "rollback",
+		Short: "Rollback migrations (alias for 'down')",
+		Long:  "Rolls back the last N migrations. Default is 1.",
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			if steps < 1 {
+				output.Error("Steps must be at least 1")
+				os.Exit(1)
+			}
+
+			migrator, err := migrate.NewMigrator()
+			if err != nil {
+				output.Error(err.Error())
+				os.Exit(1)
+			}
+
+			if err := migrator.Down(context.Background(), steps); err != nil {
+				output.Error(err.Error())
+				os.Exit(1)
+			}
+		},
+	}
+
+	cmd.Flags().IntVar(&steps, "steps", 1, "Number of migrations to rollback")
+
+	return cmd
 }
 
 // migrateStatusCmd shows migration status

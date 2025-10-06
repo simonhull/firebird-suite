@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"{{ .ModulePath }}/internal/db"
 	"{{ .ModulePath }}/internal/dto"
+	apperrors "{{ .ModulePath }}/internal/errors"
 	"{{ .ModulePath }}/internal/repositories"
 {{- if .HasAPILoadableRelationships }}
 	"{{ .ModulePath }}/internal/services/generated"
@@ -81,10 +82,12 @@ func (s *{{ .ModelName }}ServiceImpl) GetByID(ctx context.Context, id {{ .Primar
 	model, err := s.{{ .RepoFieldName }}.GetByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrNotFound
+			return nil, apperrors.NewNotFoundError("{{ .ModelName }}", id)
 		}
-		s.logger.ErrorContext(ctx, "failed to get {{ .ModelNameLower }}", slog.Any("id", id), slog.String("error", err.Error()))
-		return nil, fmt.Errorf("get {{ .ModelNameLower }}: %w", err)
+		s.logger.ErrorContext(ctx, "failed to get {{ .ModelNameLower }}",
+			slog.Any("id", id),
+			slog.String("error", err.Error()))
+		return nil, apperrors.NewInternalError("Failed to get {{ .ModelNameLower }}", err)
 	}
 
 	return dto.From{{ .ModelName }}(model), nil
@@ -169,10 +172,10 @@ func (s *{{ .ModelName }}ServiceImpl) Update(ctx context.Context, id {{ .Primary
 	model, err := s.{{ .RepoFieldName }}.Update(ctx, params)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrNotFound
+			return nil, apperrors.NewNotFoundError("{{ .ModelName }}", id)
 		}
 		s.logger.ErrorContext(ctx, "failed to update {{ .ModelNameLower }}", slog.Any("id", id), slog.String("error", err.Error()))
-		return nil, fmt.Errorf("update {{ .ModelNameLower }}: %w", err)
+		return nil, apperrors.NewInternalError("Failed to update {{ .ModelNameLower }}", err)
 	}
 
 	s.logger.InfoContext(ctx, "{{ .ModelNameLower }} updated", slog.Any("id", id))
@@ -184,16 +187,26 @@ func (s *{{ .ModelName }}ServiceImpl) Update(ctx context.Context, id {{ .Primary
 func (s *{{ .ModelName }}ServiceImpl) Delete(ctx context.Context, id {{ .PrimaryKeyType }}) error {
 	s.logger.InfoContext(ctx, "deleting {{ .ModelNameLower }}", slog.Any("id", id))
 
+	// Check if exists first
+	_, err := s.{{ .RepoFieldName }}.GetByID(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return apperrors.NewNotFoundError("{{ .ModelName }}", id)
+		}
+		return apperrors.NewInternalError("Failed to verify {{ .ModelNameLower }} exists", err)
+	}
+
 	// TODO: Add pre-delete validation or cascade logic here
 	// Example:
 	// if err := s.validateDelete(ctx, id); err != nil {
 	//     return err
 	// }
 
-	err := s.{{ .RepoFieldName }}.Delete(ctx, id)
-	if err != nil {
-		s.logger.ErrorContext(ctx, "failed to delete {{ .ModelNameLower }}", slog.Any("id", id), slog.String("error", err.Error()))
-		return fmt.Errorf("delete {{ .ModelNameLower }}: %w", err)
+	if err := s.{{ .RepoFieldName }}.Delete(ctx, id); err != nil {
+		s.logger.ErrorContext(ctx, "failed to delete {{ .ModelNameLower }}",
+			slog.Any("id", id),
+			slog.String("error", err.Error()))
+		return apperrors.NewInternalError("Failed to delete {{ .ModelNameLower }}", err)
 	}
 
 	s.logger.InfoContext(ctx, "{{ .ModelNameLower }} deleted", slog.Any("id", id))

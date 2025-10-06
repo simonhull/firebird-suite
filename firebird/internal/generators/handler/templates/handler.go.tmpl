@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"{{ .ModulePath }}/internal/dto"
+	apperrors "{{ .ModulePath }}/internal/errors"
+	"{{ .ModulePath }}/internal/helpers"
 	"{{ .ModulePath }}/internal/services"
 	"{{ .ModulePath }}/internal/validation"
 {{- if eq .PrimaryKeyType "uuid.UUID" }}
@@ -27,13 +29,32 @@ func New{{ .ModelName }}Handler(service services.{{ .ModelName }}Service) *{{ .M
 	}
 }
 
-// Index handles GET /{{ .ModelPlural }} - List all {{ .ModelPlural }} with pagination
+// Index handles GET /{{ .ModelPlural }} - List all {{ .ModelPlural }} with pagination, sorting, and filtering
+// Query params: ?page=1&per_page=20&sort=-created_at&status=published&q=search
 func (h *{{ .ModelName }}Handler) Index(w http.ResponseWriter, r *http.Request) {
-	pagination := ParsePagination(r)
+	// Parse pagination
+	pagination := helpers.ParsePagination(r.URL.Query())
 
+	// Parse sorting (example allowed fields)
+	// allowedSorts := []string{"id", "created_at", "updated_at", "title"}
+	// sortOrders := helpers.ParseSort(r.URL.Query().Get("sort"), allowedSorts)
+
+	// Parse filters (example allowed filters)
+	// allowedFilters := map[string]string{
+	//     "status": "=",
+	//     "author_id": "=",
+	// }
+	// filters := helpers.ParseFilters(r.URL.Query(), allowedFilters)
+
+	// Parse search
+	// searchFields := []string{"title", "content"}
+	// search := helpers.ParseSearch(r.URL.Query(), searchFields)
+
+	// For now, use basic pagination
+	// TODO: Extend service layer to support sorting, filtering, and search
 	result, err := h.service.List(r.Context(), pagination)
 	if err != nil {
-		RespondServiceError(w, err)
+		helpers.RespondError(w, err)
 		return
 	}
 
@@ -44,29 +65,38 @@ func (h *{{ .ModelName }}Handler) Index(w http.ResponseWriter, r *http.Request) 
 		"total_pages": result.TotalPages,
 	}
 
-	RespondSuccessWithMeta(w, http.StatusOK, result.Items, meta)
+	response := map[string]interface{}{
+		"data": result.Items,
+		"meta": meta,
+	}
+
+	helpers.RespondSuccess(w, response)
 }
 
 // Store handles POST /{{ .ModelPlural }} - Create new {{ .ModelNameLower }}
 func (h *{{ .ModelName }}Handler) Store(w http.ResponseWriter, r *http.Request) {
 	var req dto.Create{{ .ModelName }}Input
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "Invalid JSON", "invalid_json")
+		helpers.RespondError(w, apperrors.NewBadRequestError("Invalid JSON"))
 		return
 	}
 
-	if err := h.validator.Struct(req); err != nil {
-		RespondValidationError(w, err)
+	// Validate input
+	if err := helpers.ValidateStruct(&req); err != nil {
+		validationErrs := helpers.ValidationErrorResponse(err)
+		helpers.RespondError(w, apperrors.NewValidationError("Validation failed", map[string]interface{}{
+			"fields": validationErrs,
+		}))
 		return
 	}
 
 	{{ .ModelNameLower }}, err := h.service.Create(r.Context(), req)
 	if err != nil {
-		RespondServiceError(w, err)
+		helpers.RespondError(w, err)
 		return
 	}
 
-	RespondSuccess(w, http.StatusCreated, {{ .ModelNameLower }})
+	helpers.RespondCreated(w, {{ .ModelNameLower }})
 }
 
 // Show handles GET /{{ .ModelPlural }}/{id} - Get single {{ .ModelNameLower }}
@@ -76,7 +106,7 @@ func (h *{{ .ModelName }}Handler) Store(w http.ResponseWriter, r *http.Request) 
 func (h *{{ .ModelName }}Handler) Show(w http.ResponseWriter, r *http.Request) {
 	id, err := GetPath{{ if eq .PrimaryKeyType "uuid.UUID" }}UUID{{ else }}Int64{{ end }}(r, "id")
 	if err != nil {
-		RespondError(w, http.StatusBadRequest, "Invalid ID", "invalid_id")
+		helpers.RespondError(w, apperrors.NewBadRequestError("Invalid ID format"))
 		return
 	}
 
@@ -92,64 +122,68 @@ func (h *{{ .ModelName }}Handler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		RespondServiceError(w, err)
+		helpers.RespondError(w, err)
 		return
 	}
 {{- else }}
 	{{ .ModelNameLower }}, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
-		RespondServiceError(w, err)
+		helpers.RespondError(w, err)
 		return
 	}
 {{- end }}
 
-	RespondSuccess(w, http.StatusOK, {{ .ModelNameLower }})
+	helpers.RespondSuccess(w, {{ .ModelNameLower }})
 }
 
 // Update handles PUT /{{ .ModelPlural }}/{id} - Update {{ .ModelNameLower }}
 func (h *{{ .ModelName }}Handler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := GetPath{{ if eq .PrimaryKeyType "uuid.UUID" }}UUID{{ else }}Int64{{ end }}(r, "id")
 	if err != nil {
-		RespondError(w, http.StatusBadRequest, "Invalid ID", "invalid_id")
+		helpers.RespondError(w, apperrors.NewBadRequestError("Invalid ID format"))
 		return
 	}
 
 	var req dto.Update{{ .ModelName }}Input
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "Invalid JSON", "invalid_json")
+		helpers.RespondError(w, apperrors.NewBadRequestError("Invalid JSON"))
 		return
 	}
 
-	if err := h.validator.Struct(req); err != nil {
-		RespondValidationError(w, err)
+	// Validate input
+	if err := helpers.ValidateStruct(&req); err != nil {
+		validationErrs := helpers.ValidationErrorResponse(err)
+		helpers.RespondError(w, apperrors.NewValidationError("Validation failed", map[string]interface{}{
+			"fields": validationErrs,
+		}))
 		return
 	}
 
 	{{ .ModelNameLower }}, err := h.service.Update(r.Context(), id, req)
 	if err != nil {
-		RespondServiceError(w, err)
+		helpers.RespondError(w, err)
 		return
 	}
 
-	RespondSuccess(w, http.StatusOK, {{ .ModelNameLower }})
+	helpers.RespondSuccess(w, {{ .ModelNameLower }})
 }
 
 // Destroy handles DELETE /{{ .ModelPlural }}/{id} - {{ if .HasSoftDelete }}Soft delete{{ else }}Delete{{ end }} {{ .ModelNameLower }}
 func (h *{{ .ModelName }}Handler) Destroy(w http.ResponseWriter, r *http.Request) {
 	id, err := GetPath{{ if eq .PrimaryKeyType "uuid.UUID" }}UUID{{ else }}Int64{{ end }}(r, "id")
 	if err != nil {
-		RespondError(w, http.StatusBadRequest, "Invalid ID", "invalid_id")
+		helpers.RespondError(w, apperrors.NewBadRequestError("Invalid ID format"))
 		return
 	}
 
 {{ if .HasSoftDelete }}	// Soft delete (sets deleted_at timestamp)
 {{ end }}	err = h.service.Delete(r.Context(), id)
 	if err != nil {
-		RespondServiceError(w, err)
+		helpers.RespondError(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	helpers.RespondNoContent(w)
 }
 
 // TODO: Add custom handlers here

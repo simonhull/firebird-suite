@@ -8,6 +8,7 @@ import (
 
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/migration"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/model"
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/shared"
 	"github.com/simonhull/firebird-suite/firebird/internal/schema"
 	"github.com/simonhull/firebird-suite/firebird/internal/types"
 	"github.com/simonhull/firebird-suite/fledge/generator"
@@ -72,9 +73,9 @@ func (g *Generator) Generate(opts Options) ([]generator.Operation, error) {
 		Mode:    0644,
 	})
 
-	// 4. If --generate flag, orchestrate model + migration generators
+	// 4. If --generate flag, orchestrate shared + model + migration generators
 	if opts.Generate {
-		output.Verbose("Orchestrating model and migration generation")
+		output.Verbose("Orchestrating shared infrastructure, model, and migration generation")
 
 		// Parse the schema we just built to pass to generators
 		var schemaData Schema
@@ -84,6 +85,22 @@ func (g *Generator) Generate(opts Options) ([]generator.Operation, error) {
 
 		// Convert to schema.Definition for generators
 		schemaDef := convertToDefinition(schemaData)
+
+		// Get module path from go.mod for shared infrastructure
+		modulePath, err := getModulePath()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read module path: %w", err)
+		}
+
+		// Generate shared infrastructure FIRST (errors, helpers)
+		// This only needs to happen once per project, but it's safe to regenerate
+		sharedGen := shared.NewGenerator(".", modulePath)
+		sharedOps, err := sharedGen.Generate()
+		if err != nil {
+			return nil, fmt.Errorf("shared infrastructure generation failed: %w", err)
+		}
+		output.Verbose(fmt.Sprintf("Shared infrastructure operations: %d", len(sharedOps)))
+		ops = append(ops, sharedOps...)
 
 		// Generate model using in-memory schema
 		modelGen := model.NewGenerator()
@@ -158,6 +175,24 @@ func readDatabaseDriver() (string, error) {
 	}
 
 	return driver, nil
+}
+
+// getModulePath reads the module path from go.mod
+func getModulePath() (string, error) {
+	data, err := os.ReadFile("go.mod")
+	if err != nil {
+		return "", fmt.Errorf("failed to read go.mod: %w", err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "module")), nil
+		}
+	}
+
+	return "", fmt.Errorf("module path not found in go.mod")
 }
 
 // buildSchema generates the YAML schema content

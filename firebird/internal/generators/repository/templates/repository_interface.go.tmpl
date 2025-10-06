@@ -19,6 +19,7 @@ type {{ .ModelName }}Repository interface {
 	Delete(ctx context.Context, id {{ .PrimaryKeyType }}) error
 {{- if .SoftDeletes }}
 	Restore(ctx context.Context, id {{ .PrimaryKeyType }}) error
+	PermanentDelete(ctx context.Context, id {{ .PrimaryKeyType }}) error
 {{- end }}
 
 {{- if .Relationships }}

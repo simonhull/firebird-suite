@@ -67,6 +67,67 @@ func (m *Migrator) Up(ctx context.Context) error {
 	return nil
 }
 
+// DryRun shows SQL that would be executed without running migrations
+func (m *Migrator) DryRun(ctx context.Context) error {
+	output.Info("=== DRY RUN: SQL that would be executed ===\n")
+	output.Verbose(fmt.Sprintf("Migrations directory: %s", migrationsDir))
+
+	// Get current version
+	cmd := exec.Command("migrate",
+		"-path", migrationsDir,
+		"-database", m.connectionString,
+		"version",
+	)
+
+	var outBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = os.Stderr
+
+	currentVersion := "none"
+	if err := cmd.Run(); err == nil {
+		currentVersion = strings.TrimSpace(outBuf.String())
+	}
+
+	// List all migrations
+	entries, err := os.ReadDir(migrationsDir)
+	if err != nil {
+		return fmt.Errorf("failed to read migrations directory: %w", err)
+	}
+
+	// Find pending migrations
+	migrations := parseMigrationEntries(entries, currentVersion)
+	pendingCount := 0
+
+	for _, mig := range migrations {
+		if mig.Direction == "up" && !mig.Applied {
+			pendingCount++
+			filename := fmt.Sprintf("%s_%s.up.sql", mig.Version, mig.Name)
+			filepath := fmt.Sprintf("%s/%s", migrationsDir, filename)
+
+			output.Info(fmt.Sprintf("-- Migration: %s_%s", mig.Version, mig.Name))
+			output.Info(fmt.Sprintf("-- File: %s\n", filename))
+
+			content, err := os.ReadFile(filepath)
+			if err != nil {
+				output.Error(fmt.Sprintf("Failed to read %s: %v", filename, err))
+				continue
+			}
+
+			fmt.Println(string(content))
+			fmt.Println(strings.Repeat("-", 80))
+			fmt.Println()
+		}
+	}
+
+	if pendingCount == 0 {
+		output.Success("✓ No pending migrations")
+	} else {
+		output.Info(fmt.Sprintf("Total migrations to apply: %d", pendingCount))
+	}
+
+	return nil
+}
+
 // Down rolls back the last n migrations
 func (m *Migrator) Down(ctx context.Context, steps int) error {
 	if steps < 1 {

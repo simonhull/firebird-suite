@@ -60,11 +60,50 @@ WHERE id = $1 AND deleted_at IS NULL;
 UPDATE {{ .TableName }}
 SET deleted_at = NULL
 WHERE id = $1;
+
+-- name: PermanentDelete{{ .ModelName }} :exec
+DELETE FROM {{ .TableName }}
+WHERE id = $1;
 {{- else }}
 
 -- name: Delete{{ .ModelName }} :exec
 DELETE FROM {{ .TableName }}
 WHERE id = $1;
+{{- end }}
+{{- if .SupportsCursorPagination }}
+
+-- ==========================================
+-- Cursor-Based Pagination
+-- ==========================================
+
+-- name: List{{ .ModelName }}sFirst :many
+SELECT {{ .SelectColumns }}
+FROM {{ .TableName }}
+{{- if .SoftDeletes }}
+WHERE deleted_at IS NULL
+{{- end }}
+ORDER BY {{ .CursorField }} DESC
+LIMIT $1;
+
+-- name: List{{ .ModelName }}sAfter :many
+SELECT {{ .SelectColumns }}
+FROM {{ .TableName }}
+WHERE {{ .CursorField }} < $1
+{{- if .SoftDeletes }}
+  AND deleted_at IS NULL
+{{- end }}
+ORDER BY {{ .CursorField }} DESC
+LIMIT $2;
+
+-- name: List{{ .ModelName }}sBefore :many
+SELECT {{ .SelectColumns }}
+FROM {{ .TableName }}
+WHERE {{ .CursorField }} > $1
+{{- if .SoftDeletes }}
+  AND deleted_at IS NULL
+{{- end }}
+ORDER BY {{ .CursorField }} ASC
+LIMIT $2;
 {{- end }}
 {{- if .Relationships }}
 

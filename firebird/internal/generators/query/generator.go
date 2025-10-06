@@ -165,19 +165,42 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 	// Prepare relationship data
 	relationships := g.prepareRelationshipData(def)
 
+	// Determine pagination support
+	supportsCursor := false
+	cursorField := "id" // default
+	cursorFieldType := "bigint"
+
+	if def.Spec.Pagination != nil {
+		paginationType := def.Spec.Pagination.Type
+		if paginationType == "" {
+			paginationType = "offset" // default
+		}
+
+		supportsCursor = paginationType == "cursor" || paginationType == "both"
+
+		if def.Spec.Pagination.CursorField != "" {
+			cursorField = def.Spec.Pagination.CursorField
+		}
+
+		cursorFieldType = getCursorFieldType(def, cursorField)
+	}
+
 	return map[string]interface{}{
-		"ModelName":         modelName,
-		"TableName":         tableName,
-		"InsertFields":      strings.Join(insertFields, ", "),
-		"InsertParams":      strings.Join(insertParams, ", "),
-		"SelectColumns":     strings.Join(selectColumns, ", "),
-		"UpdateFields":      strings.Join(updateFields, ", "),
-		"UpdateParamCount":  updateParamIndex, // This is the param for WHERE id = $N
-		"SoftDeletes":       def.Spec.SoftDeletes,
-		"SoftDeleteWhere":   softDeleteWhere,
-		"HasTimestamps":     def.Spec.Timestamps,
-		"QueryCount":        queryCount,
-		"Relationships":     relationships,
+		"ModelName":                modelName,
+		"TableName":                tableName,
+		"InsertFields":             strings.Join(insertFields, ", "),
+		"InsertParams":             strings.Join(insertParams, ", "),
+		"SelectColumns":            strings.Join(selectColumns, ", "),
+		"UpdateFields":             strings.Join(updateFields, ", "),
+		"UpdateParamCount":         updateParamIndex, // This is the param for WHERE id = $N
+		"SoftDeletes":              def.Spec.SoftDeletes,
+		"SoftDeleteWhere":          softDeleteWhere,
+		"HasTimestamps":            def.Spec.Timestamps,
+		"QueryCount":               queryCount,
+		"Relationships":            relationships,
+		"SupportsCursorPagination": supportsCursor,
+		"CursorField":              generator.SnakeCase(cursorField),
+		"CursorFieldType":          cursorFieldType,
 	}
 }
 
@@ -267,6 +290,27 @@ func getPrimaryKeyDBType(def *schema.Definition) string {
 		}
 	}
 	return "bigint" // Fallback
+}
+
+// getCursorFieldType returns the DB type for the cursor field
+func getCursorFieldType(def *schema.Definition, cursorFieldName string) string {
+	for _, field := range def.Spec.Fields {
+		if field.Name == cursorFieldName {
+			switch field.DBType {
+			case "UUID":
+				return "uuid"
+			case "BIGINT", "BIGSERIAL":
+				return "bigint"
+			case "INTEGER", "SERIAL":
+				return "integer"
+			case "TIMESTAMP", "TIMESTAMPTZ":
+				return "timestamp"
+			default:
+				return "bigint"
+			}
+		}
+	}
+	return "bigint" // Fallback for id
 }
 
 // loadTargetModelSchema attempts to load the schema for a target model

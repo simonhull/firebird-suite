@@ -20,12 +20,21 @@ type Definition struct {
 
 // Spec contains the resource specification
 type Spec struct {
-	TableName     string         `yaml:"table_name,omitempty"`
-	Fields        []Field        `yaml:"fields"`
-	Indexes       []Index        `yaml:"indexes,omitempty"`
-	Relationships []Relationship `yaml:"relationships,omitempty"`
-	Timestamps    bool           `yaml:"timestamps,omitempty"`
-	SoftDeletes   bool           `yaml:"soft_deletes,omitempty"`
+	TableName     string             `yaml:"table_name,omitempty"`
+	Fields        []Field            `yaml:"fields"`
+	Indexes       []Index            `yaml:"indexes,omitempty"`
+	Relationships []Relationship     `yaml:"relationships,omitempty"`
+	Timestamps    bool               `yaml:"timestamps,omitempty"`
+	SoftDeletes   bool               `yaml:"soft_deletes,omitempty"`
+	Pagination    *PaginationConfig  `yaml:"pagination,omitempty"`
+}
+
+// PaginationConfig defines pagination behavior
+type PaginationConfig struct {
+	Type         string `yaml:"type,omitempty"`          // "offset" (default), "cursor", or "both"
+	CursorField  string `yaml:"cursor_field,omitempty"`  // Field to use for cursor (default: "id")
+	DefaultLimit int    `yaml:"default_limit,omitempty"` // Default: 20
+	MaxLimit     int    `yaml:"max_limit,omitempty"`     // Default: 100
 }
 
 // Field represents a single field in the resource

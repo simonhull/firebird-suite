@@ -277,6 +277,38 @@ func (r *{{ .ModelName }}RepositoryBase) Restore(ctx context.Context, id {{ .Pri
 
 	return nil
 }
+
+// PermanentDelete permanently deletes a {{ .ModelName }} from the database.
+// This bypasses soft delete and cannot be undone. Use with caution.
+// Typically used for GDPR compliance or data cleanup.
+func (r *{{ .ModelName }}RepositoryBase) PermanentDelete(ctx context.Context, id {{ .PrimaryKeyType }}) error {
+	start := time.Now()
+
+	err := r.queries.PermanentDelete{{ .ModelName }}(ctx, id)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to permanently delete {{ .ModelName }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "PermanentDelete"),
+			slog.Any("id", id),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return err
+	}
+
+	// Use WarnContext because permanent deletion is a serious operation
+	r.logger.WarnContext(ctx, "{{ .ModelName }} permanently deleted",
+		slog.String("layer", "repository"),
+		slog.String("operation", "PermanentDelete"),
+		slog.Any("id", id),
+		slog.Int64("duration_ms", duration.Milliseconds()),
+	)
+
+	return nil
+}
 {{- end }}
 
 // WithTx executes a function within a database transaction.

@@ -97,5 +97,46 @@ WHERE {{ .ForeignKey }} = ANY($1::{{ .PrimaryKeyType }}[])
 ORDER BY {{ .ForeignKey }}, created_at DESC;
 {{- end }}
 
+{{- if eq .Type "many_to_many" }}
+-- name: {{ .GetSingleQueryName }} :many
+SELECT t.* FROM {{ .TargetTable }} t
+INNER JOIN {{ .JunctionTable }} jt ON jt.{{ .RelatedKey }} = t.id
+WHERE jt.{{ .ForeignKey }} = $1
+{{- if .TargetSoftDeletes }}
+  AND t.deleted_at IS NULL
+{{- end }}
+{{- if .OrderBy }}
+ORDER BY t.{{ .OrderBy }}
+{{- else }}
+ORDER BY t.id
+{{- end }};
+
+-- name: {{ .GetManyQueryName }} :many
+SELECT jt.{{ .ForeignKey }}, t.* FROM {{ .TargetTable }} t
+INNER JOIN {{ .JunctionTable }} jt ON jt.{{ .RelatedKey }} = t.id
+WHERE jt.{{ .ForeignKey }} = ANY($1::{{ .PrimaryKeyType }}[])
+{{- if .TargetSoftDeletes }}
+  AND t.deleted_at IS NULL
+{{- end }}
+{{- if .OrderBy }}
+ORDER BY jt.{{ .ForeignKey }}, t.{{ .OrderBy }}
+{{- else }}
+ORDER BY jt.{{ .ForeignKey }}, t.id
+{{- end }};
+
+-- name: {{ .AddQueryName }} :exec
+INSERT INTO {{ .JunctionTable }} ({{ .ForeignKey }}, {{ .RelatedKey }})
+VALUES ($1, $2)
+ON CONFLICT DO NOTHING;
+
+-- name: {{ .RemoveQueryName }} :exec
+DELETE FROM {{ .JunctionTable }}
+WHERE {{ .ForeignKey }} = $1 AND {{ .RelatedKey }} = $2;
+
+-- name: {{ .RemoveAllQueryName }} :exec
+DELETE FROM {{ .JunctionTable }}
+WHERE {{ .ForeignKey }} = $1;
+{{- end }}
+
 {{- end }}
 {{- end }}

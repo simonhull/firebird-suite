@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/simonhull/firebird-suite/fledge/generator"
 	"gopkg.in/yaml.v3"
 )
 
@@ -55,11 +57,14 @@ type Index struct {
 
 // Relationship represents a relationship between resources
 type Relationship struct {
-	Name        string `yaml:"name"`         // Relationship name (e.g., "Author", "Comments")
-	Type        string `yaml:"type"`         // Relationship type: "belongs_to" or "has_many"
-	Model       string `yaml:"model"`        // Target model name (e.g., "User", "Comment")
-	ForeignKey  string `yaml:"foreign_key"`  // Foreign key field name (e.g., "author_id", "post_id")
-	APILoadable bool   `yaml:"api_loadable"` // Allow loading via API includes (default: false, secure by default)
+	Name          string `yaml:"name"`                     // Relationship name (e.g., "Author", "Comments", "Tags")
+	Type          string `yaml:"type"`                     // Relationship type: "belongs_to", "has_many", or "many_to_many"
+	Model         string `yaml:"model"`                    // Target model name (e.g., "User", "Comment", "Tag")
+	ForeignKey    string `yaml:"foreign_key,omitempty"`    // Foreign key field name (e.g., "author_id", "post_id")
+	RelatedKey    string `yaml:"related_key,omitempty"`    // Related key for M2M (e.g., "tag_id")
+	JunctionTable string `yaml:"junction_table,omitempty"` // Junction table for M2M (e.g., "post_tags")
+	OrderBy       string `yaml:"order_by,omitempty"`       // Order by clause for M2M (e.g., "name ASC")
+	APILoadable   bool   `yaml:"api_loadable"`             // Allow loading via API includes (default: false, secure by default)
 }
 
 // ValidationError represents a schema validation error with context
@@ -356,14 +361,14 @@ func ValidateWithLineNumbers(def *Definition, lineMap map[string]int) error {
 			errors = append(errors, ValidationError{
 				Field:      fmt.Sprintf("%s.type", relPath),
 				Message:    "relationship type is required",
-				Suggestion: "use 'belongs_to' or 'has_many'",
+				Suggestion: "use 'belongs_to', 'has_many', or 'many_to_many'",
 				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.type", i)),
 			})
 		} else if !ValidateRelationshipType(rel.Type) {
 			errors = append(errors, ValidationError{
 				Field:      fmt.Sprintf("%s.type", relPath),
 				Message:    fmt.Sprintf("invalid relationship type '%s'", rel.Type),
-				Suggestion: "use 'belongs_to' or 'has_many'",
+				Suggestion: "use 'belongs_to', 'has_many', or 'many_to_many'",
 				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.type", i)),
 			})
 		}
@@ -385,14 +390,16 @@ func ValidateWithLineNumbers(def *Definition, lineMap map[string]int) error {
 			})
 		}
 
-		// 4. Validate foreign_key
-		if rel.ForeignKey == "" {
-			errors = append(errors, ValidationError{
-				Field:      fmt.Sprintf("%s.foreign_key", relPath),
-				Message:    "foreign_key is required",
-				Suggestion: "specify the foreign key field name (e.g., 'author_id', 'post_id')",
-				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.foreign_key", i)),
-			})
+		// 4. Validate foreign_key (required for belongs_to and has_many)
+		if rel.Type != "many_to_many" {
+			if rel.ForeignKey == "" {
+				errors = append(errors, ValidationError{
+					Field:      fmt.Sprintf("%s.foreign_key", relPath),
+					Message:    "foreign_key is required for belongs_to and has_many relationships",
+					Suggestion: "specify the foreign key field name (e.g., 'author_id', 'post_id')",
+					Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.foreign_key", i)),
+				})
+			}
 		}
 
 		// 5. For belongs_to: validate FK field exists in this model
@@ -422,6 +429,54 @@ func ValidateWithLineNumbers(def *Definition, lineMap map[string]int) error {
 		// Document this as a limitation for Phase 1
 		// TODO(relationships-phase3): Optionally validate related model's schema exists and has FK field
 		// For has_many, the FK field lives in the related model, which we can't validate without loading that schema
+
+		// 7. For many_to_many: validate and auto-generate fields
+		if rel.Type == "many_to_many" {
+			// Auto-generate junction table name if not provided (alphabetically sorted)
+			if rel.JunctionTable == "" {
+				sourceTable := generator.SnakeCase(def.Name)
+				targetTable := generator.SnakeCase(rel.Model)
+				// Sort alphabetically for consistency
+				if sourceTable < targetTable {
+					def.Spec.Relationships[i].JunctionTable = sourceTable + "_" + targetTable
+				} else {
+					def.Spec.Relationships[i].JunctionTable = targetTable + "_" + sourceTable
+				}
+			}
+
+			// Auto-generate foreign_key if not provided
+			if rel.ForeignKey == "" {
+				def.Spec.Relationships[i].ForeignKey = generator.SnakeCase(def.Name) + "_id"
+			}
+
+			// Auto-generate related_key if not provided
+			if rel.RelatedKey == "" {
+				def.Spec.Relationships[i].RelatedKey = generator.SnakeCase(rel.Model) + "_id"
+			}
+
+			// Validate order_by format if provided
+			if rel.OrderBy != "" {
+				if !isValidOrderBy(rel.OrderBy) {
+					errors = append(errors, ValidationError{
+						Field:      fmt.Sprintf("%s.order_by", relPath),
+						Message:    fmt.Sprintf("invalid order_by format '%s'", rel.OrderBy),
+						Suggestion: "use format like 'name ASC' or 'created_at DESC'",
+						Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.order_by", i)),
+					})
+				}
+			}
+
+			// Warn if foreign_key or related_key are provided but might conflict
+			// (This is more of a sanity check than a hard error)
+			if strings.Contains(rel.ForeignKey, rel.RelatedKey) || strings.Contains(rel.RelatedKey, rel.ForeignKey) {
+				errors = append(errors, ValidationError{
+					Field:      fmt.Sprintf("%s.foreign_key", relPath),
+					Message:    "foreign_key and related_key appear to be too similar or conflicting",
+					Suggestion: "ensure foreign_key references the source model and related_key references the target model",
+					Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.foreign_key", i)),
+				})
+			}
+		}
 	}
 
 	// Check for duplicate relationship names
@@ -459,6 +514,25 @@ func ValidateWithLineNumbers(def *Definition, lineMap map[string]int) error {
 				})
 				break
 			}
+		}
+	}
+
+	// Check for duplicate junction table names in many_to_many relationships
+	junctionTables := make(map[string]int)
+	for i, rel := range def.Spec.Relationships {
+		if rel.Type != "many_to_many" || rel.JunctionTable == "" {
+			continue
+		}
+
+		if firstIndex, exists := junctionTables[rel.JunctionTable]; exists {
+			errors = append(errors, ValidationError{
+				Field:      fmt.Sprintf("spec.relationships[%d].junction_table", i),
+				Message:    fmt.Sprintf("duplicate junction table name '%s' (first used in relationships[%d])", rel.JunctionTable, firstIndex),
+				Suggestion: "each many_to_many relationship must have a unique junction table",
+				Line:       getLineNumber(lineMap, fmt.Sprintf("spec.relationships.%d.junction_table", i)),
+			})
+		} else {
+			junctionTables[rel.JunctionTable] = i
 		}
 	}
 
@@ -530,5 +604,29 @@ func isPascalCase(s string) bool {
 			return false
 		}
 	}
+	return true
+}
+
+// isValidOrderBy checks if an order_by clause has valid format
+func isValidOrderBy(orderBy string) bool {
+	orderBy = strings.TrimSpace(orderBy)
+	if orderBy == "" {
+		return false
+	}
+
+	// Check for basic format: "column_name ASC" or "column_name DESC"
+	parts := strings.Fields(orderBy)
+	if len(parts) < 1 || len(parts) > 2 {
+		return false
+	}
+
+	// If direction is specified, must be ASC or DESC
+	if len(parts) == 2 {
+		direction := strings.ToUpper(parts[1])
+		if direction != "ASC" && direction != "DESC" {
+			return false
+		}
+	}
+
 	return true
 }

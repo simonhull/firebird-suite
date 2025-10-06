@@ -32,6 +32,13 @@ type {{ .ModelName }}Repository interface {
 	{{ .LoadMethod }}(ctx context.Context, entity *db.{{ $.ModelName }}) ([]{{ .ModelType }}, error)
 	{{ .LoadManyMethod }}(ctx context.Context, entities []db.{{ $.ModelName }}) (map[{{ .ForeignKeyType }}][]{{ .ModelType }}, error)
 {{- end }}
+{{- if .IsM2M }}
+	{{ .LoadMethod }}(ctx context.Context, entity *db.{{ $.ModelName }}) ([]{{ .ModelType }}, error)
+	{{ .LoadManyMethod }}(ctx context.Context, entities []db.{{ $.ModelName }}) (map[{{ .ForeignKeyType }}][]{{ .ModelType }}, error)
+	{{ .AddMethod }}(ctx context.Context, entityID {{ .ForeignKeyType }}, relatedIDs ...{{ .ForeignKeyType }}) error
+	{{ .RemoveMethod }}(ctx context.Context, entityID {{ .ForeignKeyType }}, relatedIDs ...{{ .ForeignKeyType }}) error
+	{{ .SetMethod }}(ctx context.Context, entityID {{ .ForeignKeyType }}, relatedIDs []{{ .ForeignKeyType }}) error
+{{- end }}
 {{- end }}
 {{- end }}
 {{- if .HasAPILoadableRelationships }}

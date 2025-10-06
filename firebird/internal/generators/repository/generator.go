@@ -26,19 +26,26 @@ type Generator struct {
 
 // RelationshipMethodData holds data for generating repository relationship methods
 type RelationshipMethodData struct {
-	Name             string // Relationship name (e.g., "Author", "Comments")
-	Type             string // "belongs_to" or "has_many"
-	Model            string // Target model (e.g., "User", "Comment")
+	Name             string // Relationship name (e.g., "Author", "Comments", "Tags")
+	Type             string // "belongs_to", "has_many", or "many_to_many"
+	Model            string // Target model (e.g., "User", "Comment", "Tag")
 	ForeignKey       string // FK field name snake_case (e.g., "author_id")
 	ForeignKeyField  string // FK field name PascalCase (e.g., "AuthorID")
-	LoadMethod       string // Method name (e.g., "LoadAuthor")
-	LoadManyMethod   string // Batch method name (e.g., "LoadCommentsForMany")
-	GetQueryName     string // SQLC query name (e.g., "GetPostAuthor")
-	GetManyQueryName string // SQLC batch query (e.g., "GetCommentsForPosts")
-	ModelType        string // Go type (e.g., "db.User")
+	LoadMethod       string // Method name (e.g., "LoadAuthor", "LoadTags")
+	LoadManyMethod   string // Batch method name (e.g., "LoadCommentsForMany", "LoadTagsForMany")
+	GetQueryName     string // SQLC query name (e.g., "GetPostAuthor", "GetPostTags")
+	GetManyQueryName string // SQLC batch query (e.g., "GetCommentsForPosts", "GetTagsForPosts")
+	AddMethod        string // M2M add method (e.g., "AddTags")
+	RemoveMethod     string // M2M remove method (e.g., "RemoveTags")
+	SetMethod        string // M2M set method (e.g., "SetTags")
+	AddQueryName     string // M2M SQLC add query (e.g., "AddPostTag")
+	RemoveQueryName  string // M2M SQLC remove query (e.g., "RemovePostTag")
+	RemoveAllQueryName string // M2M SQLC remove all query (e.g., "RemoveAllPostTags")
+	ModelType        string // Go type (e.g., "db.User", "db.Tag")
 	ForeignKeyType   string // FK Go type (e.g., "uuid.UUID", "int64")
 	IsSingle         bool   // belongs_to flag
 	IsMany           bool   // has_many flag
+	IsM2M            bool   // many_to_many flag
 	APILoadable      bool   // Allow loading via API includes (from schema)
 }
 
@@ -228,8 +235,19 @@ func prepareRelationshipMethods(def *schema.Definition) []RelationshipMethodData
 	var result []RelationshipMethodData
 
 	for _, rel := range def.Spec.Relationships {
-		// Find FK field to determine type
-		fkType := findForeignKeyType(def, rel.ForeignKey)
+		// Find FK field to determine type (for belongs_to/has_many)
+		fkType := "uuid.UUID" // Default for M2M
+		if rel.Type != "many_to_many" {
+			fkType = findForeignKeyType(def, rel.ForeignKey)
+		} else {
+			// For M2M, use primary key type
+			for _, field := range def.Spec.Fields {
+				if field.PrimaryKey {
+					fkType = strings.TrimPrefix(field.Type, "*")
+					break
+				}
+			}
+		}
 
 		data := RelationshipMethodData{
 			Name:            rel.Name,
@@ -242,7 +260,7 @@ func prepareRelationshipMethods(def *schema.Definition) []RelationshipMethodData
 			LoadMethod:     fmt.Sprintf("Load%s", rel.Name),
 			LoadManyMethod: fmt.Sprintf("Load%sForMany", rel.Name),
 
-			// SQLC query names (must match Phase 3 generation)
+			// SQLC query names (must match query generator)
 			GetQueryName:     fmt.Sprintf("Get%s%s", def.Name, rel.Name),
 			GetManyQueryName: fmt.Sprintf("Get%sFor%s", generator.Pluralize(rel.Model), generator.Pluralize(def.Name)),
 
@@ -253,9 +271,22 @@ func prepareRelationshipMethods(def *schema.Definition) []RelationshipMethodData
 			// For return types
 			IsSingle: rel.Type == "belongs_to",
 			IsMany:   rel.Type == "has_many",
+			IsM2M:    rel.Type == "many_to_many",
 
 			// API access control
 			APILoadable: rel.APILoadable,
+		}
+
+		// M2M specific methods
+		if rel.Type == "many_to_many" {
+			data.AddMethod = fmt.Sprintf("Add%s", rel.Name)
+			data.RemoveMethod = fmt.Sprintf("Remove%s", rel.Name)
+			data.SetMethod = fmt.Sprintf("Set%s", rel.Name)
+			data.AddQueryName = fmt.Sprintf("Add%s%s", def.Name, rel.Model)
+			data.RemoveQueryName = fmt.Sprintf("Remove%s%s", def.Name, rel.Model)
+			data.RemoveAllQueryName = fmt.Sprintf("RemoveAll%s%s", def.Name, rel.Name)
+			// For has_many, fix the GetManyQueryName  to match query generator
+			data.GetManyQueryName = fmt.Sprintf("Get%sFor%s", rel.Name, generator.Pluralize(def.Name))
 		}
 
 		result = append(result, data)

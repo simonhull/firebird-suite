@@ -22,15 +22,22 @@ type Generator struct {
 
 // RelationshipQueryData holds data for generating relationship queries
 type RelationshipQueryData struct {
-	Name               string // Relationship name (e.g., "Author", "Comments")
-	Type               string // "belongs_to" or "has_many"
-	Model              string // Target model name (e.g., "User", "Comment")
-	ForeignKey         string // Snake_case FK field (e.g., "author_id")
+	Name               string // Relationship name (e.g., "Author", "Comments", "Tags")
+	Type               string // "belongs_to", "has_many", or "many_to_many"
+	Model              string // Target model name (e.g., "User", "Comment", "Tag")
+	ForeignKey         string // Snake_case FK field (e.g., "author_id", "post_id")
+	RelatedKey         string // M2M related key (e.g., "tag_id")
+	JunctionTable      string // M2M junction table (e.g., "post_tags")
+	OrderBy            string // M2M order by clause (e.g., "name ASC")
 	PrimaryKeyType     string // PostgreSQL array type (e.g., "uuid", "bigint")
-	GetSingleQueryName string // Query name for single fetch (e.g., "GetPostAuthor")
-	GetManyQueryName   string // Query name for batch fetch (e.g., "GetCommentsForPosts")
+	GetSingleQueryName string // Query name for single fetch (e.g., "GetPostAuthor", "GetPostTags")
+	GetManyQueryName   string // Query name for batch fetch (e.g., "GetCommentsForPosts", "GetTagsForPosts")
+	AddQueryName       string // M2M add query (e.g., "AddPostTag")
+	RemoveQueryName    string // M2M remove query (e.g., "RemovePostTag")
+	RemoveAllQueryName string // M2M remove all query (e.g., "RemoveAllPostTags")
 	SourceTable        string // Source table name (e.g., "posts")
-	TargetTable        string // Target table name (e.g., "users")
+	TargetTable        string // Target table name (e.g., "users", "tags")
+	TargetSoftDeletes  bool   // Does target model have soft deletes? (M2M only)
 }
 
 // New creates a new query generator.
@@ -156,7 +163,7 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 	}
 
 	// Prepare relationship data
-	relationships := prepareRelationshipData(def)
+	relationships := g.prepareRelationshipData(def)
 
 	return map[string]interface{}{
 		"ModelName":         modelName,
@@ -175,7 +182,7 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 }
 
 // prepareRelationshipData transforms schema relationships into template data
-func prepareRelationshipData(def *schema.Definition) []RelationshipQueryData {
+func (g *Generator) prepareRelationshipData(def *schema.Definition) []RelationshipQueryData {
 	var result []RelationshipQueryData
 
 	// Find primary key type for batch query generation
@@ -198,7 +205,7 @@ func prepareRelationshipData(def *schema.Definition) []RelationshipQueryData {
 			TargetTable:    generator.SnakeCase(generator.Pluralize(rel.Model)),
 		}
 
-		// Generate query names
+		// Generate query names based on relationship type
 		if rel.Type == "belongs_to" {
 			// GetPostAuthor
 			data.GetSingleQueryName = fmt.Sprintf("Get%s%s", def.Name, rel.Name)
@@ -207,6 +214,33 @@ func prepareRelationshipData(def *schema.Definition) []RelationshipQueryData {
 			data.GetSingleQueryName = fmt.Sprintf("Get%s%s", def.Name, rel.Name)
 			// GetCommentsForPosts
 			data.GetManyQueryName = fmt.Sprintf("Get%sFor%s", generator.Pluralize(rel.Model), generator.Pluralize(def.Name))
+		} else if rel.Type == "many_to_many" {
+			// M2M specific fields
+			data.RelatedKey = rel.RelatedKey
+			data.JunctionTable = rel.JunctionTable
+			data.OrderBy = rel.OrderBy
+
+			// Check if target model has soft deletes
+			// This is critical for correct query generation - we need to filter
+			// soft-deleted target entities, not source entities
+			targetSoftDeletes := false
+			if targetDef, err := g.loadTargetModelSchema(rel.Model); err == nil {
+				targetSoftDeletes = targetDef.Spec.SoftDeletes
+			}
+			// If we can't load the target schema, conservatively assume false
+			// This prevents generating a filter for a column that might not exist
+			data.TargetSoftDeletes = targetSoftDeletes
+
+			// GetPostTags
+			data.GetSingleQueryName = fmt.Sprintf("Get%s%s", def.Name, rel.Name)
+			// GetTagsForPosts
+			data.GetManyQueryName = fmt.Sprintf("Get%sFor%s", rel.Name, generator.Pluralize(def.Name))
+			// AddPostTag (use the Model name, which is singular like "Tag")
+			data.AddQueryName = fmt.Sprintf("Add%s%s", def.Name, rel.Model)
+			// RemovePostTag
+			data.RemoveQueryName = fmt.Sprintf("Remove%s%s", def.Name, rel.Model)
+			// RemoveAllPostTags
+			data.RemoveAllQueryName = fmt.Sprintf("RemoveAll%s%s", def.Name, rel.Name)
 		}
 
 		result = append(result, data)
@@ -233,4 +267,28 @@ func getPrimaryKeyDBType(def *schema.Definition) string {
 		}
 	}
 	return "bigint" // Fallback
+}
+
+// loadTargetModelSchema attempts to load the schema for a target model
+// Returns the schema definition or nil if it cannot be loaded
+func (g *Generator) loadTargetModelSchema(modelName string) (*schema.Definition, error) {
+	// Convert model name to schema filename (e.g., "Tag" -> "tag.firebird.yml")
+	schemaFileName := strings.ToLower(modelName) + ".firebird.yml"
+
+	// Try common schema locations
+	possiblePaths := []string{
+		filepath.Join(g.projectPath, "app", "schemas", schemaFileName),
+		filepath.Join(g.projectPath, "schemas", schemaFileName),
+		filepath.Join(filepath.Dir(g.schemaPath), schemaFileName),
+	}
+
+	for _, schemaPath := range possiblePaths {
+		def, err := schema.Parse(schemaPath)
+		if err == nil {
+			return def, nil
+		}
+	}
+
+	// Could not load target schema - return nil (caller handles gracefully)
+	return nil, fmt.Errorf("could not load schema for model %s", modelName)
 }

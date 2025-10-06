@@ -33,3 +33,21 @@ ON {{ $.TableName }} ({{ join .Columns ", " }})
 {{- end }}
 {{- end }}
 {{- end }}
+{{- if .JunctionTables }}
+
+-- Many-to-many junction tables
+{{- range .JunctionTables }}
+
+CREATE TABLE {{ .TableName }} (
+    {{ .ForeignKey }} CHAR(36) NOT NULL,
+    {{ .RelatedKey }} CHAR(36) NOT NULL,
+    PRIMARY KEY ({{ .ForeignKey }}, {{ .RelatedKey }}),
+    FOREIGN KEY ({{ .ForeignKey }}) REFERENCES {{ .ForeignKeyTable }}(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY ({{ .RelatedKey }}) REFERENCES {{ .RelatedKeyTable }}(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Indexes for junction table
+CREATE INDEX idx_{{ .TableName }}_{{ .ForeignKey }} ON {{ .TableName }} ({{ .ForeignKey }});
+CREATE INDEX idx_{{ .TableName }}_{{ .RelatedKey }} ON {{ .TableName }} ({{ .RelatedKey }});
+{{- end }}
+{{- end }}

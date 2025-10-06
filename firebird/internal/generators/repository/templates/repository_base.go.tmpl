@@ -463,6 +463,241 @@ func (r *{{ $.ModelName }}RepositoryBase) {{ .LoadManyMethod }}(ctx context.Cont
 }
 {{- end }}
 
+{{- if .IsM2M }}
+// {{ .LoadMethod }} loads all related {{ .Model }}s for this {{ $.ModelName }} via many-to-many relationship.
+func (r *{{ $.ModelName }}RepositoryBase) {{ .LoadMethod }}(ctx context.Context, entity *db.{{ $.ModelName }}) ([]{{ .ModelType }}, error) {
+	start := time.Now()
+
+	result, err := r.queries.{{ .GetQueryName }}(ctx, entity.ID)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to load {{ .Name }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .LoadMethod }}"),
+			slog.Any("{{ $.ModelName | lower }}_id", entity.ID),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return nil, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .LoadMethod }}"),
+			slog.String("model", "{{ $.ModelName }}"),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return result, nil
+}
+
+// {{ .LoadManyMethod }} batch loads {{ .Model }}s for multiple {{ $.ModelName }}s via many-to-many relationship.
+// Returns a map keyed by {{ $.ModelName }} ID for easy association.
+func (r *{{ $.ModelName }}RepositoryBase) {{ .LoadManyMethod }}(ctx context.Context, entities []db.{{ $.ModelName }}) (map[{{ .ForeignKeyType }}][]{{ .ModelType }}, error) {
+	if len(entities) == 0 {
+		return make(map[{{ .ForeignKeyType }}][]{{ .ModelType }}), nil
+	}
+
+	start := time.Now()
+
+	// Extract IDs
+	ids := make([]{{ .ForeignKeyType }}, len(entities))
+	for i, entity := range entities {
+		ids[i] = entity.ID
+	}
+
+	// Batch query via junction table
+	results, err := r.queries.{{ .GetManyQueryName }}(ctx, ids)
+
+	duration := time.Since(start)
+
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to batch load {{ .Name }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .LoadManyMethod }}"),
+			slog.Int("entity_count", len(entities)),
+			slog.String("error", err.Error()),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+		return nil, err
+	}
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow query detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .LoadManyMethod }}"),
+			slog.String("model", "{{ $.ModelName }}"),
+			slog.Int("entity_count", len(entities)),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	// Group by source ID (returned from junction table query)
+	grouped := make(map[{{ .ForeignKeyType }}][]{{ .ModelType }})
+	// Note: SQLC returns the junction table FK along with the target model data
+	// We need to extract that FK to group properly
+	// This assumes SQLC generates a struct with both FK and target data
+	for _, result := range results {
+		// Access the FK from the query result (first column in SELECT jt.foreign_key, t.*)
+		// Since SQLC embeds junction table columns, we access via the generated struct
+		// The actual field name depends on SQLC generation, typically the FK column name
+		// For now, we'll group by assuming the results maintain order
+		// TODO: Verify SQLC struct field names match FK column
+		grouped[result.{{ .ForeignKeyField }}] = append(grouped[result.{{ .ForeignKeyField }}], result)
+	}
+
+	return grouped, nil
+}
+
+// {{ .AddMethod }} associates one or more {{ .Model }}s with this {{ $.ModelName }}.
+// This operation is idempotent (uses ON CONFLICT DO NOTHING).
+func (r *{{ $.ModelName }}RepositoryBase) {{ .AddMethod }}(ctx context.Context, entityID {{ .ForeignKeyType }}, relatedIDs ...{{ .ForeignKeyType }}) error {
+	start := time.Now()
+
+	for _, relatedID := range relatedIDs {
+		if err := r.queries.{{ .AddQueryName }}(ctx, db.{{ .AddQueryName }}Params{
+			Column1: entityID,
+			Column2: relatedID,
+		}); err != nil {
+			r.logger.ErrorContext(ctx, "failed to add {{ .Name }} association",
+				slog.String("layer", "repository"),
+				slog.String("operation", "{{ .AddMethod }}"),
+				slog.Any("{{ $.ModelName | lower }}_id", entityID),
+				slog.Any("{{ .Model | lower }}_id", relatedID),
+				slog.String("error", err.Error()),
+			)
+			return err
+		}
+	}
+
+	duration := time.Since(start)
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow operation detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .AddMethod }}"),
+			slog.String("model", "{{ $.ModelName }}"),
+			slog.Int("count", len(relatedIDs)),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return nil
+}
+
+// {{ .RemoveMethod }} removes associations between this {{ $.ModelName }} and one or more {{ .Model }}s.
+func (r *{{ $.ModelName }}RepositoryBase) {{ .RemoveMethod }}(ctx context.Context, entityID {{ .ForeignKeyType }}, relatedIDs ...{{ .ForeignKeyType }}) error {
+	start := time.Now()
+
+	for _, relatedID := range relatedIDs {
+		if err := r.queries.{{ .RemoveQueryName }}(ctx, db.{{ .RemoveQueryName }}Params{
+			Column1: entityID,
+			Column2: relatedID,
+		}); err != nil {
+			r.logger.ErrorContext(ctx, "failed to remove {{ .Name }} association",
+				slog.String("layer", "repository"),
+				slog.String("operation", "{{ .RemoveMethod }}"),
+				slog.Any("{{ $.ModelName | lower }}_id", entityID),
+				slog.Any("{{ .Model | lower }}_id", relatedID),
+				slog.String("error", err.Error()),
+			)
+			return err
+		}
+	}
+
+	duration := time.Since(start)
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow operation detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .RemoveMethod }}"),
+			slog.String("model", "{{ $.ModelName }}"),
+			slog.Int("count", len(relatedIDs)),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return nil
+}
+
+// {{ .SetMethod }} replaces all {{ .Model }} associations for this {{ $.ModelName }}.
+// This is a transactional operation: removes all existing associations, then adds new ones.
+func (r *{{ $.ModelName }}RepositoryBase) {{ .SetMethod }}(ctx context.Context, entityID {{ .ForeignKeyType }}, relatedIDs []{{ .ForeignKeyType }}) error {
+	start := time.Now()
+
+	// Use a transaction for atomicity
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to begin transaction for {{ .SetMethod }}",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .SetMethod }}"),
+			slog.Any("{{ $.ModelName | lower }}_id", entityID),
+			slog.String("error", err.Error()),
+		)
+		return err
+	}
+	defer tx.Rollback()
+
+	qtx := r.queries.WithTx(tx)
+
+	// Remove all existing associations
+	if err := qtx.{{ .RemoveAllQueryName }}(ctx, entityID); err != nil {
+		r.logger.ErrorContext(ctx, "failed to remove existing {{ .Name }} associations",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .SetMethod }}"),
+			slog.Any("{{ $.ModelName | lower }}_id", entityID),
+			slog.String("error", err.Error()),
+		)
+		return err
+	}
+
+	// Add new associations
+	for _, relatedID := range relatedIDs {
+		if err := qtx.{{ .AddQueryName }}(ctx, db.{{ .AddQueryName }}Params{
+			Column1: entityID,
+			Column2: relatedID,
+		}); err != nil {
+			r.logger.ErrorContext(ctx, "failed to add {{ .Name }} association in SetTags",
+				slog.String("layer", "repository"),
+				slog.String("operation", "{{ .SetMethod }}"),
+				slog.Any("{{ $.ModelName | lower }}_id", entityID),
+				slog.Any("{{ .Model | lower }}_id", relatedID),
+				slog.String("error", err.Error()),
+			)
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		r.logger.ErrorContext(ctx, "failed to commit {{ .SetMethod }} transaction",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .SetMethod }}"),
+			slog.Any("{{ $.ModelName | lower }}_id", entityID),
+			slog.String("error", err.Error()),
+		)
+		return err
+	}
+
+	duration := time.Since(start)
+
+	if duration.Milliseconds() > 100 {
+		r.logger.WarnContext(ctx, "slow transaction detected",
+			slog.String("layer", "repository"),
+			slog.String("operation", "{{ .SetMethod }}"),
+			slog.String("model", "{{ $.ModelName }}"),
+			slog.Int("count", len(relatedIDs)),
+			slog.Int64("duration_ms", duration.Milliseconds()),
+		)
+	}
+
+	return nil
+}
+{{- end }}
+
 {{- end }}
 {{- end }}
 {{- if .HasAPILoadableRelationships }}

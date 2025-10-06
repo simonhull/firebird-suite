@@ -1,3 +1,10 @@
+{{- if .JunctionTables }}
+-- Drop many-to-many junction tables
+{{- range .JunctionTables }}
+DROP TABLE IF EXISTS {{ .TableName }};
+{{- end }}
+
+{{- end }}
 {{- if .ForeignKeys }}
 -- Drop foreign key constraints
 {{- range .ForeignKeys }}

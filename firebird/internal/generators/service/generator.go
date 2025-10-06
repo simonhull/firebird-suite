@@ -301,6 +301,7 @@ func prepareRelationshipHelpers(def *schema.Definition) []RelationshipHelperData
 			LoadManyMethod: fmt.Sprintf("Load%sForMany", rel.Name),
 			IsSingle:       rel.Type == "belongs_to",
 			IsMany:         rel.Type == "has_many",
+			IsM2M:          rel.Type == "many_to_many",
 			APILoadable:    rel.APILoadable,
 		}
 		result = append(result, data)
@@ -330,13 +331,14 @@ type FieldMapping struct {
 }
 
 type RelationshipHelperData struct {
-	Name           string // Relationship name (e.g., "Author", "Posts")
-	Type           string // "belongs_to" or "has_many"
-	Model          string // Target model (e.g., "User", "Post")
-	LoadMethod     string // Method name (e.g., "LoadAuthor")
-	LoadManyMethod string // Batch method name (e.g., "LoadPostsForMany")
+	Name           string // Relationship name (e.g., "Author", "Posts", "Tags")
+	Type           string // "belongs_to", "has_many", or "many_to_many"
+	Model          string // Target model (e.g., "User", "Post", "Tag")
+	LoadMethod     string // Method name (e.g., "LoadAuthor", "LoadTags")
+	LoadManyMethod string // Batch method name (e.g., "LoadPostsForMany", "LoadTagsForMany")
 	IsSingle       bool   // belongs_to flag
 	IsMany         bool   // has_many flag
+	IsM2M          bool   // many_to_many flag
 	APILoadable    bool   // Allow loading via API includes
 }
 

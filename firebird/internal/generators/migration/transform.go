@@ -10,11 +10,12 @@ import (
 
 // MigrationData is the data passed to templates
 type MigrationData struct {
-	TableName   string          // Snake_case table name (e.g., "users")
-	Columns     []ColumnData    // Column definitions
-	Indexes     []IndexData     // Index definitions
-	ForeignKeys []ForeignKeyData // Foreign key constraints
-	Dialect     DatabaseDialect // Database dialect
+	TableName       string               // Snake_case table name (e.g., "users")
+	Columns         []ColumnData         // Column definitions
+	Indexes         []IndexData          // Index definitions
+	ForeignKeys     []ForeignKeyData     // Foreign key constraints
+	JunctionTables  []JunctionTableData  // M2M junction tables
+	Dialect         DatabaseDialect      // Database dialect
 }
 
 // ColumnData represents a single column definition
@@ -44,6 +45,16 @@ type ForeignKeyData struct {
 	ReferenceColumn string // Target column (e.g., "id")
 	OnDelete        string // CASCADE, SET NULL, RESTRICT, etc.
 	OnUpdate        string // CASCADE, SET NULL, RESTRICT, etc.
+}
+
+// JunctionTableData represents a many-to-many junction table
+type JunctionTableData struct {
+	TableName       string   // Junction table name (e.g., "post_tags")
+	ForeignKey      string   // First FK column (e.g., "post_id")
+	ForeignKeyTable string   // First FK references (e.g., "posts")
+	RelatedKey      string   // Second FK column (e.g., "tag_id")
+	RelatedKeyTable string   // Second FK references (e.g., "tags")
+	Indexes         []string // Index column names
 }
 
 // PrepareMigrationData transforms a schema definition into migration data
@@ -107,6 +118,16 @@ func PrepareMigrationData(def *schema.Definition, dialect DatabaseDialect) *Migr
 
 		fk := transformRelationshipToFK(rel, tableName, def)
 		data.ForeignKeys = append(data.ForeignKeys, fk)
+	}
+
+	// Generate junction tables for many_to_many relationships
+	for _, rel := range def.Spec.Relationships {
+		if rel.Type != "many_to_many" {
+			continue
+		}
+
+		junctionTable := generateJunctionTableData(rel, tableName, def)
+		data.JunctionTables = append(data.JunctionTables, junctionTable)
 	}
 
 	return data
@@ -398,5 +419,31 @@ func transformRelationshipToFK(rel schema.Relationship, tableName string, def *s
 		ReferenceColumn: refColumn,
 		OnDelete:        onDelete,
 		OnUpdate:        onUpdate,
+	}
+}
+
+// generateJunctionTableData creates junction table data for many_to_many relationships
+func generateJunctionTableData(rel schema.Relationship, sourceTableName string, def *schema.Definition) JunctionTableData {
+	// Use junction table name from schema (already validated and auto-generated if needed)
+	junctionTableName := rel.JunctionTable
+
+	// FK columns (already validated and auto-generated if needed)
+	foreignKey := rel.ForeignKey
+	relatedKey := rel.RelatedKey
+
+	// Reference tables
+	// Source table is the current table we're migrating
+	foreignKeyTable := sourceTableName
+
+	// Related table is the pluralized snake_case model name
+	relatedKeyTable := generator.SnakeCase(generator.Pluralize(rel.Model))
+
+	return JunctionTableData{
+		TableName:       junctionTableName,
+		ForeignKey:      foreignKey,
+		ForeignKeyTable: foreignKeyTable,
+		RelatedKey:      relatedKey,
+		RelatedKeyTable: relatedKeyTable,
+		Indexes:         []string{foreignKey, relatedKey},
 	}
 }

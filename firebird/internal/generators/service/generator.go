@@ -216,16 +216,26 @@ func (g *Generator) prepareTemplateData(def *schema.Definition) ServiceTemplateD
 	// Prepare relationship data
 	relationships := prepareRelationshipHelpers(def)
 
+	// Check if any relationships are API loadable
+	hasAPILoadable := false
+	for _, rel := range def.Spec.Relationships {
+		if rel.APILoadable {
+			hasAPILoadable = true
+			break
+		}
+	}
+
 	return ServiceTemplateData{
-		ModelName:      modelName,
-		ModelNameLower: modelNameLower,
-		ModulePath:     g.modulePath,
-		PrimaryKeyType: detectPrimaryKeyType(def),
-		RepoFieldName:  repoFieldName,
-		SoftDeletes:    def.Spec.SoftDeletes,
-		CreateFields:   createFields,
-		UpdateFields:   updateFields,
-		Relationships:  relationships,
+		ModelName:                    modelName,
+		ModelNameLower:               modelNameLower,
+		ModulePath:                   g.modulePath,
+		PrimaryKeyType:               detectPrimaryKeyType(def),
+		RepoFieldName:                repoFieldName,
+		SoftDeletes:                  def.Spec.SoftDeletes,
+		CreateFields:                 createFields,
+		UpdateFields:                 updateFields,
+		Relationships:                relationships,
+		HasAPILoadableRelationships:  hasAPILoadable,
 	}
 }
 
@@ -291,6 +301,7 @@ func prepareRelationshipHelpers(def *schema.Definition) []RelationshipHelperData
 			LoadManyMethod: fmt.Sprintf("Load%sForMany", rel.Name),
 			IsSingle:       rel.Type == "belongs_to",
 			IsMany:         rel.Type == "has_many",
+			APILoadable:    rel.APILoadable,
 		}
 		result = append(result, data)
 	}
@@ -301,15 +312,16 @@ func prepareRelationshipHelpers(def *schema.Definition) []RelationshipHelperData
 // Template data structures
 
 type ServiceTemplateData struct {
-	ModelName      string
-	ModelNameLower string
-	ModulePath     string
-	PrimaryKeyType string
-	RepoFieldName  string
-	SoftDeletes    bool
-	CreateFields   []FieldMapping
-	UpdateFields   []FieldMapping
-	Relationships  []RelationshipHelperData
+	ModelName                   string
+	ModelNameLower              string
+	ModulePath                  string
+	PrimaryKeyType              string
+	RepoFieldName               string
+	SoftDeletes                 bool
+	CreateFields                []FieldMapping
+	UpdateFields                []FieldMapping
+	Relationships               []RelationshipHelperData
+	HasAPILoadableRelationships bool
 }
 
 type FieldMapping struct {
@@ -325,6 +337,7 @@ type RelationshipHelperData struct {
 	LoadManyMethod string // Batch method name (e.g., "LoadPostsForMany")
 	IsSingle       bool   // belongs_to flag
 	IsMany         bool   // has_many flag
+	APILoadable    bool   // Allow loading via API includes
 }
 
 // WriteFileIfNotExistsOp is a custom operation that only creates files if they don't exist

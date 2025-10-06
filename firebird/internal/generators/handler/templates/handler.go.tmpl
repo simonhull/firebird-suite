@@ -70,7 +70,7 @@ func (h *{{ .ModelName }}Handler) Store(w http.ResponseWriter, r *http.Request) 
 }
 
 // Show handles GET /{{ .ModelPlural }}/{id} - Get single {{ .ModelNameLower }}
-{{- if .HasRelationships }}
+{{- if .HasAPILoadableRelationships }}
 // Supports ?include=relationship1,relationship2 for eager loading
 {{- end }}
 func (h *{{ .ModelName }}Handler) Show(w http.ResponseWriter, r *http.Request) {
@@ -80,28 +80,21 @@ func (h *{{ .ModelName }}Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-{{- if .HasRelationships }}
+{{- if .HasAPILoadableRelationships }}
 	// Check for relationship includes
 	includes := ParseIncludes(r)
 
-	{{ .ModelNameLower }}, err := h.service.GetByID(r.Context(), id)
+	var {{ .ModelNameLower }} *dto.{{ .ModelName }}Response
+	if len(includes) > 0 {
+		{{ .ModelNameLower }}, err = h.service.GetByIDWithIncludes(r.Context(), id, includes)
+	} else {
+		{{ .ModelNameLower }}, err = h.service.GetByID(r.Context(), id)
+	}
+
 	if err != nil {
 		RespondServiceError(w, err)
 		return
 	}
-
-	// TODO: Load relationships based on includes parameter
-	// Example:
-	// for _, include := range includes {
-	//     switch include {
-	//     case "author":
-	//         author, _ := h.service.Helpers().LoadAuthor(r.Context(), {{ .ModelNameLower }})
-	//         {{ .ModelNameLower }}.Author = author
-	//     case "comments":
-	//         comments, _ := h.service.Helpers().LoadComments(r.Context(), {{ .ModelNameLower }})
-	//         {{ .ModelNameLower }}.Comments = comments
-	//     }
-	// }
 {{- else }}
 	{{ .ModelNameLower }}, err := h.service.GetByID(r.Context(), id)
 	if err != nil {

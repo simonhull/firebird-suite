@@ -17,6 +17,11 @@ type {{ .ModelName }}Service interface {
 
 	// GetByID retrieves a {{ .ModelName }} by ID
 	GetByID(ctx context.Context, id {{ .PrimaryKeyType }}) (*dto.{{ .ModelName }}Response, error)
+{{- if .HasAPILoadableRelationships }}
+
+	// GetByIDWithIncludes retrieves a {{ .ModelName }} with related data
+	GetByIDWithIncludes(ctx context.Context, id {{ .PrimaryKeyType }}, includes []string) (*dto.{{ .ModelName }}Response, error)
+{{- end }}
 
 	// List retrieves paginated {{ .ModelName }}s
 	List(ctx context.Context, page Pagination) (*ListResult[*dto.{{ .ModelName }}Response], error)

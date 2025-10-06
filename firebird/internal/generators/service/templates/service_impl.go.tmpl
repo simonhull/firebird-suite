@@ -10,6 +10,9 @@ import (
 	"{{ .ModulePath }}/internal/db"
 	"{{ .ModulePath }}/internal/dto"
 	"{{ .ModulePath }}/internal/repositories"
+{{- if .HasAPILoadableRelationships }}
+	"{{ .ModulePath }}/internal/services/generated"
+{{- end }}
 {{- if eq .PrimaryKeyType "uuid.UUID" }}
 	"github.com/google/uuid"
 {{- end }}
@@ -86,6 +89,31 @@ func (s *{{ .ModelName }}ServiceImpl) GetByID(ctx context.Context, id {{ .Primar
 
 	return dto.From{{ .ModelName }}(model), nil
 }
+{{- if .HasAPILoadableRelationships }}
+
+// GetByIDWithIncludes retrieves a {{ .ModelName }} with related data.
+// Only relationships marked with api_loadable: true can be loaded.
+func (s *{{ .ModelName }}ServiceImpl) GetByIDWithIncludes(ctx context.Context, id {{ .PrimaryKeyType }}, includes []string) (*dto.{{ .ModelName }}Response, error) {
+	// Get base entity
+	response, err := s.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load relationships (validation happens inside helper)
+	if len(includes) > 0 {
+		if err := generated.Load{{ .ModelName }}Relationships(ctx, response, includes, s.{{ .RepoFieldName }}); err != nil {
+			s.logger.WarnContext(ctx, "failed to load relationships",
+				slog.Any("id", id),
+				slog.Any("includes", includes),
+				slog.String("error", err.Error()))
+			return nil, fmt.Errorf("load relationships: %w", err)
+		}
+	}
+
+	return response, nil
+}
+{{- end }}
 
 // List retrieves paginated {{ .ModelName }}s
 func (s *{{ .ModelName }}ServiceImpl) List(ctx context.Context, page Pagination) (*ListResult[*dto.{{ .ModelName }}Response], error) {

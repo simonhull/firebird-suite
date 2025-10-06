@@ -6,9 +6,11 @@ package generated
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"{{ .ModulePath }}/internal/db"
 	"{{ .ModulePath }}/internal/dto"
+	"{{ .ModulePath }}/internal/repositories"
 )
 
 // {{ .ModelName }}ServiceHelpers provides relationship loading utilities.
@@ -102,4 +104,54 @@ func (h *{{ $.ModelName }}ServiceHelpers) {{ .LoadManyMethod }}(ctx context.Cont
 	return result, nil
 }
 {{- end }}
+{{- end }}
+{{- if .HasAPILoadableRelationships }}
+
+// Load{{ .ModelName }}Relationships loads related data based on the includes slice.
+// Validates includes against schema whitelist before loading.
+// Only relationships with api_loadable: true can be loaded via API.
+func Load{{ .ModelName }}Relationships(ctx context.Context, entity *dto.{{ .ModelName }}Response, includes []string, repo repositories.{{ .ModelName }}Repository) error {
+	if len(includes) == 0 {
+		return nil
+	}
+
+	// Validate includes against schema whitelist (only api_loadable: true relationships)
+	if err := repo.ValidateIncludes(includes); err != nil {
+		return err
+	}
+
+	// Convert DTO to DB model for loading
+	dbModel := &db.{{ .ModelName }}{
+		ID: entity.ID,
+	}
+
+	for _, include := range includes {
+		switch strings.ToLower(include) {
+		{{- range .Relationships }}
+		{{- if .APILoadable }}
+		case "{{ .Name | lower }}":
+			{{- if .IsSingle }}
+			related, err := repo.Load{{ .Name }}(ctx, dbModel)
+			if err != nil {
+				return fmt.Errorf("loading {{ .Name }}: %w", err)
+			}
+			if related != nil {
+				entity.{{ .Name }} = dto.From{{ .Model }}(related)
+			}
+			{{- else }}
+			related, err := repo.Load{{ .Name }}(ctx, dbModel)
+			if err != nil {
+				return fmt.Errorf("loading {{ .Name }}: %w", err)
+			}
+			entity.{{ .Name }} = dto.From{{ .Model }}List(related)
+			{{- end }}
+		{{- end }}
+		{{- end }}
+		default:
+			// This shouldn't happen if ValidateIncludes passed, but be defensive
+			return fmt.Errorf("unknown relationship: %s", include)
+		}
+	}
+	return nil
+}
 {{- end }}

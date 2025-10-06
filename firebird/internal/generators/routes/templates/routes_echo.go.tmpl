@@ -2,12 +2,24 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"{{ .ModulePath }}/internal/services"
+{{- if .RealtimeEnabled }}
+	"{{ .ModulePath }}/internal/realtime"
+	"log/slog"
+{{- end }}
 )
 
 // RegisterRoutes sets up all application routes using Echo
-func RegisterRoutes(e *echo.Echo, services *ServiceContainer) {
+func RegisterRoutes(e *echo.Echo, services *ServiceContainer{{if .RealtimeEnabled}}, connManager *realtime.ConnectionManager, logger *slog.Logger{{end}}) {
+{{- if .RealtimeEnabled }}
+	// WebSocket endpoint
+	wsHandler := NewWebSocketHandler(connManager, logger)
+	e.GET("/ws", echo.WrapHandler(http.HandlerFunc(wsHandler.HandleWebSocket)))
+{{- end }}
+
 {{- range .Handlers }}
 	// {{ .ModelName }} routes
 	{{ .VarName }} := New{{ .Name }}(services.{{ .ModelName }})

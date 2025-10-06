@@ -79,12 +79,9 @@ func (g *Generator) Generate() ([]generator.Operation, error) {
 	}
 	ops = append(ops, baseOp)
 
-	// Generate interface (always regenerated)
-	interfaceOp, err := g.generateInterface(data)
-	if err != nil {
-		return nil, fmt.Errorf("generating repository interface: %w", err)
-	}
-	ops = append(ops, interfaceOp)
+	// NOTE: Interface generation removed to avoid naming conflict with user repository struct
+	// The user repository struct (*MessageRepository) is what's used throughout the codebase
+	// If an interface is needed for testing, users can create it manually
 
 	// Generate user repository (created once, never touched)
 	userOp, err := g.generateUser(data)
@@ -109,7 +106,6 @@ func (g *Generator) generateBase(data map[string]interface{}) (generator.Operati
 		g.projectPath,
 		"internal",
 		"repositories",
-		"generated",
 		strings.ToLower(modelName)+"_repository_base.go",
 	)
 
@@ -219,6 +215,17 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 		}
 	}
 
+	// Detect if UUID is used (for import)
+	usesUUID := strings.Contains(pkType, "uuid.UUID")
+	if !usesUUID {
+		for _, rel := range relationships {
+			if strings.Contains(rel.ForeignKeyType, "uuid.UUID") {
+				usesUUID = true
+				break
+			}
+		}
+	}
+
 	return map[string]interface{}{
 		"ModelName":                   modelName,
 		"TableName":                   tableName,
@@ -227,6 +234,7 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 		"PrimaryKeyType":              pkType,
 		"Relationships":               relationships,
 		"HasAPILoadableRelationships": hasAPILoadable,
+		"UsesUUID":                    usesUUID,
 	}
 }
 

@@ -225,6 +225,9 @@ func (g *Generator) prepareTemplateData(def *schema.Definition) ServiceTemplateD
 		}
 	}
 
+	// Check if realtime is enabled
+	realtimeEnabled := def.Spec.Realtime != nil && def.Spec.Realtime.Enabled
+
 	return ServiceTemplateData{
 		ModelName:                    modelName,
 		ModelNameLower:               modelNameLower,
@@ -236,6 +239,7 @@ func (g *Generator) prepareTemplateData(def *schema.Definition) ServiceTemplateD
 		UpdateFields:                 updateFields,
 		Relationships:                relationships,
 		HasAPILoadableRelationships:  hasAPILoadable,
+		RealtimeEnabled:              realtimeEnabled,
 	}
 }
 
@@ -323,6 +327,7 @@ type ServiceTemplateData struct {
 	UpdateFields                []FieldMapping
 	Relationships               []RelationshipHelperData
 	HasAPILoadableRelationships bool
+	RealtimeEnabled             bool
 }
 
 type FieldMapping struct {

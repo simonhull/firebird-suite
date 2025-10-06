@@ -2,12 +2,24 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"{{ .ModulePath }}/internal/services"
+{{- if .RealtimeEnabled }}
+	"{{ .ModulePath }}/internal/realtime"
+	"log/slog"
+{{- end }}
 )
 
 // RegisterRoutes sets up all application routes using Gin
-func RegisterRoutes(r *gin.Engine, services *ServiceContainer) {
+func RegisterRoutes(r *gin.Engine, services *ServiceContainer{{if .RealtimeEnabled}}, connManager *realtime.ConnectionManager, logger *slog.Logger{{end}}) {
+{{- if .RealtimeEnabled }}
+	// WebSocket endpoint
+	wsHandler := NewWebSocketHandler(connManager, logger)
+	r.GET("/ws", gin.WrapH(http.HandlerFunc(wsHandler.HandleWebSocket)))
+{{- end }}
+
 {{- range .Handlers }}
 	// {{ .ModelName }} routes
 	{{ .VarName }} := New{{ .Name }}(services.{{ .ModelName }})

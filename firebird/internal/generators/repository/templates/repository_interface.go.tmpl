@@ -3,6 +3,10 @@ package repositories
 
 import (
 	"context"
+{{- if .UsesUUID }}
+
+	"github.com/google/uuid"
+{{- end }}
 
 	"{{ .ModulePath }}/db"
 )
@@ -49,5 +53,5 @@ type {{ .ModelName }}Repository interface {
 {{- end }}
 
 	// Transaction support
-	WithTx(ctx context.Context, fn func({{ .ModelName }}Repository) error) error
+	WithTx(ctx context.Context, fn func(*{{ .ModelName }}Repository) error) error
 }

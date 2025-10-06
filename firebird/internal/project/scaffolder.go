@@ -14,6 +14,7 @@ import (
 	appgen "github.com/simonhull/firebird-suite/firebird/internal/generators/main"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/middleware"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/sqlc"
+	"github.com/simonhull/firebird-suite/firebird/internal/schema"
 	fledgeExec "github.com/simonhull/firebird-suite/fledge/exec"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 	"github.com/simonhull/firebird-suite/fledge/input"
@@ -209,11 +210,14 @@ type ScaffoldResult struct {
 
 // ProjectData is the data passed to templates
 type ProjectData struct {
-	Name      string         // Project name (e.g., "myapp")
-	Module    string         // Go module path (e.g., "github.com/username/myapp")
-	GoVersion string         // Go version (e.g., "1.25")
-	Database  DatabaseDriver // Database driver
-	Router    RouterType     // HTTP router
+	Name            string         // Project name (e.g., "myapp")
+	Module          string         // Go module path (e.g., "github.com/username/myapp")
+	GoVersion       string         // Go version (e.g., "1.25")
+	Database        DatabaseDriver // Database driver
+	Router          RouterType     // HTTP router
+	HasRealtime     bool           // true if any schema has realtime enabled
+	RealtimeBackend string         // "memory" or "nats"
+	NatsURL         string         // NATS server URL (only if backend=nats)
 }
 
 // buildCoreDirectoryOperations creates operations for core directories (always created)
@@ -278,8 +282,8 @@ func (s *Scaffolder) buildCoreFileOperations(projectPath string, data *ProjectDa
 func (s *Scaffolder) buildDatabaseOperations(projectPath string, data *ProjectData) ([]generator.Operation, error) {
 	var ops []generator.Operation
 
-	// Create migrations directory
-	migrationsKeep := filepath.Join(projectPath, "migrations", ".gitkeep")
+	// Create db/migrations directory
+	migrationsKeep := filepath.Join(projectPath, "db", "migrations", ".gitkeep")
 	ops = append(ops, &generator.WriteFileOp{
 		Path:    migrationsKeep,
 		Content: []byte{},
@@ -461,4 +465,48 @@ func (s *Scaffolder) RunGoModTidy(projectPath string) error {
 	})
 
 	return executor.Run(context.Background(), "go", "mod", "tidy")
+}
+
+// detectRealtimeConfig scans all .firebird.yml files for realtime configuration
+func (s *Scaffolder) detectRealtimeConfig(projectPath string) (bool, string, string) {
+	schemasDir := filepath.Join(projectPath, "schemas")
+
+	// Return early if schemas directory doesn't exist
+	if _, err := os.Stat(schemasDir); os.IsNotExist(err) {
+		return false, "", ""
+	}
+
+	entries, err := os.ReadDir(schemasDir)
+	if err != nil {
+		return false, "", ""
+	}
+
+	hasRealtime := false
+	backend := "memory"                   // default
+	natsURL := "nats://localhost:4222"    // default
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".firebird.yml") {
+			continue
+		}
+
+		schemaPath := filepath.Join(schemasDir, entry.Name())
+		def, err := schema.Parse(schemaPath)
+		if err != nil {
+			continue
+		}
+
+		if def.Spec.Realtime != nil && def.Spec.Realtime.Enabled {
+			hasRealtime = true
+			if def.Spec.Realtime.Backend != "" {
+				backend = def.Spec.Realtime.Backend
+			}
+			if def.Spec.Realtime.NatsURL != "" {
+				natsURL = def.Spec.Realtime.NatsURL
+			}
+			break // Found one, that's enough
+		}
+	}
+
+	return hasRealtime, backend, natsURL
 }

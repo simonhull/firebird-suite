@@ -3,7 +3,7 @@ package repositories
 import (
 	"log/slog"
 
-	"{{ .ModulePath }}/internal/db"
+	internaldb "{{ .ModulePath }}/internal/db"
 )
 
 // {{ .ModelName }}Repository handles {{ .ModelName }} data access.
@@ -40,7 +40,7 @@ type {{ .ModelName }}Repository struct {
 }
 
 // New{{ .ModelName }}Repository creates a new {{ .ModelName }} repository.
-func New{{ .ModelName }}Repository(database *db.DB, logger *slog.Logger) *{{ .ModelName }}Repository {
+func New{{ .ModelName }}Repository(database *internaldb.DB, logger *slog.Logger) *{{ .ModelName }}Repository {
 	return &{{ .ModelName }}Repository{
 		{{ .ModelName }}RepositoryBase: {{ .ModelName }}RepositoryBase{
 			queries: database.Queries(),

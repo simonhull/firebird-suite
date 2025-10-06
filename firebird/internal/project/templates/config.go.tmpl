@@ -20,6 +20,7 @@ type ApplicationConfig struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Logging  LoggingConfig  `mapstructure:"logging"`
+	Realtime RealtimeConfig `mapstructure:"realtime"`
 }
 
 type ServerConfig struct {
@@ -45,6 +46,12 @@ type DatabaseConfig struct {
 type LoggingConfig struct {
 	Level  string `mapstructure:"level"`
 	Format string `mapstructure:"format"`
+}
+
+type RealtimeConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Backend string `mapstructure:"backend"`
+	NatsURL string `mapstructure:"nats_url"`
 }
 
 var AppConfig *Config

@@ -10,14 +10,15 @@ import (
 	"log/slog"
 	"time"
 
-	"{{ .ModulePath }}/internal/db"
+	"{{ .ModulePath }}/db"
+	internaldb "{{ .ModulePath }}/internal/db"
 )
 
 // {{ .ModelName }}RepositoryBase provides generated CRUD operations.
 // Embed this in your {{ .ModelName }}Repository to inherit these methods.
 type {{ .ModelName }}RepositoryBase struct {
 	queries *db.Queries
-	db      *db.DB
+	db      *internaldb.DB
 	logger  *slog.Logger
 }
 
@@ -48,7 +49,7 @@ func (r *{{ .ModelName }}RepositoryBase) Create(ctx context.Context, params db.C
 		)
 	}
 
-	return result, nil
+	return &result, nil
 }
 
 // GetByID retrieves a {{ .ModelName }} by ID.
@@ -80,7 +81,7 @@ func (r *{{ .ModelName }}RepositoryBase) GetByID(ctx context.Context, id {{ .Pri
 		)
 	}
 
-	return result, err
+	return &result, err
 }
 
 // List retrieves all {{ .ModelName }}s.
@@ -207,7 +208,7 @@ func (r *{{ .ModelName }}RepositoryBase) Update(ctx context.Context, params db.U
 		)
 	}
 
-	return result, nil
+	return &result, nil
 }
 
 // Delete deletes a {{ .ModelName }}.
@@ -317,7 +318,7 @@ func (r *{{ .ModelName }}RepositoryBase) PermanentDelete(ctx context.Context, id
 // Otherwise, the transaction is committed.
 //
 // Example:
-//   err := repo.WithTx(ctx, func(txRepo {{ .ModelName }}Repository) error {
+//   err := repo.WithTx(ctx, func(txRepo *{{ .ModelName }}Repository) error {
 //       _, err := txRepo.Create(ctx, createParams)
 //       if err != nil {
 //           return err
@@ -325,7 +326,7 @@ func (r *{{ .ModelName }}RepositoryBase) PermanentDelete(ctx context.Context, id
 //       // More operations...
 //       return nil
 //   })
-func (r *{{ .ModelName }}RepositoryBase) WithTx(ctx context.Context, fn func({{ .ModelName }}Repository) error) error {
+func (r *{{ .ModelName }}RepositoryBase) WithTx(ctx context.Context, fn func(*{{ .ModelName }}Repository) error) error {
 	// Begin transaction
 	tx, err := r.db.Begin(ctx)
 	if err != nil {

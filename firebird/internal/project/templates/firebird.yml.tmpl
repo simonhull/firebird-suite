@@ -37,3 +37,12 @@ application:
   logging:
     level: info
     format: json
+{{- if .HasRealtime }}
+
+  realtime:
+    enabled: true
+    backend: {{ .RealtimeBackend }}
+    {{- if eq .RealtimeBackend "nats" }}
+    nats_url: {{ .NatsURL }}
+    {{- end }}
+{{- end }}

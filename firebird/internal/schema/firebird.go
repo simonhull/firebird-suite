@@ -27,6 +27,7 @@ type Spec struct {
 	Timestamps    bool               `yaml:"timestamps,omitempty"`
 	SoftDeletes   bool               `yaml:"soft_deletes,omitempty"`
 	Pagination    *PaginationConfig  `yaml:"pagination,omitempty"`
+	Realtime      *RealtimeConfig    `yaml:"realtime,omitempty"`
 }
 
 // PaginationConfig defines pagination behavior
@@ -35,6 +36,15 @@ type PaginationConfig struct {
 	CursorField  string `yaml:"cursor_field,omitempty"`  // Field to use for cursor (default: "id")
 	DefaultLimit int    `yaml:"default_limit,omitempty"` // Default: 20
 	MaxLimit     int    `yaml:"max_limit,omitempty"`     // Default: 100
+}
+
+// RealtimeConfig defines real-time event configuration
+type RealtimeConfig struct {
+	Enabled       bool     `yaml:"enabled,omitempty"`        // Enable real-time events
+	Backend       string   `yaml:"backend,omitempty"`        // "memory" (default) or "nats"
+	NatsURL       string   `yaml:"nats_url,omitempty"`       // NATS server URL (default: "nats://localhost:4222")
+	AutoBroadcast bool     `yaml:"auto_broadcast,omitempty"` // Auto-broadcast CRUD events (default: true)
+	Events        []string `yaml:"events,omitempty"`         // Event types to broadcast: ["created", "updated", "deleted"]
 }
 
 // Field represents a single field in the resource

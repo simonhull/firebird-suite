@@ -5,10 +5,20 @@ import (
 	"net/http"
 
 	"{{ .ModulePath }}/internal/services"
+{{- if .RealtimeEnabled }}
+	"{{ .ModulePath }}/internal/realtime"
+	"log/slog"
+{{- end }}
 )
 
 // RegisterRoutes sets up all application routes using the standard library ServeMux
-func RegisterRoutes(mux *http.ServeMux, services *ServiceContainer) {
+func RegisterRoutes(mux *http.ServeMux, services *ServiceContainer{{if .RealtimeEnabled}}, connManager *realtime.ConnectionManager, logger *slog.Logger{{end}}) {
+{{- if .RealtimeEnabled }}
+	// WebSocket endpoint
+	wsHandler := NewWebSocketHandler(connManager, logger)
+	mux.HandleFunc("/ws", wsHandler.HandleWebSocket)
+{{- end }}
+
 {{- range .Handlers }}
 	// {{ .ModelName }} routes
 	{{ .VarName }} := New{{ .Name }}(services.{{ .ModelName }})

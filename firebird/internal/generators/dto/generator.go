@@ -326,15 +326,37 @@ func buildValidationTags(field schema.Field, isUpdate bool) string {
 	return strings.Join(tags, ",")
 }
 
-// toGoName converts snake_case to PascalCase
+// toGoName converts snake_case to PascalCase following Go conventions
 func toGoName(name string) string {
 	parts := strings.Split(name, "_")
 	for i, part := range parts {
 		if len(part) > 0 {
-			parts[i] = strings.ToUpper(part[:1]) + part[1:]
+			// Handle common Go initialisms (ID, URL, HTTP, etc.)
+			upperPart := strings.ToUpper(part)
+			if isCommonInitialism(upperPart) {
+				parts[i] = upperPart
+			} else {
+				parts[i] = strings.ToUpper(part[:1]) + part[1:]
+			}
 		}
 	}
 	return strings.Join(parts, "")
+}
+
+// isCommonInitialism checks if a string is a common Go initialism that should be all caps
+func isCommonInitialism(s string) bool {
+	// Common Go initialisms per https://github.com/golang/lint/blob/master/lint.go
+	initialisms := map[string]bool{
+		"API": true, "ASCII": true, "CPU": true, "CSS": true, "DNS": true,
+		"EOF": true, "GUID": true, "HTML": true, "HTTP": true, "HTTPS": true,
+		"ID": true, "IP": true, "JSON": true, "LHS": true, "QPS": true,
+		"RAM": true, "RHS": true, "RPC": true, "SLA": true, "SMTP": true,
+		"SQL": true, "SSH": true, "TCP": true, "TLS": true, "TTL": true,
+		"UDP": true, "UI": true, "UID": true, "UUID": true, "URI": true,
+		"URL": true, "UTF8": true, "VM": true, "XML": true, "XMPP": true,
+		"XSRF": true, "XSS": true,
+	}
+	return initialisms[s]
 }
 
 // getJSONTag gets the JSON tag for a field

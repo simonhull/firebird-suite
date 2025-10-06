@@ -61,8 +61,8 @@ func (g *Generator) Generate(opts Options) ([]generator.Operation, error) {
 	}
 
 	// 3. Create schema file operation
-	schemaDir := "app/schemas"
-	schemaFileName := strings.ToLower(opts.Name) + ".firebird.yml"
+	schemaDir := "internal/schemas"
+	schemaFileName := opts.Name + ".firebird.yml" // Use capitalized name to match resource generator expectations
 	schemaPath := filepath.Join(schemaDir, schemaFileName)
 
 	output.Verbose(fmt.Sprintf("Schema path: %s", schemaPath))
@@ -226,7 +226,7 @@ func buildSchema(opts Options, driver string) ([]byte, error) {
 // buildFields converts parsed fields to schema fields with db_type
 func buildFields(fields []Field, driver string, useIntID bool) []SchemaField {
 	// Determine primary key type
-	idType := "UUID" // Default to UUID
+	idType := "uuid.UUID" // Default to uuid.UUID (proper Go type)
 	if useIntID {
 		idType = "int64"
 	}

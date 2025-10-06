@@ -9,7 +9,6 @@ import (
 	apperrors "{{ .ModulePath }}/internal/errors"
 	"{{ .ModulePath }}/internal/helpers"
 	"{{ .ModulePath }}/internal/services"
-	"{{ .ModulePath }}/internal/validation"
 {{- if eq .PrimaryKeyType "uuid.UUID" }}
 	"github.com/google/uuid"
 {{- end }}
@@ -17,15 +16,13 @@ import (
 
 // {{ .ModelName }}Handler handles HTTP requests for {{ .ModelName }} resources
 type {{ .ModelName }}Handler struct {
-	service   services.{{ .ModelName }}Service
-	validator *validation.Validate
+	service services.{{ .ModelName }}Service
 }
 
 // New{{ .ModelName }}Handler creates a new {{ .ModelName }} handler
 func New{{ .ModelName }}Handler(service services.{{ .ModelName }}Service) *{{ .ModelName }}Handler {
 	return &{{ .ModelName }}Handler{
-		service:   service,
-		validator: validation.New(),
+		service: service,
 	}
 }
 

@@ -174,9 +174,10 @@ func (g *Generator) generateStdlibRoutes(handlers []HandlerInfo) (generator.Oper
 	path := filepath.Join(g.projectPath, "internal", "handlers", "routes.go")
 
 	data := RoutesTemplateData{
-		ModulePath: g.modulePath,
-		Router:     g.router,
-		Handlers:   handlers,
+		ModulePath:      g.modulePath,
+		Router:          g.router,
+		Handlers:        handlers,
+		RealtimeEnabled: g.hasRealtimeEnabled(),
 	}
 
 	content, err := g.renderer.RenderFS(templatesFS, "templates/routes_stdlib.go.tmpl", data)
@@ -195,9 +196,10 @@ func (g *Generator) generateChiRoutes(handlers []HandlerInfo) (generator.Operati
 	path := filepath.Join(g.projectPath, "internal", "handlers", "routes.go")
 
 	data := RoutesTemplateData{
-		ModulePath: g.modulePath,
-		Router:     g.router,
-		Handlers:   handlers,
+		ModulePath:      g.modulePath,
+		Router:          g.router,
+		Handlers:        handlers,
+		RealtimeEnabled: g.hasRealtimeEnabled(),
 	}
 
 	content, err := g.renderer.RenderFS(templatesFS, "templates/routes_chi.go.tmpl", data)
@@ -216,9 +218,10 @@ func (g *Generator) generateGinRoutes(handlers []HandlerInfo) (generator.Operati
 	path := filepath.Join(g.projectPath, "internal", "handlers", "routes.go")
 
 	data := RoutesTemplateData{
-		ModulePath: g.modulePath,
-		Router:     g.router,
-		Handlers:   handlers,
+		ModulePath:      g.modulePath,
+		Router:          g.router,
+		Handlers:        handlers,
+		RealtimeEnabled: g.hasRealtimeEnabled(),
 	}
 
 	content, err := g.renderer.RenderFS(templatesFS, "templates/routes_gin.go.tmpl", data)
@@ -237,9 +240,10 @@ func (g *Generator) generateEchoRoutes(handlers []HandlerInfo) (generator.Operat
 	path := filepath.Join(g.projectPath, "internal", "handlers", "routes.go")
 
 	data := RoutesTemplateData{
-		ModulePath: g.modulePath,
-		Router:     g.router,
-		Handlers:   handlers,
+		ModulePath:      g.modulePath,
+		Router:          g.router,
+		Handlers:        handlers,
+		RealtimeEnabled: g.hasRealtimeEnabled(),
 	}
 
 	content, err := g.renderer.RenderFS(templatesFS, "templates/routes_echo.go.tmpl", data)
@@ -256,9 +260,10 @@ func (g *Generator) generateEchoRoutes(handlers []HandlerInfo) (generator.Operat
 
 // Template data structure
 type RoutesTemplateData struct {
-	ModulePath string
-	Router     string
-	Handlers   []HandlerInfo
+	ModulePath      string
+	Router          string
+	Handlers        []HandlerInfo
+	RealtimeEnabled bool
 }
 
 // Helper functions
@@ -339,4 +344,35 @@ func (op *WriteFileIfNotExistsOp) Description() string {
 		return fmt.Sprintf("Skip %s (already exists)", op.Path)
 	}
 	return fmt.Sprintf("Create %s (%d bytes)", op.Path, len(op.Content))
+}
+
+// hasRealtimeEnabled checks if any schema file has realtime enabled
+func (g *Generator) hasRealtimeEnabled() bool {
+	// Scan for .firebird.yml files in the project
+	schemasDir := filepath.Join(g.projectPath, "schemas")
+	entries, err := os.ReadDir(schemasDir)
+	if err != nil {
+		return false // No schemas directory
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".firebird.yml") {
+			continue
+		}
+
+		schemaPath := filepath.Join(schemasDir, entry.Name())
+		data, err := os.ReadFile(schemaPath)
+		if err != nil {
+			continue
+		}
+
+		// Simple check for realtime: enabled: true
+		// This is a lightweight check to avoid full YAML parsing
+		if strings.Contains(string(data), "realtime:") &&
+		   (strings.Contains(string(data), "enabled: true") || strings.Contains(string(data), "enabled:true")) {
+			return true
+		}
+	}
+
+	return false
 }

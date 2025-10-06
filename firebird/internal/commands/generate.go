@@ -4,18 +4,22 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/dto"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/handler"
-	"github.com/simonhull/firebird-suite/firebird/internal/generators/helpers"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/migration"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/model"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/query"
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/realtime"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/repository"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/routes"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/scaffold"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/service"
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/shared"
+	"github.com/simonhull/firebird-suite/firebird/internal/helpers"
+	"github.com/simonhull/firebird-suite/firebird/internal/schema"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 	"github.com/simonhull/firebird-suite/fledge/output"
 	"github.com/spf13/cobra"
@@ -309,27 +313,27 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 					output.Success("Created model")
 				}
 
-				// 2. Generate Helpers (if first resource)
+				// 2. Generate Shared Infrastructure (errors, helpers, validation, etc.)
 				if !skipHelpers {
-					output.Info("Generating helpers infrastructure")
+					output.Info("Generating shared infrastructure (errors, helpers, validation)")
 
-					helpersGen := helpers.New(".", modulePath)
-					helpersOps, helpersErr := helpersGen.Generate()
-					if helpersErr != nil {
-						output.Error(fmt.Sprintf("Failed to generate helpers: %v", helpersErr))
+					sharedGen := shared.NewGenerator(".", modulePath)
+					sharedOps, sharedErr := sharedGen.Generate()
+					if sharedErr != nil {
+						output.Error(fmt.Sprintf("Failed to generate shared infrastructure: %v", sharedErr))
 						os.Exit(1)
 					}
 
-					if err := generator.Execute(ctx, helpersOps, generator.ExecuteOptions{
+					if err := generator.Execute(ctx, sharedOps, generator.ExecuteOptions{
 						DryRun: dryRun,
 						Force:  force,
 						Writer: cmd.OutOrStdout(),
 					}); err != nil {
-						output.Error(fmt.Sprintf("Failed to create helpers: %v", err))
+						output.Error(fmt.Sprintf("Failed to create shared infrastructure: %v", err))
 						os.Exit(1)
 					}
 
-					output.Success("Created helpers infrastructure")
+					output.Success("Created shared infrastructure")
 				}
 
 				// 3. Generate Queries
@@ -475,6 +479,39 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 					output.Info("Skipping route generation (router: none)")
 				}
 
+				// 9. Generate Realtime Infrastructure (if realtime is enabled in schema)
+				def, parseErr := schema.Parse(schemaPath)
+				if parseErr == nil && def.Spec.Realtime != nil && def.Spec.Realtime.Enabled {
+					output.Info("Generating realtime infrastructure")
+
+					// Collect model information for subscription helpers
+					models := []realtime.ModelHelper{
+						{
+							Name:       name,
+							NamePlural: strings.ToLower(name) + "s", // Simple pluralization
+							PKType:     detectPKType(def),
+						},
+					}
+
+					realtimeGen := realtime.NewWithModels(".", modulePath, models)
+					realtimeOps, realtimeErr := realtimeGen.Generate()
+					if realtimeErr != nil {
+						output.Error(fmt.Sprintf("Failed to generate realtime: %v", realtimeErr))
+						os.Exit(1)
+					}
+
+					if err := generator.Execute(ctx, realtimeOps, generator.ExecuteOptions{
+						DryRun: dryRun,
+						Force:  force,
+						Writer: cmd.OutOrStdout(),
+					}); err != nil {
+						output.Error(fmt.Sprintf("Failed to create realtime: %v", err))
+						os.Exit(1)
+					}
+
+					output.Success("Created realtime infrastructure")
+				}
+
 				// Summary
 				if !dryRun {
 					output.Success(fmt.Sprintf("\n✨ Resource complete: %s", name))
@@ -502,6 +539,40 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 					}
 					if !skipRoutes && routerType != "none" {
 						output.Step("✓ Routes (internal/handlers/routes.go)")
+					}
+				}
+
+				// Check for first-time realtime auto-initialization
+				if !dryRun {
+					def, parseErr := schema.Parse(schemaPath)
+					if parseErr == nil && def.Spec.Realtime != nil && def.Spec.Realtime.Enabled {
+						// Check if realtime infrastructure needs initialization
+						if !helpers.IsRealtimeInitialized() {
+							output.Info("")
+							output.Info("🔥 First realtime resource detected!")
+							output.Info("   Auto-initializing WebSocket support...")
+
+							backend := def.Spec.Realtime.Backend
+							if backend == "" {
+								backend = "memory"
+							}
+							natsURL := def.Spec.Realtime.NatsURL
+							if natsURL == "" {
+								natsURL = "nats://localhost:4222"
+							}
+
+							if err := autoInitRealtime(backend, natsURL); err != nil {
+								output.Error("Auto-initialization failed: " + err.Error())
+								output.Info("Run 'firebird realtime init' manually to complete setup")
+							} else {
+								output.Success("✓ WebSocket support initialized automatically!")
+								output.Info("  • EventBus configured in cmd/server/main.go")
+								output.Info("  • /ws endpoint registered in internal/handlers/routes.go")
+								output.Info("  • Config updated in config/firebird.yml")
+								output.Info("")
+								output.Info("Your WebSocket endpoint is ready at /ws 🚀")
+							}
+						}
 					}
 				}
 			case "scaffold":
@@ -689,4 +760,47 @@ func getRouterConfig() (string, error) {
 	}
 
 	return config.Router, nil
+}
+
+// detectPKType determines the primary key type from schema definition
+func detectPKType(def *schema.Definition) string {
+	for _, field := range def.Spec.Fields {
+		if field.PrimaryKey {
+			return cleanType(field.Type)
+		}
+	}
+	return "uuid.UUID" // Default
+}
+
+// cleanType removes pointer prefix from type
+func cleanType(t string) string {
+	return strings.TrimPrefix(t, "*")
+}
+
+// autoInitRealtime wires up realtime infrastructure automatically
+func autoInitRealtime(backend, natsURL string) error {
+	// Get module path
+	modulePath, err := helpers.GetModulePath()
+	if err != nil {
+		return fmt.Errorf("getting module path: %w", err)
+	}
+
+	// Update main.go
+	mainPath := filepath.Join("cmd", "server", "main.go")
+	if err := helpers.UpdateMainGo(mainPath, modulePath, backend, natsURL); err != nil {
+		return fmt.Errorf("updating main.go: %w", err)
+	}
+
+	// Update routes.go
+	routesPath := filepath.Join("internal", "handlers", "routes.go")
+	if err := helpers.UpdateRoutesGo(routesPath, modulePath); err != nil {
+		return fmt.Errorf("updating routes.go: %w", err)
+	}
+
+	// Update config (mark as initialized)
+	if err := helpers.UpdateConfigWithRealtime(backend, natsURL, true); err != nil {
+		return fmt.Errorf("updating config: %w", err)
+	}
+
+	return nil
 }

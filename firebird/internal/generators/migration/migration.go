@@ -67,7 +67,7 @@ func (g *Generator) generateFromDefinition(name string, def *schema.Definition) 
 	output.Verbose(fmt.Sprintf("Detected database dialect: %s", dialect))
 
 	// 2. Check if migration already exists and detect ALTER TABLE scenario
-	migrationsDir := "migrations"
+	migrationsDir := filepath.Join("db", "migrations")
 
 	// Try to extract previous schema
 	oldDef, err := extractLastSnapshot(migrationsDir, name)

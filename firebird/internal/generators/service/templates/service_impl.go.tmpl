@@ -7,12 +7,16 @@ import (
 	"log/slog"
 
 	"github.com/go-playground/validator/v10"
-	"{{ .ModulePath }}/internal/db"
+	"{{ .ModulePath }}/db"
+	internaldb "{{ .ModulePath }}/internal/db"
 	"{{ .ModulePath }}/internal/dto"
 	apperrors "{{ .ModulePath }}/internal/errors"
 	"{{ .ModulePath }}/internal/repositories"
 {{- if .HasAPILoadableRelationships }}
 	"{{ .ModulePath }}/internal/services/generated"
+{{- end }}
+{{- if .RealtimeEnabled }}
+	"{{ .ModulePath }}/internal/events"
 {{- end }}
 {{- if eq .PrimaryKeyType "uuid.UUID" }}
 	"github.com/google/uuid"
@@ -21,24 +25,33 @@ import (
 
 // {{ .ModelName }}ServiceImpl implements {{ .ModelName }}Service
 type {{ .ModelName }}ServiceImpl struct {
-	{{ .RepoFieldName }} repositories.{{ .ModelName }}Repository
-	db                   *db.DB
+	{{ .RepoFieldName }} *repositories.{{ .ModelName }}Repository
+	db                   *internaldb.DB
 	logger               *slog.Logger
 	validator            *validator.Validate
+{{- if .RealtimeEnabled }}
+	eventBus             events.EventBus
+{{- end }}
 }
 
 // New{{ .ModelName }}Service creates a new {{ .ModelName }} service
 func New{{ .ModelName }}Service(
-	{{ .RepoFieldName }} repositories.{{ .ModelName }}Repository,
-	database *db.DB,
+	{{ .RepoFieldName }} *repositories.{{ .ModelName }}Repository,
+	database *internaldb.DB,
 	logger *slog.Logger,
 	validator *validator.Validate,
+{{- if .RealtimeEnabled }}
+	eventBus events.EventBus,
+{{- end }}
 ) {{ .ModelName }}Service {
 	return &{{ .ModelName }}ServiceImpl{
 		{{ .RepoFieldName }}: {{ .RepoFieldName }},
 		db:                   database,
 		logger:               logger.With(slog.String("service", "{{ .ModelName }}")),
 		validator:            validator,
+{{- if .RealtimeEnabled }}
+		eventBus:             eventBus,
+{{- end }}
 	}
 }
 
@@ -73,6 +86,19 @@ func (s *{{ .ModelName }}ServiceImpl) Create(ctx context.Context, input dto.Crea
 	}
 
 	s.logger.InfoContext(ctx, "{{ .ModelNameLower }} created", slog.Any("id", model.ID))
+
+{{- if .RealtimeEnabled }}
+	// Broadcast event if realtime is enabled
+	if s.eventBus != nil {
+		topic := "{{ .ModelNameLower }}s.created"
+		if err := s.eventBus.Publish(ctx, topic, dto.From{{ .ModelName }}(model)); err != nil {
+			s.logger.WarnContext(ctx, "failed to broadcast event",
+				slog.String("topic", topic),
+				slog.String("error", err.Error()),
+			)
+		}
+	}
+{{- end }}
 
 	return dto.From{{ .ModelName }}(model), nil
 }
@@ -180,6 +206,19 @@ func (s *{{ .ModelName }}ServiceImpl) Update(ctx context.Context, id {{ .Primary
 
 	s.logger.InfoContext(ctx, "{{ .ModelNameLower }} updated", slog.Any("id", id))
 
+{{- if .RealtimeEnabled }}
+	// Broadcast event if realtime is enabled
+	if s.eventBus != nil {
+		topic := "{{ .ModelNameLower }}s.updated"
+		if err := s.eventBus.Publish(ctx, topic, dto.From{{ .ModelName }}(model)); err != nil {
+			s.logger.WarnContext(ctx, "failed to broadcast event",
+				slog.String("topic", topic),
+				slog.String("error", err.Error()),
+			)
+		}
+	}
+{{- end }}
+
 	return dto.From{{ .ModelName }}(model), nil
 }
 
@@ -210,6 +249,19 @@ func (s *{{ .ModelName }}ServiceImpl) Delete(ctx context.Context, id {{ .Primary
 	}
 
 	s.logger.InfoContext(ctx, "{{ .ModelNameLower }} deleted", slog.Any("id", id))
+
+{{- if .RealtimeEnabled }}
+	// Broadcast event if realtime is enabled
+	if s.eventBus != nil {
+		topic := "{{ .ModelNameLower }}s.deleted"
+		if err := s.eventBus.Publish(ctx, topic, map[string]interface{}{"id": id}); err != nil {
+			s.logger.WarnContext(ctx, "failed to broadcast event",
+				slog.String("topic", topic),
+				slog.String("error", err.Error()),
+			)
+		}
+	}
+{{- end }}
 
 	return nil
 }

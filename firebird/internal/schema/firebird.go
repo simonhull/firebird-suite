@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/simonhull/firebird-suite/fledge/generator"
+	fledgeschema "github.com/simonhull/firebird-suite/fledge/schema"
 	"gopkg.in/yaml.v3"
 )
 
@@ -86,47 +87,13 @@ type Relationship struct {
 	APILoadable   bool   `yaml:"api_loadable"`             // Allow loading via API includes (default: false, secure by default)
 }
 
-// ValidationError represents a schema validation error with context
-type ValidationError struct {
-	Field      string // Field path (e.g., "spec.fields[0].name")
-	Message    string // Error message
-	Suggestion string // Helpful suggestion (optional)
-	Line       int    // Line number in YAML (if available)
-}
-
-// Error returns a formatted error message
-func (e *ValidationError) Error() string {
-	var msg string
-	if e.Line > 0 {
-		msg = fmt.Sprintf("validation error at %s (line %d): %s", e.Field, e.Line, e.Message)
-	} else {
-		msg = fmt.Sprintf("validation error at %s: %s", e.Field, e.Message)
-	}
-	if e.Suggestion != "" {
-		msg += fmt.Sprintf(". Suggestion: %s", e.Suggestion)
-	}
-	return msg
-}
+// ValidationError represents a validation error with context and suggestions
+// This is a type alias to Fledge's ValidationError for consistency across the Firebird Suite
+type ValidationError = fledgeschema.ValidationError
 
 // ValidationErrors is a collection of validation errors
-type ValidationErrors []ValidationError
-
-// Error returns all validation errors formatted with clear separation
-func (e ValidationErrors) Error() string {
-	if len(e) == 0 {
-		return "validation errors"
-	}
-	if len(e) == 1 {
-		return e[0].Error()
-	}
-
-	var buf bytes.Buffer
-	buf.WriteString(fmt.Sprintf("found %d validation errors:\n", len(e)))
-	for i, err := range e {
-		buf.WriteString(fmt.Sprintf("  %d. %s\n", i+1, err.Error()))
-	}
-	return buf.String()
-}
+// This is a type alias to Fledge's ValidationErrors for consistency across the Firebird Suite
+type ValidationErrors = fledgeschema.ValidationErrors
 
 // Parse reads and validates a schema file
 func Parse(path string) (*Definition, error) {

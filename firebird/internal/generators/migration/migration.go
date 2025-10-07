@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/model"
 	"github.com/simonhull/firebird-suite/firebird/internal/schema"
@@ -18,7 +19,9 @@ var templatesFS embed.FS
 
 // Generator generates SQL migrations from schemas
 type Generator struct {
-	renderer *generator.Renderer
+	renderer      *generator.Renderer
+	baseTimestamp time.Time // Optional: if zero, use time.Now()
+	offset        int       // Offset in seconds for sequential ordering
 }
 
 // NewGenerator creates a new migration generator
@@ -26,6 +29,16 @@ func NewGenerator() *Generator {
 	return &Generator{
 		renderer: generator.NewRenderer(),
 	}
+}
+
+// SetBaseTimestamp sets the base timestamp for migration numbering
+func (g *Generator) SetBaseTimestamp(t time.Time) {
+	g.baseTimestamp = t
+}
+
+// SetOffset sets the offset in seconds for migration numbering
+func (g *Generator) SetOffset(offset int) {
+	g.offset = offset
 }
 
 // Generate generates a SQL migration for the given schema name
@@ -99,8 +112,8 @@ func (g *Generator) generateFromDefinition(name string, def *schema.Definition) 
 		return nil, fmt.Errorf("migration for '%s' already exists. Migrations are immutable - create a new migration to modify the table", name)
 	}
 
-	// 3. Generate migration number
-	number, err := GenerateMigrationNumber(TimestampNumbering, migrationsDir)
+	// 3. Generate migration number (with optional base timestamp and offset)
+	number, err := GenerateMigrationNumberWithOffset(TimestampNumbering, migrationsDir, g.baseTimestamp, g.offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate migration number: %w", err)
 	}

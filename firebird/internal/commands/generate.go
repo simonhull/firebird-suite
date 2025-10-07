@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/dto"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/handler"
@@ -94,8 +95,10 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 			ctx := context.Background()
 			genType := args[0]
 			var name string
+			var names []string
 			if len(args) > 1 {
 				name = args[1]
+				names = args[1:] // Collect all names for multi-resource support
 			}
 
 			// Validate mutually exclusive flags (force, skip, diff)
@@ -159,8 +162,13 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 					os.Exit(1)
 				}
 			case "migration":
-				gen := migration.NewGenerator()
-				ops, err = gen.Generate(name)
+				// Support multiple resources with dependency ordering
+				if len(names) > 1 {
+					ops, err = generateOrderedMigrations(names)
+				} else {
+					gen := migration.NewGenerator()
+					ops, err = gen.Generate(name)
+				}
 			case "service":
 				// Get module path
 				modulePath, modErr := getModulePath(".")
@@ -911,4 +919,110 @@ func autoInitRealtime(backend, natsURL string) error {
 	}
 
 	return nil
+}
+
+// generateOrderedMigrations generates migrations for multiple resources in dependency order
+func generateOrderedMigrations(names []string) ([]generator.Operation, error) {
+	output.Info(fmt.Sprintf("🔍 Validating schemas for %d resources...", len(names)))
+
+	// 1. Load all schema definitions
+	var resources []*schema.Definition
+	for _, name := range names {
+		// Find schema file
+		schemaPath, err := model.FindSchemaFile(name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find schema for %s: %w", name, err)
+		}
+
+		// Parse schema
+		def, err := schema.Parse(schemaPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse schema %s: %w", name, err)
+		}
+
+		resources = append(resources, def)
+	}
+
+	// 2. Build dependency graph
+	graph, err := migration.BuildDependencyGraph(resources)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build dependency graph: %w", err)
+	}
+
+	// 3. Check for circular dependencies
+	if hasCycle, cycleInfo := graph.HasCircularDependency(); hasCycle {
+		return nil, fmt.Errorf("❌ Cannot generate migrations: %s", cycleInfo)
+	}
+
+	// 4. Sort by dependencies (topological sort)
+	orderedNames, err := graph.TopologicalSort()
+	if err != nil {
+		return nil, fmt.Errorf("failed to order resources: %w", err)
+	}
+
+	// 5. Count foreign keys for user feedback
+	fkCount := 0
+	for _, resource := range resources {
+		for _, field := range resource.Spec.Fields {
+			if field.Tags["fk"] != "" {
+				fkCount++
+			}
+		}
+	}
+
+	// 6. Print dependency information
+	output.Success(fmt.Sprintf("✅ Validation passed (%d foreign key%s detected)\n", fkCount, pluralize(fkCount)))
+
+	output.Info("📊 Migration order (based on FK dependencies):")
+	for i, resName := range orderedNames {
+		deps := graph.GetDependencies(resName)
+		if len(deps) > 0 {
+			output.Info(fmt.Sprintf("  %d. %s (depends on: %s)", i+1, resName, strings.Join(deps, ", ")))
+		} else {
+			output.Info(fmt.Sprintf("  %d. %s (no dependencies)", i+1, resName))
+		}
+	}
+	fmt.Println()
+
+	// 7. Generate migrations with sequential timestamps
+	baseTime := time.Now()
+	var allOps []generator.Operation
+
+	output.Info("Generating migrations...")
+	for i, resName := range orderedNames {
+		gen := migration.NewGenerator()
+		gen.SetBaseTimestamp(baseTime)
+		gen.SetOffset(i) // Offset by i seconds for sequential ordering
+
+		// Find the schema definition for this resource
+		var resourceDef *schema.Definition
+		for _, res := range resources {
+			if res.Name == resName {
+				resourceDef = res
+				break
+			}
+		}
+
+		if resourceDef == nil {
+			return nil, fmt.Errorf("resource definition not found for %s", resName)
+		}
+
+		// Generate migration for this resource
+		ops, err := gen.GenerateFromSchema(resName, resourceDef)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate migration for %s: %w", resName, err)
+		}
+
+		allOps = append(allOps, ops...)
+	}
+
+	return allOps, nil
+}
+
+// pluralize returns "s" if count != 1, otherwise empty string
+func pluralize(count int) string {
+	if count == 1 {
+		return ""
+	}
+	return "s"
 }

@@ -19,9 +19,15 @@ const (
 
 // GenerateMigrationNumber creates a new migration number
 func GenerateMigrationNumber(strategy NumberingStrategy, migrationsDir string) (string, error) {
+	return GenerateMigrationNumberWithOffset(strategy, migrationsDir, time.Time{}, 0)
+}
+
+// GenerateMigrationNumberWithOffset creates a new migration number with optional base time and offset
+// If baseTime is zero, uses time.Now(). Offset is added as seconds to the timestamp.
+func GenerateMigrationNumberWithOffset(strategy NumberingStrategy, migrationsDir string, baseTime time.Time, offset int) (string, error) {
 	switch strategy {
 	case TimestampNumbering:
-		return generateTimestamp(), nil
+		return generateTimestampWithOffset(baseTime, offset), nil
 	case SequentialNumbering:
 		return generateSequential(migrationsDir)
 	default:
@@ -32,6 +38,23 @@ func GenerateMigrationNumber(strategy NumberingStrategy, migrationsDir string) (
 // generateTimestamp creates a timestamp-based migration number
 func generateTimestamp() string {
 	return time.Now().UTC().Format("20060102150405")
+}
+
+// generateTimestampWithOffset creates a timestamp-based migration number with optional base time and offset
+func generateTimestampWithOffset(baseTime time.Time, offset int) string {
+	var t time.Time
+	if baseTime.IsZero() {
+		t = time.Now().UTC()
+	} else {
+		t = baseTime.UTC()
+	}
+
+	// Add offset seconds for sequential ordering
+	if offset > 0 {
+		t = t.Add(time.Duration(offset) * time.Second)
+	}
+
+	return t.Format("20060102150405")
 }
 
 // generateSequential finds the highest sequential number and increments

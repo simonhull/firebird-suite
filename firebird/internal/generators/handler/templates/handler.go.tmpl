@@ -3,17 +3,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"{{ .ModulePath }}/internal/dto"
 	apperrors "{{ .ModulePath }}/internal/errors"
 	"{{ .ModulePath }}/internal/helpers"
 	"{{ .ModulePath }}/internal/services"
-{{- if eq .PrimaryKeyType "uuid.UUID" }}
-	"github.com/google/uuid"
-{{- end }}
 )
 
 // {{ .ModelName }}Handler handles HTTP requests for {{ .ModelName }} resources
@@ -109,7 +104,7 @@ func (h *{{ .ModelName }}Handler) Store(w http.ResponseWriter, r *http.Request) 
 // Supports ?include=relationship1,relationship2 for eager loading
 {{- end }}
 func (h *{{ .ModelName }}Handler) Show(w http.ResponseWriter, r *http.Request) {
-	id, err := helpers.GetPath{{ if eq .PrimaryKeyType "uuid.UUID" }}UUID{{ else }}Int64{{ end }}(r, "id")
+	id, err := GetPath{{ if eq .PrimaryKeyType "uuid.UUID" }}UUID{{ else }}Int64{{ end }}(r, "id")
 	if err != nil {
 		helpers.RespondError(w, apperrors.NewBadRequestError("Invalid ID format"))
 		return
@@ -143,7 +138,7 @@ func (h *{{ .ModelName }}Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 // Update handles PUT /{{ .ModelPlural }}/{id} - Update {{ .ModelNameLower }}
 func (h *{{ .ModelName }}Handler) Update(w http.ResponseWriter, r *http.Request) {
-	id, err := helpers.GetPath{{ if eq .PrimaryKeyType "uuid.UUID" }}UUID{{ else }}Int64{{ end }}(r, "id")
+	id, err := GetPath{{ if eq .PrimaryKeyType "uuid.UUID" }}UUID{{ else }}Int64{{ end }}(r, "id")
 	if err != nil {
 		helpers.RespondError(w, apperrors.NewBadRequestError("Invalid ID format"))
 		return
@@ -175,7 +170,7 @@ func (h *{{ .ModelName }}Handler) Update(w http.ResponseWriter, r *http.Request)
 
 // Destroy handles DELETE /{{ .ModelPlural }}/{id} - {{ if .HasSoftDelete }}Soft delete{{ else }}Delete{{ end }} {{ .ModelNameLower }}
 func (h *{{ .ModelName }}Handler) Destroy(w http.ResponseWriter, r *http.Request) {
-	id, err := helpers.GetPath{{ if eq .PrimaryKeyType "uuid.UUID" }}UUID{{ else }}Int64{{ end }}(r, "id")
+	id, err := GetPath{{ if eq .PrimaryKeyType "uuid.UUID" }}UUID{{ else }}Int64{{ end }}(r, "id")
 	if err != nil {
 		helpers.RespondError(w, apperrors.NewBadRequestError("Invalid ID format"))
 		return

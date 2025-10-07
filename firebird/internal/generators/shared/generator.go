@@ -120,6 +120,13 @@ func (g *Generator) Generate() ([]generator.Operation, error) {
 	}
 	ops = append(ops, testingHelpersOp)
 
+	// Generate request helpers (GetPathInt64, GetPathUUID, ParsePagination, etc.)
+	requestHelpersOp, err := g.generateRequestHelpers()
+	if err != nil {
+		return nil, err
+	}
+	ops = append(ops, requestHelpersOp)
+
 	return ops, nil
 }
 
@@ -349,6 +356,25 @@ func (g *Generator) generateTestingHelpers() (generator.Operation, error) {
 	data := map[string]interface{}{}
 
 	content, err := g.renderer.RenderFS(templatesFS, "templates/testing_helpers.go.tmpl", data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &generator.WriteFileOp{
+		Path:    path,
+		Content: content,
+		Mode:    0644,
+	}, nil
+}
+
+func (g *Generator) generateRequestHelpers() (generator.Operation, error) {
+	path := filepath.Join(g.projectPath, "internal", "handlers", "request.go")
+
+	data := map[string]interface{}{
+		"ModulePath": g.modulePath,
+	}
+
+	content, err := g.renderer.RenderFS(templatesFS, "templates/request_helpers.go.tmpl", data)
 	if err != nil {
 		return nil, err
 	}

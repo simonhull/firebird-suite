@@ -115,7 +115,7 @@ func (r *{{ .ModelName }}RepositoryBase) List(ctx context.Context) ([]db.{{ .Mod
 }
 
 // ListPaginated retrieves {{ .ModelName }}s with pagination.
-func (r *{{ .ModelName }}RepositoryBase) ListPaginated(ctx context.Context, limit, offset int32) ([]db.{{ .ModelName }}, error) {
+func (r *{{ .ModelName }}RepositoryBase) ListPaginated(ctx context.Context, limit, offset int64) ([]db.{{ .ModelName }}, error) {
 	start := time.Now()
 
 	result, err := r.queries.List{{ .ModelName }}sPaginated(ctx, db.List{{ .ModelName }}sPaginatedParams{

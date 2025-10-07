@@ -17,6 +17,7 @@ var templatesFS embed.FS
 type Generator struct {
 	projectPath string
 	schemaPath  string
+	database    string // Database type: postgres, mysql, sqlite
 	renderer    *generator.Renderer
 }
 
@@ -41,10 +42,11 @@ type RelationshipQueryData struct {
 }
 
 // New creates a new query generator.
-func New(projectPath, schemaPath string) *Generator {
+func New(projectPath, schemaPath, database string) *Generator {
 	return &Generator{
 		projectPath: projectPath,
 		schemaPath:  schemaPath,
+		database:    database,
 		renderer:    generator.NewRenderer(),
 	}
 }
@@ -98,14 +100,15 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 		}
 
 		insertFields = append(insertFields, generator.SnakeCase(field.Name))
-		insertParams = append(insertParams, fmt.Sprintf("$%d", paramIndex))
+		insertParams = append(insertParams, g.getParamPlaceholder(paramIndex))
 		paramIndex++
 	}
 
 	// Add timestamp columns if enabled
 	if def.Spec.Timestamps {
 		insertFields = append(insertFields, "created_at", "updated_at")
-		insertParams = append(insertParams, "NOW()", "NOW()")
+		timestampFunc := g.getTimestampFunction()
+		insertParams = append(insertParams, timestampFunc, timestampFunc)
 	}
 
 	// Build list of updatable fields (exclude id, created_at, deleted_at)
@@ -119,14 +122,14 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 		}
 
 		updateFields = append(updateFields,
-			fmt.Sprintf("%s = $%d", generator.SnakeCase(field.Name), updateParamIndex),
+			fmt.Sprintf("%s = %s", generator.SnakeCase(field.Name), g.getParamPlaceholder(updateParamIndex)),
 		)
 		updateParamIndex++
 	}
 
 	// Add updated_at = NOW() at the end if timestamps enabled
 	if def.Spec.Timestamps {
-		updateFields = append(updateFields, "updated_at = NOW()")
+		updateFields = append(updateFields, fmt.Sprintf("updated_at = %s", g.getTimestampFunction()))
 	}
 
 	// Build SELECT column list
@@ -201,6 +204,13 @@ func (g *Generator) templateData(def *schema.Definition) map[string]interface{} 
 		"SupportsCursorPagination": supportsCursor,
 		"CursorField":              generator.SnakeCase(cursorField),
 		"CursorFieldType":          cursorFieldType,
+		"Database":                 g.database,
+		"SupportsReturning":        g.supportsReturning(),
+		"IDParam":                  g.getParamPlaceholder(1),        // For WHERE id = ?/$1
+		"LimitParam":               g.getParamPlaceholder(1),        // For LIMIT ?/$1
+		"OffsetParam":              g.getParamPlaceholder(2),        // For OFFSET ?/$2
+		"WhereIDParam":             g.getParamPlaceholder(updateParamIndex), // For WHERE in UPDATE
+		"TimestampFunc":            g.getTimestampFunction(),        // For NOW() or datetime('now')
 	}
 }
 
@@ -335,4 +345,49 @@ func (g *Generator) loadTargetModelSchema(modelName string) (*schema.Definition,
 
 	// Could not load target schema - return nil (caller handles gracefully)
 	return nil, fmt.Errorf("could not load schema for model %s", modelName)
+}
+
+// getParamPlaceholder returns the SQL parameter placeholder for the given database
+// PostgreSQL: $1, $2, $3
+// MySQL/SQLite: ?
+func (g *Generator) getParamPlaceholder(index int) string {
+	switch g.database {
+	case "postgresql", "postgres":
+		return fmt.Sprintf("$%d", index)
+	case "mysql", "sqlite":
+		return "?"
+	default:
+		// Default to PostgreSQL syntax
+		return fmt.Sprintf("$%d", index)
+	}
+}
+
+// getTimestampFunction returns the SQL function for current timestamp
+// PostgreSQL: NOW()
+// MySQL: NOW()
+// SQLite: datetime('now')
+func (g *Generator) getTimestampFunction() string {
+	switch g.database {
+	case "sqlite":
+		return "datetime('now')"
+	case "postgresql", "postgres", "mysql":
+		return "NOW()"
+	default:
+		return "NOW()"
+	}
+}
+
+// supportsReturning returns whether the database supports RETURNING clause
+// PostgreSQL: Yes
+// SQLite: Yes (3.35+)
+// MySQL: No
+func (g *Generator) supportsReturning() bool {
+	switch g.database {
+	case "postgresql", "postgres", "sqlite":
+		return true
+	case "mysql":
+		return false
+	default:
+		return true
+	}
 }

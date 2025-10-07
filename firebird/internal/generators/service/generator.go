@@ -276,12 +276,25 @@ func detectPrimaryKeyType(def *schema.Definition) string {
 	return "uuid.UUID" // Default
 }
 
-// toGoName converts snake_case to PascalCase
+// toGoName converts snake_case to PascalCase with proper initialism handling
 func toGoName(name string) string {
+	// Common initialisms that should be all caps
+	initialisms := map[string]bool{
+		"id": true, "url": true, "http": true, "https": true,
+		"api": true, "json": true, "xml": true, "html": true,
+		"sql": true, "uuid": true, "uri": true, "tcp": true,
+		"udp": true, "ip": true, "db": true, "rpc": true,
+	}
+
 	parts := strings.Split(name, "_")
 	for i, part := range parts {
 		if len(part) > 0 {
-			parts[i] = strings.ToUpper(part[:1]) + part[1:]
+			lower := strings.ToLower(part)
+			if initialisms[lower] {
+				parts[i] = strings.ToUpper(part)
+			} else {
+				parts[i] = strings.ToUpper(part[:1]) + part[1:]
+			}
 		}
 	}
 	return strings.Join(parts, "")

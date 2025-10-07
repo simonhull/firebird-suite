@@ -4,12 +4,14 @@
 -- name: Create{{ .ModelName }} :one
 INSERT INTO {{ .TableName }} ({{ .InsertFields }})
 VALUES ({{ .InsertParams }})
-RETURNING *;
+{{- if .SupportsReturning }}
+RETURNING *
+{{- end }};
 
 -- name: Get{{ .ModelName }} :one
 SELECT {{ .SelectColumns }}
 FROM {{ .TableName }}
-WHERE id = $1{{ .SoftDeleteWhere }};
+WHERE id = {{ .IDParam }}{{ .SoftDeleteWhere }};
 
 -- name: List{{ .ModelName }}s :many
 SELECT {{ .SelectColumns }}
@@ -34,7 +36,7 @@ ORDER BY created_at DESC
 {{- else }}
 ORDER BY id DESC
 {{- end }}
-LIMIT $1 OFFSET $2;
+LIMIT {{ .LimitParam }} OFFSET {{ .OffsetParam }};
 
 -- name: Count{{ .ModelName }}s :one
 SELECT COUNT(*)
@@ -46,29 +48,31 @@ WHERE deleted_at IS NULL
 -- name: Update{{ .ModelName }} :one
 UPDATE {{ .TableName }}
 SET {{ .UpdateFields }}
-WHERE id = ${{ .UpdateParamCount }}{{ .SoftDeleteWhere }}
-RETURNING *;
+WHERE id = {{ .WhereIDParam }}{{ .SoftDeleteWhere }}
+{{- if .SupportsReturning }}
+RETURNING *
+{{- end }};
 
 {{- if .SoftDeletes }}
 
 -- name: Delete{{ .ModelName }} :exec
 UPDATE {{ .TableName }}
-SET deleted_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL;
+SET deleted_at = {{ .TimestampFunc }}
+WHERE id = {{ .IDParam }} AND deleted_at IS NULL;
 
 -- name: Restore{{ .ModelName }} :exec
 UPDATE {{ .TableName }}
 SET deleted_at = NULL
-WHERE id = $1;
+WHERE id = {{ .IDParam }};
 
 -- name: PermanentDelete{{ .ModelName }} :exec
 DELETE FROM {{ .TableName }}
-WHERE id = $1;
+WHERE id = {{ .IDParam }};
 {{- else }}
 
 -- name: Delete{{ .ModelName }} :exec
 DELETE FROM {{ .TableName }}
-WHERE id = $1;
+WHERE id = {{ .IDParam }};
 {{- end }}
 {{- if .SupportsCursorPagination }}
 
@@ -83,27 +87,27 @@ FROM {{ .TableName }}
 WHERE deleted_at IS NULL
 {{- end }}
 ORDER BY {{ .CursorField }} DESC
-LIMIT $1;
+LIMIT {{ .LimitParam }};
 
 -- name: List{{ .ModelName }}sAfter :many
 SELECT {{ .SelectColumns }}
 FROM {{ .TableName }}
-WHERE {{ .CursorField }} < $1
+WHERE {{ .CursorField }} < {{ .LimitParam }}
 {{- if .SoftDeletes }}
   AND deleted_at IS NULL
 {{- end }}
 ORDER BY {{ .CursorField }} DESC
-LIMIT $2;
+LIMIT {{ .OffsetParam }};
 
 -- name: List{{ .ModelName }}sBefore :many
 SELECT {{ .SelectColumns }}
 FROM {{ .TableName }}
-WHERE {{ .CursorField }} > $1
+WHERE {{ .CursorField }} > {{ .LimitParam }}
 {{- if .SoftDeletes }}
   AND deleted_at IS NULL
 {{- end }}
 ORDER BY {{ .CursorField }} ASC
-LIMIT $2;
+LIMIT {{ .OffsetParam }};
 {{- end }}
 {{- if .Relationships }}
 
@@ -115,13 +119,13 @@ LIMIT $2;
 {{- if eq .Type "belongs_to" }}
 -- name: {{ .GetSingleQueryName }} :one
 SELECT * FROM {{ .TargetTable }}
-WHERE id = $1;
+WHERE id = {{ $.IDParam }};
 {{- end }}
 
 {{- if eq .Type "has_many" }}
 -- name: {{ .GetSingleQueryName }} :many
 SELECT * FROM {{ .TargetTable }}
-WHERE {{ .ForeignKey }} = $1
+WHERE {{ .ForeignKey }} = {{ $.IDParam }}
 {{- if $.SoftDeletes }}
   AND deleted_at IS NULL
 {{- end }}
@@ -129,7 +133,7 @@ ORDER BY created_at DESC;
 
 -- name: {{ .GetManyQueryName }} :many
 SELECT * FROM {{ .TargetTable }}
-WHERE {{ .ForeignKey }} = ANY($1::{{ .PrimaryKeyType }}[])
+WHERE {{ .ForeignKey }} = ANY({{ $.IDParam }}::{{ .PrimaryKeyType }}[])
 {{- if $.SoftDeletes }}
   AND deleted_at IS NULL
 {{- end }}
@@ -140,7 +144,7 @@ ORDER BY {{ .ForeignKey }}, created_at DESC;
 -- name: {{ .GetSingleQueryName }} :many
 SELECT t.* FROM {{ .TargetTable }} t
 INNER JOIN {{ .JunctionTable }} jt ON jt.{{ .RelatedKey }} = t.id
-WHERE jt.{{ .ForeignKey }} = $1
+WHERE jt.{{ .ForeignKey }} = {{ $.IDParam }}
 {{- if .TargetSoftDeletes }}
   AND t.deleted_at IS NULL
 {{- end }}
@@ -153,7 +157,7 @@ ORDER BY t.id
 -- name: {{ .GetManyQueryName }} :many
 SELECT jt.{{ .ForeignKey }}, t.* FROM {{ .TargetTable }} t
 INNER JOIN {{ .JunctionTable }} jt ON jt.{{ .RelatedKey }} = t.id
-WHERE jt.{{ .ForeignKey }} = ANY($1::{{ .PrimaryKeyType }}[])
+WHERE jt.{{ .ForeignKey }} = ANY({{ $.IDParam }}::{{ .PrimaryKeyType }}[])
 {{- if .TargetSoftDeletes }}
   AND t.deleted_at IS NULL
 {{- end }}
@@ -165,16 +169,16 @@ ORDER BY jt.{{ .ForeignKey }}, t.id
 
 -- name: {{ .AddQueryName }} :exec
 INSERT INTO {{ .JunctionTable }} ({{ .ForeignKey }}, {{ .RelatedKey }})
-VALUES ($1, $2)
+VALUES ({{ $.IDParam }}, {{ $.OffsetParam }})
 ON CONFLICT DO NOTHING;
 
 -- name: {{ .RemoveQueryName }} :exec
 DELETE FROM {{ .JunctionTable }}
-WHERE {{ .ForeignKey }} = $1 AND {{ .RelatedKey }} = $2;
+WHERE {{ .ForeignKey }} = {{ $.IDParam }} AND {{ .RelatedKey }} = {{ $.OffsetParam }};
 
 -- name: {{ .RemoveAllQueryName }} :exec
 DELETE FROM {{ .JunctionTable }}
-WHERE {{ .ForeignKey }} = $1;
+WHERE {{ .ForeignKey }} = {{ $.IDParam }};
 {{- end }}
 
 {{- end }}

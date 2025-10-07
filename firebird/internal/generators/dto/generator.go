@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/simonhull/firebird-suite/firebird/internal/migrate"
 	"github.com/simonhull/firebird-suite/firebird/internal/schema"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 )
@@ -239,17 +240,21 @@ func (g *Generator) prepareResponseData(def *schema.Definition) ResponseData {
 
 	// Add timestamps if enabled
 	if def.Spec.Timestamps {
+		// Determine timestamp type based on database dialect
+		// SQLite stores timestamps as TEXT (string), others use time.Time
+		timestampType := getTimestampGoType()
+
 		fields = append(fields,
 			ResponseFieldData{
 				Name:        "CreatedAt",
-				Type:        "time.Time",
+				Type:        timestampType,
 				JSONTag:     "created_at",
 				DBFieldName: "CreatedAt",
 				Omitempty:   false,
 			},
 			ResponseFieldData{
 				Name:        "UpdatedAt",
-				Type:        "time.Time",
+				Type:        timestampType,
 				JSONTag:     "updated_at",
 				DBFieldName: "UpdatedAt",
 				Omitempty:   false,
@@ -441,6 +446,26 @@ func toSnakeCase(s string) string {
 		}
 	}
 	return string(result)
+}
+
+// getTimestampGoType returns the appropriate Go type for timestamp fields
+// based on the database dialect. SQLite stores timestamps as TEXT (string),
+// while PostgreSQL and MySQL use native timestamp types (time.Time).
+func getTimestampGoType() string {
+	// Try to load database config
+	config, err := migrate.LoadDatabaseConfig()
+	if err != nil {
+		// Default to time.Time if can't detect
+		return "time.Time"
+	}
+
+	// SQLite stores timestamps as TEXT, SQLC generates string type
+	if config.Driver == "sqlite" {
+		return "string"
+	}
+
+	// PostgreSQL and MySQL use time.Time
+	return "time.Time"
 }
 
 // Template data structures

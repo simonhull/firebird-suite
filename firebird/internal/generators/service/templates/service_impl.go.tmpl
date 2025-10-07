@@ -147,7 +147,7 @@ func (s *{{ .ModelName }}ServiceImpl) GetByIDWithIncludes(ctx context.Context, i
 // List retrieves paginated {{ .ModelName }}s
 func (s *{{ .ModelName }}ServiceImpl) List(ctx context.Context, page Pagination) (*ListResult[*dto.{{ .ModelName }}Response], error) {
 	// Get items
-	models, err := s.{{ .RepoFieldName }}.ListPaginated(ctx, int32(page.PerPage), int32(page.Offset()))
+	models, err := s.{{ .RepoFieldName }}.ListPaginated(ctx, int64(page.PerPage), int64(page.Offset()))
 	if err != nil {
 		s.logger.ErrorContext(ctx, "failed to list {{ .ModelNameLower }}s", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("list {{ .ModelNameLower }}s: %w", err)

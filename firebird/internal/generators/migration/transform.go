@@ -59,7 +59,11 @@ type JunctionTableData struct {
 
 // PrepareMigrationData transforms a schema definition into migration data
 func PrepareMigrationData(def *schema.Definition, dialect DatabaseDialect) *MigrationData {
-	tableName := generator.SnakeCase(generator.Pluralize(def.Name))
+	// Use explicit table_name if specified, otherwise pluralize model name
+	tableName := def.Spec.TableName
+	if tableName == "" {
+		tableName = generator.SnakeCase(generator.Pluralize(def.Name))
+	}
 
 	data := &MigrationData{
 		TableName:   tableName,
@@ -78,22 +82,39 @@ func PrepareMigrationData(def *schema.Definition, dialect DatabaseDialect) *Migr
 		// because the inline UNIQUE constraint already creates an index in most databases.
 	}
 
-	// Add timestamps if enabled
+	// Add timestamps if enabled (but skip if already explicitly defined)
 	if def.Spec.Timestamps {
-		data.Columns = append(data.Columns,
-			ColumnData{
+		// Check if created_at already exists
+		hasCreatedAt := false
+		hasUpdatedAt := false
+		for _, col := range data.Columns {
+			if col.Name == "created_at" {
+				hasCreatedAt = true
+			}
+			if col.Name == "updated_at" {
+				hasUpdatedAt = true
+			}
+		}
+
+		// Add created_at if not already defined
+		if !hasCreatedAt {
+			data.Columns = append(data.Columns, ColumnData{
 				Name:     "created_at",
 				Type:     getTimestampType(dialect),
 				Nullable: false,
 				Default:  getTimestampDefault(dialect, "created_at"),
-			},
-			ColumnData{
+			})
+		}
+
+		// Add updated_at if not already defined
+		if !hasUpdatedAt {
+			data.Columns = append(data.Columns, ColumnData{
 				Name:     "updated_at",
 				Type:     getTimestampType(dialect),
 				Nullable: false,
 				Default:  getTimestampDefault(dialect, "updated_at"),
-			},
-		)
+			})
+		}
 	}
 
 	// Add soft deletes if enabled

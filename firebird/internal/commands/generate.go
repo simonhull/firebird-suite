@@ -18,7 +18,9 @@ import (
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/scaffold"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/service"
 	"github.com/simonhull/firebird-suite/firebird/internal/generators/shared"
+	"github.com/simonhull/firebird-suite/firebird/internal/generators/wiring"
 	"github.com/simonhull/firebird-suite/firebird/internal/helpers"
+	"github.com/simonhull/firebird-suite/firebird/internal/migrate"
 	"github.com/simonhull/firebird-suite/firebird/internal/schema"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 	"github.com/simonhull/firebird-suite/fledge/output"
@@ -340,7 +342,17 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 				if !skipQueries {
 					output.Info("Generating queries")
 
-					queryGen := query.New(".", schemaPath)
+					// Load database config to pass to query generator
+					dbCfg, err := migrate.LoadDatabaseConfig()
+					database := "postgres" // Default
+					if err == nil && dbCfg.Driver != "" {
+						database = dbCfg.Driver
+					} else if err != nil {
+						output.Verbose(fmt.Sprintf("Could not load database config: %v (using default: postgres)", err))
+					}
+					output.Verbose(fmt.Sprintf("Using database type: %s", database))
+
+					queryGen := query.New(".", schemaPath, database)
 					queryOps, queryErr := queryGen.Generate()
 					if queryErr != nil {
 						output.Error(fmt.Sprintf("Failed to generate queries: %v", queryErr))
@@ -510,6 +522,29 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 					}
 
 					output.Success("Created realtime infrastructure")
+				}
+
+				// 10. Generate wiring.go (always, to ensure proper route registration)
+				if !dryRun && routerType != "none" {
+					output.Info("Generating wiring")
+
+					wiringGen := wiring.New(".", modulePath)
+					wiringOps, wiringErr := wiringGen.Generate()
+					if wiringErr != nil {
+						output.Error(fmt.Sprintf("Failed to generate wiring: %v", wiringErr))
+						os.Exit(1)
+					}
+
+					if err := generator.Execute(ctx, wiringOps, generator.ExecuteOptions{
+						DryRun: dryRun,
+						Force:  true, // Always regenerate wiring.go
+						Writer: cmd.OutOrStdout(),
+					}); err != nil {
+						output.Error(fmt.Sprintf("Failed to create wiring: %v", err))
+						os.Exit(1)
+					}
+
+					output.Success("Generated wiring")
 				}
 
 				// Summary

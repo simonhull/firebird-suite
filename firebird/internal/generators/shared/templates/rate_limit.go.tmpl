@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"{{ .ModulePath }}/internal/config"
+	"{{ .ModulePath }}/internal/errors"
 	"{{ .ModulePath }}/internal/helpers"
-	"{{ .ModulePath }}/internal/helpers/apperrors"
 	"golang.org/x/time/rate"
 )
 
@@ -120,7 +120,7 @@ func RateLimit(cfg *config.RateLimitConfig) func(http.Handler) http.Handler {
 
 			// Check if request is allowed
 			if !limiter.Allow() {
-				helpers.RespondError(w, apperrors.NewRateLimitError(cfg.RequestsPerMin))
+				helpers.RespondError(w, errors.NewRateLimitError(cfg.RequestsPerMin))
 				return
 			}
 

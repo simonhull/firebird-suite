@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"{{ .ModulePath }}/internal/db"
 	"{{ .ModulePath }}/internal/logging"
 	"{{ .ModulePath }}/internal/middleware"
-	"{{ .ModulePath }}/internal/repositories"
 )
 
 func main() {
@@ -35,9 +35,8 @@ func main() {
 
 	logger.Info("database connected")
 
-	// Setup repositories
-	repos := setupRepositories(database, logger)
-	_ = repos // Will be used when services are added
+	// Setup validator
+	validate := validator.New()
 
 	// Setup HTTP server
 	mux := http.NewServeMux()
@@ -48,8 +47,12 @@ func main() {
 		fmt.Fprintf(w, "OK")
 	})
 
+	// Wire up all generated routes
+	// This function is defined in wiring.go (generated file)
+	setupRoutes(mux, database, logger, validate)
+
 	// Wrap with middleware
-	handler := middleware.Logging(logger)(mux)
+	handler := middleware.Logger(logger)(mux)
 	handler = middleware.Recovery(logger)(handler)
 
 	// Create server
@@ -154,26 +157,6 @@ func setupDatabase(logger *slog.Logger) (*db.DB, error) {
 	}
 
 	return database, nil
-}
-
-// setupRepositories initializes all repositories
-func setupRepositories(database *db.DB, logger *slog.Logger) *Repositories {
-	repoLogger := logger.With(slog.String("layer", "repository"))
-
-	return &Repositories{
-		// Add repositories as they are generated
-		// Example:
-		// Posts: repositories.NewPostRepository(database, repoLogger),
-		_ : struct{}{}, // Remove this when you add your first repository
-	}
-}
-
-// Repositories holds all repository instances
-type Repositories struct {
-	// Add repository fields here as they are generated
-	// Example:
-	// Posts *repositories.PostRepository
-	_ struct{} // Remove this when you add your first repository
 }
 
 // getEnv retrieves an environment variable with a fallback default

@@ -3,6 +3,8 @@ package schema
 import (
 	"strings"
 	"unicode"
+
+	fledgeschema "github.com/simonhull/firebird-suite/fledge/schema"
 )
 
 // DefaultTableName converts resource name to snake_case plural
@@ -48,75 +50,5 @@ func pascalToSnake(s string) string {
 // Pluralize converts singular to plural
 // This is exported so other packages can use it
 func Pluralize(s string) string {
-	return pluralize(s)
-}
-
-// pluralize adds simple pluralization
-// This is a basic implementation - could be enhanced with more rules
-func pluralize(s string) string {
-	if s == "" {
-		return ""
-	}
-
-	// Handle some common irregular plurals
-	irregulars := map[string]string{
-		"person": "people",
-		"child":  "children",
-		"mouse":  "mice",
-		"foot":   "feet",
-		"tooth":  "teeth",
-		"goose":  "geese",
-		"man":    "men",
-		"woman":  "women",
-	}
-
-	if plural, ok := irregulars[strings.ToLower(s)]; ok {
-		return plural
-	}
-
-	// Handle words ending in 's', 'x', 'z', 'ch', 'sh' -> add 'es'
-	if strings.HasSuffix(s, "s") || strings.HasSuffix(s, "x") || strings.HasSuffix(s, "z") ||
-		strings.HasSuffix(s, "ch") || strings.HasSuffix(s, "sh") {
-		return s + "es"
-	}
-
-	// Handle words ending in consonant + 'y' -> change 'y' to 'ies'
-	if len(s) > 1 && strings.HasSuffix(s, "y") {
-		prevChar := s[len(s)-2]
-		if !isVowel(prevChar) {
-			return s[:len(s)-1] + "ies"
-		}
-	}
-
-	// Handle words ending in 'f' or 'fe' -> change to 'ves'
-	if strings.HasSuffix(s, "f") {
-		return s[:len(s)-1] + "ves"
-	}
-	if strings.HasSuffix(s, "fe") {
-		return s[:len(s)-2] + "ves"
-	}
-
-	// Handle words ending in consonant + 'o' -> add 'es'
-	if len(s) > 1 && strings.HasSuffix(s, "o") {
-		prevChar := s[len(s)-2]
-		if !isVowel(prevChar) {
-			// Common exceptions that just add 's'
-			exceptions := []string{"photo", "piano", "halo"}
-			for _, exc := range exceptions {
-				if strings.HasSuffix(s, exc[len(exc)-2:]) {
-					return s + "s"
-				}
-			}
-			return s + "es"
-		}
-	}
-
-	// Default: just add 's'
-	return s + "s"
-}
-
-// isVowel checks if a byte represents a vowel
-func isVowel(c byte) bool {
-	vowels := "aeiouAEIOU"
-	return strings.ContainsRune(vowels, rune(c))
+	return fledgeschema.Pluralize(s)
 }

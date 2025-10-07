@@ -73,3 +73,72 @@ func (op *WriteFileOp) Execute(ctx context.Context) error {
 func (op *WriteFileOp) Description() string {
 	return fmt.Sprintf("Create %s (%d bytes)", op.Path, len(op.Content))
 }
+
+// WriteFileIfNotExistsOp creates a file only if it doesn't already exist.
+//
+// This is useful for scaffolding files that users may have customized.
+// Unlike WriteFileOp which fails on existing files (unless force=true),
+// this operation silently skips existing files.
+//
+// Validation behavior:
+//   - Creates parent directories if they don't exist
+//   - Passes validation even if file exists (Execute will skip)
+//   - Checks content is not nil
+//
+// Execution behavior:
+//   - Skips writing if file already exists
+//   - Creates parent directories if needed
+//   - Writes file with specified Mode if file doesn't exist
+type WriteFileIfNotExistsOp struct {
+	Path    string      // File path to create
+	Content []byte      // File content (can be empty, must not be nil)
+	Mode    fs.FileMode // File permissions (e.g., 0644)
+}
+
+func (op *WriteFileIfNotExistsOp) Validate(ctx context.Context, force bool) error {
+	// Create parent directory (side effect, but idempotent)
+	dir := filepath.Dir(op.Path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("cannot create directory %s: %w", dir, err)
+	}
+
+	// Check if file exists - validation still passes, but Execute will skip
+	// (This is intentional: we don't want to fail validation for existing files)
+	if _, err := os.Stat(op.Path); err == nil {
+		return nil
+	}
+
+	// Reject nil content
+	if op.Content == nil {
+		return fmt.Errorf("content is nil for file: %s", op.Path)
+	}
+
+	return nil
+}
+
+func (op *WriteFileIfNotExistsOp) Execute(ctx context.Context) error {
+	// Skip if file exists
+	if _, err := os.Stat(op.Path); err == nil {
+		return nil
+	}
+
+	// Create parent directory
+	dir := filepath.Dir(op.Path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+
+	// Write file
+	if err := os.WriteFile(op.Path, op.Content, op.Mode); err != nil {
+		return fmt.Errorf("failed to write file %s: %w", op.Path, err)
+	}
+
+	return nil
+}
+
+func (op *WriteFileIfNotExistsOp) Description() string {
+	if _, err := os.Stat(op.Path); err == nil {
+		return fmt.Sprintf("Skip %s (already exists)", op.Path)
+	}
+	return fmt.Sprintf("Create %s (%d bytes)", op.Path, len(op.Content))
+}

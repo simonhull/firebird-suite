@@ -414,7 +414,7 @@ func prepareRelationshipFields(def *schema.Definition) []RelationshipFieldData {
 	for _, rel := range def.Spec.Relationships {
 		field := RelationshipFieldData{
 			Name:    rel.Name,
-			JSONTag: toSnakeCase(rel.Name),
+			JSONTag: generator.SnakeCase(rel.Name),
 		}
 
 		// Determine response type
@@ -430,22 +430,6 @@ func prepareRelationshipFields(def *schema.Definition) []RelationshipFieldData {
 	}
 
 	return result
-}
-
-// toSnakeCase converts PascalCase to snake_case
-func toSnakeCase(s string) string {
-	var result []rune
-	for i, r := range s {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result = append(result, '_')
-		}
-		if r >= 'A' && r <= 'Z' {
-			result = append(result, r-'A'+'a')
-		} else {
-			result = append(result, r)
-		}
-	}
-	return string(result)
 }
 
 // getTimestampGoType returns the appropriate Go type for timestamp fields

@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/simonhull/firebird-suite/firebird/internal/schema"
 	"github.com/simonhull/firebird-suite/fledge/generator"
 )
 
@@ -141,7 +142,7 @@ func (g *Generator) parseHandlerFile(filePath string) (HandlerInfo, error) {
 				info.Name = typeSpec.Name.Name
 				info.ModelName = strings.TrimSuffix(typeSpec.Name.Name, "Handler")
 				info.VarName = toLowerCamel(info.Name)
-				info.ModelPlural = pluralize(toSnakeCase(info.ModelName))
+				info.ModelPlural = schema.Pluralize(generator.SnakeCase(info.ModelName))
 			}
 		}
 
@@ -274,27 +275,6 @@ func toLowerCamel(s string) string {
 	return strings.ToLower(s[:1]) + s[1:]
 }
 
-func toSnakeCase(s string) string {
-	var result []rune
-	for i, r := range s {
-		if i > 0 && isUpper(r) {
-			result = append(result, '_')
-		}
-		result = append(result, toLowerRune(r))
-	}
-	return string(result)
-}
-
-func isUpper(r rune) bool {
-	return r >= 'A' && r <= 'Z'
-}
-
-func toLowerRune(r rune) rune {
-	if r >= 'A' && r <= 'Z' {
-		return r + 32
-	}
-	return r
-}
 
 func pluralize(s string) string {
 	if strings.HasSuffix(s, "y") {

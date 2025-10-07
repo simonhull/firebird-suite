@@ -61,7 +61,7 @@ func (g *Generator) generateHandler(def *schema.Definition) (generator.Operation
 		g.projectPath,
 		"internal",
 		"handlers",
-		fmt.Sprintf("%s_handler.go", toSnakeCase(def.Name)),
+		fmt.Sprintf("%s_handler.go", generator.SnakeCase(def.Name)),
 	)
 
 	content, err := g.renderer.RenderFS(templatesFS, "templates/handler.go.tmpl", data)
@@ -80,7 +80,7 @@ func (g *Generator) generateHandler(def *schema.Definition) (generator.Operation
 func (g *Generator) prepareTemplateData(def *schema.Definition) HandlerTemplateData {
 	modelName := def.Name
 	modelNameLower := toLowerCamel(modelName)
-	modelPlural := pluralize(toSnakeCase(modelName))
+	modelPlural := schema.Pluralize(generator.SnakeCase(modelName))
 
 	// Check for soft deletes
 	hasSoftDelete := def.Spec.SoftDeletes
@@ -129,29 +129,6 @@ func toLowerCamel(s string) string {
 		return s
 	}
 	return strings.ToLower(s[:1]) + s[1:]
-}
-
-// toSnakeCase converts PascalCase to snake_case
-func toSnakeCase(s string) string {
-	var result []rune
-	for i, r := range s {
-		if i > 0 && isUpper(r) {
-			result = append(result, '_')
-		}
-		result = append(result, toLowerRune(r))
-	}
-	return string(result)
-}
-
-func isUpper(r rune) bool {
-	return r >= 'A' && r <= 'Z'
-}
-
-func toLowerRune(r rune) rune {
-	if r >= 'A' && r <= 'Z' {
-		return r + 32
-	}
-	return r
 }
 
 // pluralize converts singular to plural (simple English rules)

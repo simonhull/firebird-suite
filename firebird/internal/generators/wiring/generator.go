@@ -100,7 +100,7 @@ func (g *Generator) discoverResources() ([]ResourceData, error) {
 		filename := strings.TrimSuffix(entry.Name(), "_repository.go")
 
 		// Convert to PascalCase (e.g., "todo" -> "Todo", "blog_post" -> "BlogPost")
-		resourceName := toPascalCase(filename)
+		resourceName := generator.PascalCase(filename)
 
 		resources = append(resources, ResourceData{
 			Name:      resourceName,
@@ -111,13 +111,3 @@ func (g *Generator) discoverResources() ([]ResourceData, error) {
 	return resources, nil
 }
 
-// toPascalCase converts snake_case to PascalCase
-func toPascalCase(s string) string {
-	parts := strings.Split(s, "_")
-	for i, part := range parts {
-		if len(part) > 0 {
-			parts[i] = strings.ToUpper(part[:1]) + part[1:]
-		}
-	}
-	return strings.Join(parts, "")
-}

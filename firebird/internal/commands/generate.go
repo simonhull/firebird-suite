@@ -33,6 +33,7 @@ func GenerateCmd() *cobra.Command {
 	var force, skip, diff, dryRun bool
 	var timestamps, softDeletes, generateAll bool
 	var intID bool // NEW: Use int64 instead of UUID for primary key
+	var skipValidation bool // Skip schema validation before generation
 	// Resource generator flags
 	var skipModel, skipService, skipHandler, skipRoutes bool
 	var skipHelpers, skipQueries, skipRepository, skipDTOs bool
@@ -41,17 +42,27 @@ func GenerateCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "generate [type] [name] [field:type[:modifier]...]",
-		Short: "Generate code from schema",
+		Short: "Generate code from schema (with automatic validation)",
 		Long: `Generate code from .firebird.yml schema files.
 
 Available types:
   scaffold   - Create schema file from field specifications
   model      - Generate Go struct from schema
-  migration  - Generate SQL migration
+  migration  - Generate SQL migration (with foreign key constraints)
   service    - Generate service layer
   handler    - Generate HTTP handler
   routes     - Generate route registration
   resource   - Generate complete CRUD stack (model + service + handler + routes)
+
+Schema Validation:
+  Schemas are automatically validated before generation. Validation checks:
+  - Field names for reserved words and SQL keywords
+  - Go type / database type compatibility
+  - Foreign key detection from *_id fields (auto-adds FK constraints)
+  - Relationship integrity
+
+  Foreign keys are automatically detected and added to migrations.
+  Use --skip-validation to bypass validation (not recommended).
 
 Examples:
   # Atomic commands (generate individual components)
@@ -60,9 +71,10 @@ Examples:
   firebird generate handler User
   firebird generate routes
 
-  # Composite command (generate full stack)
+  # Composite command (generate full stack with validation)
   firebird generate resource Post
   firebird generate resource Article --skip-handler
+  firebird generate resource Comment --skip-validation  # Skip validation
 
   # Scaffold creates just the schema
   firebird generate scaffold Post title:string body:text
@@ -277,6 +289,55 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 					if err != nil {
 						output.Error(err.Error())
 						os.Exit(1)
+					}
+				}
+
+				// Validate schema before generation
+				if !skipValidation {
+					output.Info("🔍 Validating schema...")
+
+					// Parse schema to get definition
+					def, parseErr := schema.Parse(schemaPath)
+					if parseErr != nil {
+						output.Error(fmt.Sprintf("Failed to parse schema: %v", parseErr))
+						os.Exit(1)
+					}
+
+					// Run validation pipeline (non-interactive mode)
+					pipeline := schema.NewValidationPipeline(false)
+					result, validationErr := pipeline.Validate(def, nil) // nil lineMap for now (TODO: extract from parser)
+					if validationErr != nil {
+						output.Error(fmt.Sprintf("Validation pipeline failed: %v", validationErr))
+						os.Exit(1)
+					}
+
+					// Print validation results if any issues found
+					if len(result.Errors)+len(result.Warnings)+len(result.Infos) > 0 {
+						fmt.Println(result.Error())
+					}
+
+					// Block generation on errors
+					if result.HasErrors() {
+						output.Error("Schema validation failed - fix errors above and try again")
+						os.Exit(1)
+					}
+
+					// Success message
+					fkCount := countForeignKeys(result)
+					if fkCount > 0 {
+						suffix := ""
+						if fkCount > 1 {
+							suffix = "s"
+						}
+						output.Success(fmt.Sprintf("Validation passed (%d foreign key%s detected)\n", fkCount, suffix))
+
+						// Persist FK tags to schema file
+						// This ensures that migrations generated later will include FK constraints
+						if writeErr := schema.WriteToFile(def, schemaPath); writeErr != nil {
+							output.Error(fmt.Sprintf("⚠️  Failed to persist FK tags to schema: %v", writeErr))
+						}
+					} else {
+						output.Success("Validation passed\n")
 					}
 				}
 
@@ -709,6 +770,7 @@ Primary keys default to UUID. Use --int-id for int64 with auto-increment.`,
 	cmd.Flags().BoolVar(&skipQueries, "skip-queries", false, "Skip queries generation (resource only)")
 	cmd.Flags().BoolVar(&skipRepository, "skip-repository", false, "Skip repository generation (resource only)")
 	cmd.Flags().BoolVar(&skipDTOs, "skip-dtos", false, "Skip DTO generation (resource only)")
+	cmd.Flags().BoolVar(&skipValidation, "skip-validation", false, "Skip schema validation before generation (not recommended)")
 	// Model generator flags
 	cmd.Flags().StringVar(&modelOutput, "output", "", "Custom output path for model file (model only)")
 	cmd.Flags().StringVar(&modelPackage, "package", "", "Custom package name for model (model only)")
@@ -810,6 +872,17 @@ func detectPKType(def *schema.Definition) string {
 // cleanType removes pointer prefix from type
 func cleanType(t string) string {
 	return strings.TrimPrefix(t, "*")
+}
+
+// countForeignKeys counts how many FK constraints were detected in validation results
+func countForeignKeys(result *schema.ExtendedValidationResult) int {
+	count := 0
+	for _, info := range result.Infos {
+		if strings.Contains(info.Message, "Auto-detected FK:") {
+			count++
+		}
+	}
+	return count
 }
 
 // autoInitRealtime wires up realtime infrastructure automatically

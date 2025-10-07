@@ -130,6 +130,14 @@ func PrepareMigrationData(def *schema.Definition, dialect DatabaseDialect) *Migr
 	// Transform indexes
 	data.Indexes = transformIndexes(def.Spec.Indexes, tableName)
 
+	// Extract FK constraints from field tags (auto-detected by validator)
+	for _, field := range def.Spec.Fields {
+		if field.Tags != nil && field.Tags["fk"] != "" {
+			fk := extractForeignKeyFromTags(field, tableName)
+			data.ForeignKeys = append(data.ForeignKeys, fk)
+		}
+	}
+
 	// Transform relationships to foreign keys
 	for _, rel := range def.Spec.Relationships {
 		// Only belongs_to creates FK constraints in this table
@@ -414,6 +422,43 @@ func getTimestampDefault(dialect DatabaseDialect, columnName string) string {
 		return "CURRENT_TIMESTAMP"
 	default:
 		return "CURRENT_TIMESTAMP"
+	}
+}
+
+// extractForeignKeyFromTags extracts FK constraint from field tags
+func extractForeignKeyFromTags(field schema.Field, tableName string) ForeignKeyData {
+	// Parse FK target: "posts.id" -> table="posts", column="id"
+	fkTarget := field.Tags["fk"]
+	parts := strings.Split(fkTarget, ".")
+
+	refTable := parts[0]
+	refColumn := "id" // Default
+	if len(parts) > 1 {
+		refColumn = parts[1]
+	}
+
+	// Get ON DELETE/UPDATE behavior from tags
+	onDelete := field.Tags["fk_on_delete"]
+	if onDelete == "" {
+		onDelete = "CASCADE" // Default
+	}
+
+	onUpdate := field.Tags["fk_on_update"]
+	if onUpdate == "" {
+		onUpdate = "CASCADE" // Default
+	}
+
+	// Generate constraint name: fk_comments_post_id
+	fieldSnake := generator.SnakeCase(field.Name)
+	constraintName := fmt.Sprintf("fk_%s_%s", tableName, fieldSnake)
+
+	return ForeignKeyData{
+		Name:            constraintName,
+		Column:          fieldSnake,
+		ReferenceTable:  refTable,
+		ReferenceColumn: refColumn,
+		OnDelete:        onDelete,
+		OnUpdate:        onUpdate,
 	}
 }
 

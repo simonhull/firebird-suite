@@ -169,6 +169,29 @@ func ParseBytes(data []byte) (*Definition, error) {
 	return &def, nil
 }
 
+// WriteToFile writes a schema definition to a file
+// This is used to persist modifications made during validation (e.g., FK tags)
+func WriteToFile(def *Definition, path string) error {
+	var buf bytes.Buffer
+	encoder := yaml.NewEncoder(&buf)
+	encoder.SetIndent(2) // Use 2-space indentation for readability
+
+	if err := encoder.Encode(def); err != nil {
+		return fmt.Errorf("failed to encode schema to YAML: %w", err)
+	}
+
+	if err := encoder.Close(); err != nil {
+		return fmt.Errorf("failed to close YAML encoder: %w", err)
+	}
+
+	// Write to file with proper permissions (0644 = rw-r--r--)
+	if err := os.WriteFile(path, buf.Bytes(), 0644); err != nil {
+		return fmt.Errorf("failed to write schema file: %w", err)
+	}
+
+	return nil
+}
+
 // Validate validates a parsed schema
 func Validate(def *Definition) error {
 	return ValidateWithLineNumbers(def, nil)

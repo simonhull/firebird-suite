@@ -7,19 +7,12 @@ CREATE TABLE {{ .TableName }} (
 {{- if and $col.Unique (not $col.PrimaryKey) }} UNIQUE{{ end }}
 {{- if $col.Default }} DEFAULT {{ $col.Default }}{{ end }}
 {{- end }}
-);
 {{- if .ForeignKeys }}
-
--- Foreign key constraints
-{{- range .ForeignKeys }}
-ALTER TABLE {{ $.TableName }}
-    ADD CONSTRAINT {{ .Name }}
-    FOREIGN KEY ({{ .Column }})
-    REFERENCES {{ .ReferenceTable }}({{ .ReferenceColumn }})
-    ON DELETE {{ .OnDelete }}
-    ON UPDATE {{ .OnUpdate }};
+{{- range .ForeignKeys }},
+    FOREIGN KEY ({{ .Column }}) REFERENCES {{ .ReferenceTable }}({{ .ReferenceColumn }}) ON DELETE {{ .OnDelete }} ON UPDATE {{ .OnUpdate }}
 {{- end }}
 {{- end }}
+);
 {{- if .Indexes }}
 
 -- Indexes

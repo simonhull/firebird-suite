@@ -12,6 +12,7 @@ func main() {
 	// Always available commands
 	rootCmd.AddCommand(commands.NewCmd())
 	rootCmd.AddCommand(commands.GenerateCmd())
+	rootCmd.AddCommand(commands.ModuleCmd())
 	rootCmd.AddCommand(commands.RealtimeCmd())
 
 	// Only register database commands if database is configured

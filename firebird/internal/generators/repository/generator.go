@@ -1,11 +1,8 @@
 package repository
 
 import (
-	"context"
 	"embed"
 	"fmt"
-	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -156,7 +153,7 @@ func (g *Generator) generateUser(data map[string]interface{}) (generator.Operati
 		return nil, err
 	}
 
-	return &WriteFileIfNotExistsOp{
+	return &generator.WriteFileIfNotExistsOp{
 		Path:    userPath,
 		Content: content,
 		Mode:    0644,
@@ -315,50 +312,3 @@ func findForeignKeyType(def *schema.Definition, fkName string) string {
 
 // WriteFileIfNotExistsOp creates a file only if it doesn't already exist.
 // This allows user customizations to be preserved across regenerations.
-type WriteFileIfNotExistsOp struct {
-	Path    string
-	Content []byte
-	Mode    fs.FileMode
-}
-
-func (op *WriteFileIfNotExistsOp) Validate(ctx context.Context, force bool) error {
-	dir := filepath.Dir(op.Path)
-
-	// Create parent directory (side effect, but idempotent)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("cannot create directory %s: %w", dir, err)
-	}
-
-	// Check if file already exists - if so, skip without error
-	if _, err := os.Stat(op.Path); err == nil {
-		return nil // File exists, validation passes but Execute will skip
-	}
-
-	// Reject nil content (empty is OK)
-	if op.Content == nil {
-		return fmt.Errorf("content is nil for file: %s", op.Path)
-	}
-
-	return nil
-}
-
-func (op *WriteFileIfNotExistsOp) Execute(ctx context.Context) error {
-	// Check if file already exists
-	if _, err := os.Stat(op.Path); err == nil {
-		return nil // File exists, skip creation
-	}
-
-	dir := filepath.Dir(op.Path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-	return os.WriteFile(op.Path, op.Content, op.Mode)
-}
-
-func (op *WriteFileIfNotExistsOp) Description() string {
-	// Check if file exists
-	if _, err := os.Stat(op.Path); err == nil {
-		return fmt.Sprintf("Skip %s (already exists)", op.Path)
-	}
-	return fmt.Sprintf("Create %s (%d bytes)", op.Path, len(op.Content))
-}

@@ -1,11 +1,8 @@
 package service
 
 import (
-	"context"
 	"embed"
 	"fmt"
-	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -93,7 +90,7 @@ func (g *Generator) generateSharedFiles() ([]generator.Operation, error) {
 	if err != nil {
 		return nil, err
 	}
-	ops = append(ops, &WriteFileIfNotExistsOp{
+	ops = append(ops, &generator.WriteFileIfNotExistsOp{
 		Path:    errorsPath,
 		Content: errorsContent,
 		Mode:    0644,
@@ -105,7 +102,7 @@ func (g *Generator) generateSharedFiles() ([]generator.Operation, error) {
 	if err != nil {
 		return nil, err
 	}
-	ops = append(ops, &WriteFileIfNotExistsOp{
+	ops = append(ops, &generator.WriteFileIfNotExistsOp{
 		Path:    typesPath,
 		Content: typesContent,
 		Mode:    0644,
@@ -174,7 +171,7 @@ func (g *Generator) generateService(def *schema.Definition) (generator.Operation
 		return nil, err
 	}
 
-	return &WriteFileIfNotExistsOp{
+	return &generator.WriteFileIfNotExistsOp{
 		Path:    path,
 		Content: content,
 		Mode:    0644,
@@ -361,40 +358,3 @@ type RelationshipHelperData struct {
 }
 
 // WriteFileIfNotExistsOp is a custom operation that only creates files if they don't exist
-type WriteFileIfNotExistsOp struct {
-	Path    string
-	Content []byte
-	Mode    fs.FileMode
-}
-
-func (op *WriteFileIfNotExistsOp) Validate(ctx context.Context, force bool) error {
-	dir := filepath.Dir(op.Path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("cannot create directory %s: %w", dir, err)
-	}
-	if _, err := os.Stat(op.Path); err == nil {
-		return nil // File exists, validation passes but Execute will skip
-	}
-	if op.Content == nil {
-		return fmt.Errorf("content is nil for file: %s", op.Path)
-	}
-	return nil
-}
-
-func (op *WriteFileIfNotExistsOp) Execute(ctx context.Context) error {
-	if _, err := os.Stat(op.Path); err == nil {
-		return nil // File exists, skip creation
-	}
-	dir := filepath.Dir(op.Path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-	return os.WriteFile(op.Path, op.Content, op.Mode)
-}
-
-func (op *WriteFileIfNotExistsOp) Description() string {
-	if _, err := os.Stat(op.Path); err == nil {
-		return fmt.Sprintf("Skip %s (already exists)", op.Path)
-	}
-	return fmt.Sprintf("Create %s (%d bytes)", op.Path, len(op.Content))
-}

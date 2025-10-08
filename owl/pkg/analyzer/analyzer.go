@@ -3,9 +3,9 @@ package analyzer
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"gopkg.in/yaml.v3"
+	"github.com/simonhull/firebird-suite/fledge/filesystem"
+	"github.com/simonhull/firebird-suite/fledge/project"
 )
 
 // Analyzer analyzes Go projects and extracts documentation
@@ -29,37 +29,41 @@ type ConventionDetector interface {
 
 // Analyze analyzes a Go project and returns a Project structure
 func (a *Analyzer) Analyze(rootPath string) (*Project, error) {
-	project := &Project{
+	proj := &Project{
 		Packages: make([]*Package, 0),
 	}
 
-	// Detect Firebird project
-	project.IsFirebirdProject, project.FirebirdConfig = a.detectFirebirdProject(rootPath)
-
-	if project.IsFirebirdProject {
-		fmt.Println("🔥 Firebird project detected!")
-		if project.FirebirdConfig != nil {
-			fmt.Printf("   Database: %s, Router: %s\n",
-				project.FirebirdConfig.Database,
-				project.FirebirdConfig.Router)
-		}
-		fmt.Println()
+	// Detect Firebird project using Fledge utility
+	isFirebird, firebirdConfig, err := project.DetectFirebirdProject(rootPath)
+	if err != nil {
+		// Log warning but continue
+		fmt.Printf("⚠️  Warning: error detecting Firebird project: %v\n", err)
 	}
 
-	// Walk the project directory
-	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	if isFirebird && firebirdConfig != nil {
+		fmt.Println("🔥 Firebird project detected!")
+		fmt.Printf("   Database: %s, Router: %s\n",
+			firebirdConfig.Database,
+			firebirdConfig.Router)
+		fmt.Println()
 
-		// Skip hidden directories and vendor/testdata
-		if info.IsDir() {
-			name := info.Name()
-			if name[0] == '.' || name == "vendor" || name == "testdata" {
-				return filepath.SkipDir
-			}
+		// Convert to Owl's FirebirdConfig type
+		proj.IsFirebirdProject = true
+		proj.FirebirdConfig = &FirebirdConfig{
+			ConfigPath: firebirdConfig.ConfigPath,
+			Database:   firebirdConfig.Database,
+			Router:     firebirdConfig.Router,
 		}
+	}
 
+	// Walk the project directory using Fledge utility
+	err = filesystem.Walk(rootPath, filesystem.WalkOptions{
+		IgnoreDirs: []string{
+			"node_modules", "vendor", ".git", ".svn",
+			"dist", "build", "bin", "tmp", "temp", "testdata",
+			".idea", ".vscode", ".vs",
+		},
+	}, func(path string, info os.FileInfo) error {
 		// Only process directories (we'll parse all .go files in each directory)
 		if !info.IsDir() {
 			return nil
@@ -92,7 +96,7 @@ func (a *Analyzer) Analyze(rootPath string) (*Project, error) {
 				a.applyConventions(pkg)
 			}
 
-			project.Packages = append(project.Packages, pkg)
+			proj.Packages = append(proj.Packages, pkg)
 		}
 
 		return nil
@@ -102,7 +106,7 @@ func (a *Analyzer) Analyze(rootPath string) (*Project, error) {
 		return nil, fmt.Errorf("analyzing project: %w", err)
 	}
 
-	return project, nil
+	return proj, nil
 }
 
 // applyConventions applies convention detection to package types and functions
@@ -112,36 +116,4 @@ func (a *Analyzer) applyConventions(pkg *Package) {
 	// Note: The detector will have already assigned conventions to types/functions
 	// This is just for tracking at the package level
 	_ = conventions
-}
-
-// detectFirebirdProject checks if this is a Firebird-generated project
-func (a *Analyzer) detectFirebirdProject(rootPath string) (bool, *FirebirdConfig) {
-	configPath := filepath.Join(rootPath, "firebird.yml")
-
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		return false, nil
-	}
-
-	// Parse basic config
-	var config struct {
-		Application struct {
-			Database struct {
-				Driver string `yaml:"driver"`
-			} `yaml:"database"`
-			Router struct {
-				Type string `yaml:"type"`
-			} `yaml:"router"`
-		} `yaml:"application"`
-	}
-
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return false, nil
-	}
-
-	return true, &FirebirdConfig{
-		ConfigPath: configPath,
-		Database:   config.Application.Database.Driver,
-		Router:     config.Application.Router.Type,
-	}
 }

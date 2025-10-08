@@ -77,6 +77,15 @@ Owl is built with three main components:
 - **Convention Detector** - Identifies architectural patterns
 - **Generator** - Creates documentation from analysis
 
+## Dependencies
+
+Owl is built on [Fledge](../fledge), the Firebird suite foundation library.
+
+Key Fledge packages used:
+- `fledge/output` - Consistent terminal output
+- `fledge/project` - Go module and Firebird project detection
+- `fledge/filesystem` - Directory traversal and package discovery
+
 ## Roadmap
 
 - [x] Core analyzer with AST parsing

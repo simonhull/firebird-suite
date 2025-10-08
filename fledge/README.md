@@ -95,6 +95,8 @@ err := generator.Execute(ctx, ops, generator.ExecuteOptions{
 - **exec/** - Command execution with solid UX
 - **output/** - Styled terminal output
 - **input/** - Interactive prompts
+- **project/** - Go module and Firebird project detection
+- **filesystem/** - Directory traversal with smart ignores
 
 ## Documentation
 
@@ -214,6 +216,7 @@ func TestExecute(t *testing.T) {
 Fledge is used by:
 
 - **Firebird** - Convention-over-configuration web framework for Go
+- **Owl** - Convention-aware documentation generator for Go
 
 ## Contributing
 

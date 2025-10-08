@@ -1,6 +1,6 @@
-module github.com/simonhull/firebird-suite/owldocs
+module github.com/simonhull/firebird-suite/owl
 
-go 1.23
+go 1.25.0
 
 require (
 	github.com/spf13/cobra v1.8.0

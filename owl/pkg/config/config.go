@@ -1,136 +1,120 @@
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"gopkg.in/yaml.v3"
 )
 
-// Config represents owldocs.yaml configuration
+// Config represents the Owl configuration
 type Config struct {
-	Project     ProjectConfig    `yaml:"project"`
-	Framework   string           `yaml:"framework"`
-	Conventions ConventionConfig `yaml:"conventions"`
-	Structure   StructureConfig  `yaml:"structure"`
-	Output      OutputConfig     `yaml:"output"`
-	Features    FeatureFlags     `yaml:"features"`
-	Server      ServerConfig     `yaml:"server"`
+	Project     ProjectConfig     `yaml:"project"`
+	Conventions ConventionConfig  `yaml:"conventions"`
+	Structure   StructureConfig   `yaml:"structure"`
+	Output      OutputConfig      `yaml:"output"`
+	Features    FeatureFlags      `yaml:"features"`
+	Server      ServerConfig      `yaml:"server"`
 }
 
-// ProjectConfig holds project metadata
+// ProjectConfig contains project-level settings
 type ProjectConfig struct {
-	Name        string `yaml:"name"`
-	Version     string `yaml:"version"`
-	Description string `yaml:"description"`
+	Name        string   `yaml:"name"`
+	Description string   `yaml:"description"`
+	RootPaths   []string `yaml:"root_paths"`
+	Exclude     []string `yaml:"exclude"`
 }
 
-// ConventionConfig holds convention detection settings
+// ConventionConfig contains convention detection settings
 type ConventionConfig struct {
-	Enabled bool               `yaml:"enabled"`
-	Builtin []string           `yaml:"builtin"`
-	Custom  []CustomConvention `yaml:"custom"`
+	Enabled        bool     `yaml:"enabled"`
+	CustomPatterns []string `yaml:"custom_patterns"`
+	IgnorePatterns []string `yaml:"ignore_patterns"`
 }
 
-// CustomConvention represents a user-defined convention pattern
-type CustomConvention struct {
-	Name     string `yaml:"name"`
-	Pattern  string `yaml:"pattern"`
-	Category string `yaml:"category"`
-	Layer    string `yaml:"layer"`
-}
-
-// StructureConfig defines documentation structure
+// StructureConfig defines how documentation is organized
 type StructureConfig struct {
-	Guides       string `yaml:"guides"`
-	Architecture string `yaml:"architecture"`
-	Examples     string `yaml:"examples"`
+	GroupBy      string   `yaml:"group_by"` // "layer", "package", "type"
+	Sections     []string `yaml:"sections"`
+	ShowInternal bool     `yaml:"show_internal"`
 }
 
 // OutputConfig defines output settings
 type OutputConfig struct {
-	Path  string `yaml:"path"`
-	Theme string `yaml:"theme"`
+	Path   string `yaml:"path"`
+	Format string `yaml:"format"` // "html", "markdown", "json"
+	Theme  string `yaml:"theme"`
 }
 
-// FeatureFlags controls optional features
+// FeatureFlags enables/disables features
 type FeatureFlags struct {
-	Search       bool `yaml:"search"`
-	Diagrams     bool `yaml:"diagrams"`
-	Examples     bool `yaml:"examples"`
-	Dependencies bool `yaml:"dependencies"`
-	DarkMode     bool `yaml:"dark_mode"`
+	DependencyGraph bool `yaml:"dependency_graph"`
+	SearchIndex     bool `yaml:"search_index"`
+	LiveReload      bool `yaml:"live_reload"`
 }
 
-// ServerConfig holds dev server settings
+// ServerConfig contains dev server settings
 type ServerConfig struct {
-	Port       int  `yaml:"port"`
-	Watch      bool `yaml:"watch"`
-	LiveReload bool `yaml:"livereload"`
+	Port int    `yaml:"port"`
+	Host string `yaml:"host"`
 }
 
 // LoadConfig loads configuration from a YAML file
 func LoadConfig(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		// Return default config if file doesn't exist
-		if os.IsNotExist(err) {
-			return DefaultConfig(), nil
-		}
-		return nil, fmt.Errorf("reading config file: %w", err)
+		return nil, err
 	}
 
-	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("parsing config file: %w", err)
+	var config Config
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, err
 	}
 
-	return &cfg, nil
+	return &config, nil
 }
 
-// DefaultConfig returns a config with sensible defaults
-func DefaultConfig() *Config {
-	return &Config{
-		Framework: "auto",
-		Conventions: ConventionConfig{
-			Enabled: true,
-			Builtin: []string{
-				"handlers",
-				"services",
-				"repositories",
-				"middleware",
-			},
-		},
-		Structure: StructureConfig{
-			Guides:       "docs/guides",
-			Architecture: "docs/architecture",
-			Examples:     "docs/examples",
-		},
-		Output: OutputConfig{
-			Path:  "./docs-site",
-			Theme: "default",
-		},
-		Features: FeatureFlags{
-			Search:       true,
-			Diagrams:     true,
-			Examples:     true,
-			Dependencies: true,
-			DarkMode:     true,
-		},
-		Server: ServerConfig{
-			Port:       6060,
-			Watch:      true,
-			LiveReload: true,
-		},
-	}
-}
-
-// SaveConfig writes configuration to a YAML file
-func SaveConfig(path string, cfg *Config) error {
-	data, err := yaml.Marshal(cfg)
+// SaveConfig saves configuration to a YAML file
+func SaveConfig(path string, config *Config) error {
+	data, err := yaml.Marshal(config)
 	if err != nil {
-		return fmt.Errorf("marshaling config: %w", err)
+		return err
 	}
 
 	return os.WriteFile(path, data, 0644)
+}
+
+// DefaultConfig returns a default configuration
+func DefaultConfig() *Config {
+	return &Config{
+		Project: ProjectConfig{
+			Name:        "My Project",
+			Description: "Project documentation",
+			RootPaths:   []string{"."},
+			Exclude:     []string{"vendor", "testdata"},
+		},
+		Conventions: ConventionConfig{
+			Enabled:        true,
+			CustomPatterns: []string{},
+			IgnorePatterns: []string{},
+		},
+		Structure: StructureConfig{
+			GroupBy:      "layer",
+			Sections:     []string{"overview", "api", "architecture"},
+			ShowInternal: false,
+		},
+		Output: OutputConfig{
+			Path:   "./docs",
+			Format: "html",
+			Theme:  "default",
+		},
+		Features: FeatureFlags{
+			DependencyGraph: true,
+			SearchIndex:     true,
+			LiveReload:      true,
+		},
+		Server: ServerConfig{
+			Port: 8080,
+			Host: "localhost",
+		},
+	}
 }

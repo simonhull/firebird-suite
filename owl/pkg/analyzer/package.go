@@ -22,18 +22,23 @@ type File struct {
 	Package string
 	Doc     string
 	AST     *ast.File
+	Imports map[string]string // alias/name -> import path
 }
 
 // Type represents a Go type (struct, interface, etc.)
 type Type struct {
-	Name       string
-	Kind       string // "struct", "interface", "alias", etc.
-	Doc        string
-	Fields     []*Field
-	Methods    []*Function
-	Package    string
-	FilePath   string
-	Convention *Convention // Detected convention (if any)
+	Name          string
+	Kind          string // "struct", "interface", "alias", "generic"
+	Doc           string
+	Fields        []*Field
+	Methods       []*Function
+	Package       string
+	FilePath      string
+	GenericParams []GenericParam
+	Convention    *Convention
+
+	// Dependency tracking (from deep parse)
+	UsedTypes []string // Type names referenced in fields
 }
 
 // Field represents a struct field
@@ -42,6 +47,12 @@ type Field struct {
 	Type string
 	Tag  string
 	Doc  string
+}
+
+// GenericParam represents a type parameter
+type GenericParam struct {
+	Name       string
+	Constraint string // "any", "comparable", or custom constraint
 }
 
 // Function represents a function or method
@@ -54,7 +65,12 @@ type Function struct {
 	Returns    []*Parameter
 	Package    string
 	FilePath   string
-	Convention *Convention // Detected convention (if any)
+	Convention *Convention
+
+	// Deep parse results
+	Calls       []string // Function/method names called
+	UsesTypes   []string // Type names used in body
+	UsesImports []string // Import packages used
 }
 
 // Parameter represents a function parameter or return value
@@ -81,10 +97,12 @@ type Constant struct {
 	Package string
 }
 
-// Convention represents a detected architectural pattern
+// Convention represents a detected pattern with confidence
 type Convention struct {
-	Name     string
-	Category string
-	Layer    string
-	Tags     []string
+	Name       string  // "Handler", "Service", etc.
+	Category   string  // "handlers", "services" (for grouping)
+	Layer      string  // "presentation", "business", "data" (if known)
+	Confidence float64 // 0.0-1.0
+	Reason     string  // Why we matched (for verbose mode)
+	Tags       []string
 }

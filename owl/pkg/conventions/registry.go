@@ -1,41 +1,43 @@
 package conventions
 
-// Registry manages convention patterns
+// Registry holds all registered architectural patterns
 type Registry struct {
-	patterns []Pattern
+	patterns []*Pattern
 }
 
-// NewRegistry creates a new Registry with default patterns
+// NewRegistry creates a new pattern registry
 func NewRegistry() *Registry {
-	r := &Registry{
-		patterns: make([]Pattern, 0),
+	return &Registry{
+		patterns: make([]*Pattern, 0),
 	}
-
-	// Register default patterns
-	for _, pattern := range DefaultPatterns() {
-		r.Register(pattern)
-	}
-
-	return r
 }
 
 // Register adds a pattern to the registry
-func (r *Registry) Register(pattern Pattern) {
+func (r *Registry) Register(pattern *Pattern) {
 	r.patterns = append(r.patterns, pattern)
 }
 
-// Patterns returns all registered patterns
-func (r *Registry) Patterns() []Pattern {
-	return r.patterns
-}
-
-// Find returns patterns matching the given predicate
-func (r *Registry) Find(predicate func(Pattern) bool) []Pattern {
-	var matches []Pattern
-	for _, pattern := range r.patterns {
-		if predicate(pattern) {
-			matches = append(matches, pattern)
+// Find returns a pattern by name
+func (r *Registry) Find(name string) *Pattern {
+	for _, p := range r.patterns {
+		if p.Name == name {
+			return p
 		}
 	}
-	return matches
+	return nil
+}
+
+// FindByID returns a pattern by ID
+func (r *Registry) FindByID(id string) *Pattern {
+	for _, p := range r.patterns {
+		if p.ID == id {
+			return p
+		}
+	}
+	return nil
+}
+
+// All returns all registered patterns
+func (r *Registry) All() []*Pattern {
+	return r.patterns
 }

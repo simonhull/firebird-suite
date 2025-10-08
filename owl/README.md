@@ -1,58 +1,95 @@
 # 🦉 Owl Docs
 
-**Convention-aware documentation generator for Go**
+Convention-Aware Documentation Generator for Go
 
-Owl Docs transforms your Go codebase into beautiful, intelligent documentation that developers actually want to read.
+## Overview
+
+Owl analyzes Go projects to automatically detect architectural patterns and conventions, then generates beautiful, structured documentation that reflects your project's actual organization.
+
+Instead of generic godoc output, Owl understands your architecture - handlers, services, repositories, DTOs, middleware - and organizes documentation accordingly.
 
 ## Features
 
-- 🔍 **Convention Detection** - Automatically identifies handlers, services, repositories, and more
-- 📊 **Dependency Visualization** - See how your code fits together
-- 🎨 **Beautiful UI** - Modern, responsive design with dark mode
-- ⚡ **Live Reload** - Docs update as you code
-- 🎯 **Zero Config** - Works great out of the box
-- 🔧 **Highly Configurable** - Customize for your project's needs
+- 🏗️ **Convention Detection** - Automatically identifies handlers, services, repositories, and more
+- 🔍 **Deep Code Analysis** - Parses function bodies to understand dependencies and call graphs
+- 📊 **Dependency Tracking** - Visualizes type usage and function calls
+- 🎯 **Generic Support** - Full support for Go 1.18+ generics
+- 🗂️ **Smart Organization** - Groups docs by architectural layer, not just package
+- 🎨 **Beautiful Output** - Clean, modern documentation themes
+- ⚡ **Live Reload** - Development server with auto-refresh (coming soon)
+- 🔌 **Extensible** - Custom pattern detection and templates
 
 ## Installation
 
 ```bash
-go install github.com/simonhull/firebird-suite/owldocs/cmd/owldocs@latest
+# From the firebird-suite workspace
+cd owldocs
+go install ./cmd/owldocs
+```
+
+Or build directly:
+
+```bash
+go build -o owldocs ./cmd/owldocs
 ```
 
 ## Quick Start
 
 ```bash
-# Generate docs for your project
-owldocs generate ./myproject
+# Generate docs for a project
+owldocs generate ./internal/handlers
 
-# Serve with live reload
-owldocs serve --watch
+# Generate docs for entire project
+owldocs generate .
 
-# Open http://localhost:6060
+# Start development server (coming soon)
+owldocs serve
+
+# Initialize configuration
+owldocs init
 ```
 
-## Status
+## Example Output
 
-**Version: 0.1.0 (Early Development)**
+```
+🦉 Analyzing project at ./internal/handlers...
+✅ Found 5 packages
 
-Currently bootstrapping the core architecture. Check back soon for updates!
+📊 Analysis Results:
+   Types: 23
+   Functions: 47
+
+🏗️  Detected Conventions:
+   Handler: 8
+   Service: 5
+   Repository: 4
+   DTO: 12
+   Middleware: 3
+
+✅ Documentation generated successfully!
+```
 
 ## Architecture
 
-Owl Docs is built on three core components:
+Owl is built with three main components:
 
-1. **Analyzer** - Parses Go code and extracts documentation
-2. **Convention Detector** - Identifies architectural patterns
-3. **Generator** - Creates beautiful static HTML
+- **Analyzer** - Parses Go code and extracts structure
+- **Convention Detector** - Identifies architectural patterns
+- **Generator** - Creates documentation from analysis
 
 ## Roadmap
 
-- [x] Project structure and interfaces
-- [ ] AST parsing and analysis
-- [ ] Convention detection (6+ patterns)
-- [ ] HTML generation and theming
-- [ ] Dev server with live reload
-- [ ] Firebird framework integration
+- [x] Core analyzer with AST parsing
+- [x] Convention detection system
+- [x] Deep function body analysis
+- [x] Generic type support
+- [x] Dependency tracking
+- [ ] HTML documentation generation
+- [ ] Dependency graph visualization
+- [ ] Live reload server
+- [ ] Custom pattern definitions
+- [ ] Multiple output formats (Markdown, JSON)
+- [ ] Search index generation
 
 ## License
 

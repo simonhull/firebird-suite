@@ -1,6 +1,6 @@
 package analyzer
 
-// Project represents a complete analyzed Go project
+// Project represents an analyzed Go project
 type Project struct {
 	Name        string
 	Module      string
@@ -8,27 +8,41 @@ type Project struct {
 	Description string
 	Packages    []*Package
 	Graph       *DependencyGraph
+
+	// Firebird-specific (if detected)
+	IsFirebirdProject bool
+	FirebirdConfig    *FirebirdConfig
 }
 
-// DependencyGraph represents package and type dependencies
+// FirebirdConfig holds Firebird project metadata
+type FirebirdConfig struct {
+	ConfigPath string
+	Database   string
+	Router     string
+	Resources  []string
+}
+
+// DependencyGraph represents the dependency relationships in the project
 type DependencyGraph struct {
 	Nodes []*GraphNode
 	Edges []*GraphEdge
 }
 
-// GraphNode represents a package or type in the dependency graph
+// GraphNode represents a type or function in the dependency graph
 type GraphNode struct {
 	ID       string
-	Type     string // "package", "type", "function"
+	Type     string // "type" or "function"
 	Name     string
 	Package  string
+	Layer    string // from convention detection
 	FilePath string
 }
 
 // GraphEdge represents a dependency relationship
 type GraphEdge struct {
-	From     string
-	To       string
-	Type     string // "imports", "uses", "calls"
-	Strength int    // Weight of the dependency
+	From       string // Node ID
+	To         string // Node ID
+	Type       string // "uses", "calls", "contains"
+	Strength   int    // Frequency or importance
+	SourceFile string
 }

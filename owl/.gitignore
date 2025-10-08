@@ -5,17 +5,14 @@ owldocs
 *.so
 *.dylib
 
-# Test binaries
+# Test files
 *.test
 *.out
+coverage.txt
 
-# Go workspace
-go.work
-go.work.sum
-
-# Generated docs
-docs-site/
-dist/
+# Generated documentation
+docs/
+*.html
 
 # IDE
 .vscode/
@@ -27,3 +24,6 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Config
+.owl.yml

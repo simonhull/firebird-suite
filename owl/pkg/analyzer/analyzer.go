@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Analyzer analyzes Go projects and extracts documentation
@@ -31,6 +33,19 @@ func (a *Analyzer) Analyze(rootPath string) (*Project, error) {
 		Packages: make([]*Package, 0),
 	}
 
+	// Detect Firebird project
+	project.IsFirebirdProject, project.FirebirdConfig = a.detectFirebirdProject(rootPath)
+
+	if project.IsFirebirdProject {
+		fmt.Println("🔥 Firebird project detected!")
+		if project.FirebirdConfig != nil {
+			fmt.Printf("   Database: %s, Router: %s\n",
+				project.FirebirdConfig.Database,
+				project.FirebirdConfig.Router)
+		}
+		fmt.Println()
+	}
+
 	// Walk the project directory
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -53,7 +68,9 @@ func (a *Analyzer) Analyze(rootPath string) (*Project, error) {
 		// Parse all Go files in this directory
 		files, err := a.parser.ParseDirectory(path)
 		if err != nil {
-			return fmt.Errorf("parsing directory %s: %w", path, err)
+			// Log warning but continue
+			fmt.Printf("⚠️  Warning: failed to parse %s: %v\n", path, err)
+			return nil
 		}
 
 		if len(files) == 0 {
@@ -63,14 +80,18 @@ func (a *Analyzer) Analyze(rootPath string) (*Project, error) {
 		// Extract package information
 		pkg, err := a.parser.ParsePackage(files)
 		if err != nil {
-			return fmt.Errorf("parsing package in %s: %w", path, err)
+			fmt.Printf("⚠️  Warning: failed to extract package from %s: %v\n", path, err)
+			return nil
 		}
 
 		if pkg != nil {
+			pkg.Path = path
+
 			// Detect conventions
 			if a.detector != nil {
-				pkg.Types = a.applyConventions(pkg)
+				a.applyConventions(pkg)
 			}
+
 			project.Packages = append(project.Packages, pkg)
 		}
 
@@ -84,12 +105,43 @@ func (a *Analyzer) Analyze(rootPath string) (*Project, error) {
 	return project, nil
 }
 
-// applyConventions applies convention detection to package types
-func (a *Analyzer) applyConventions(pkg *Package) []*Type {
+// applyConventions applies convention detection to package types and functions
+func (a *Analyzer) applyConventions(pkg *Package) {
 	conventions := a.detector.Detect(pkg)
 
-	// TODO: Match conventions to types
-	// This is a placeholder - will be implemented when we build the detector
+	// Note: The detector will have already assigned conventions to types/functions
+	// This is just for tracking at the package level
+	_ = conventions
+}
 
-	return pkg.Types
+// detectFirebirdProject checks if this is a Firebird-generated project
+func (a *Analyzer) detectFirebirdProject(rootPath string) (bool, *FirebirdConfig) {
+	configPath := filepath.Join(rootPath, "firebird.yml")
+
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return false, nil
+	}
+
+	// Parse basic config
+	var config struct {
+		Application struct {
+			Database struct {
+				Driver string `yaml:"driver"`
+			} `yaml:"database"`
+			Router struct {
+				Type string `yaml:"type"`
+			} `yaml:"router"`
+		} `yaml:"application"`
+	}
+
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return false, nil
+	}
+
+	return true, &FirebirdConfig{
+		ConfigPath: configPath,
+		Database:   config.Application.Database.Driver,
+		Router:     config.Application.Router.Type,
+	}
 }

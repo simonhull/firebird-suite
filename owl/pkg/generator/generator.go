@@ -29,6 +29,12 @@ var packageTemplate string
 //go:embed templates/package-base.html
 var packageBaseTemplate string
 
+//go:embed templates/type.html
+var typeTemplate string
+
+//go:embed templates/type-base.html
+var typeBaseTemplate string
+
 // Generator generates HTML documentation from analyzed projects
 type Generator struct {
 	outputDir         string
@@ -78,6 +84,11 @@ func (g *Generator) Generate(project *analyzer.Project) error {
 	// Generate package pages
 	if err := g.generatePackagePages(siteData); err != nil {
 		return fmt.Errorf("failed to generate package pages: %w", err)
+	}
+
+	// Generate type detail pages
+	if err := g.generateTypePages(siteData); err != nil {
+		return fmt.Errorf("failed to generate type pages: %w", err)
 	}
 
 	// Generate search index
@@ -537,6 +548,106 @@ func (g *Generator) generatePackagePage(pkg *PackageData, packagesDir string) er
 
 	// Execute template
 	if err := tmpl.Execute(f, pkg); err != nil {
+		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	return nil
+}
+
+// generateTypePages generates individual type detail pages
+func (g *Generator) generateTypePages(siteData *SiteData) error {
+	// Create types directory
+	typesDir := filepath.Join(g.outputDir, "types")
+	if err := os.MkdirAll(typesDir, 0755); err != nil {
+		return fmt.Errorf("failed to create types directory: %w", err)
+	}
+
+	totalTypes := 0
+	// Generate a page for each type in each package
+	for _, pkg := range siteData.Packages {
+		// Create package subdirectory under types
+		pkgTypeDir := filepath.Join(typesDir, pkg.Name)
+		if err := os.MkdirAll(pkgTypeDir, 0755); err != nil {
+			return fmt.Errorf("failed to create type directory for package %s: %w", pkg.Name, err)
+		}
+
+		for _, typ := range pkg.Types {
+			if err := g.generateTypePage(typ, pkgTypeDir); err != nil {
+				return fmt.Errorf("failed to generate page for type %s.%s: %w", pkg.Name, typ.Name, err)
+			}
+			totalTypes++
+		}
+	}
+
+	fmt.Printf("   ✓ Generated %d type detail pages\n", totalTypes)
+	return nil
+}
+
+// generateTypePage generates a single type detail page
+func (g *Generator) generateTypePage(typ *TypeData, typeDir string) error {
+	// Create template with helper functions
+	tmpl := template.New("type-base").Funcs(template.FuncMap{
+		"len": func(v interface{}) int {
+			switch val := v.(type) {
+			case []*FieldData:
+				return len(val)
+			case []*MethodData:
+				return len(val)
+			case []string:
+				return len(val)
+			default:
+				return 0
+			}
+		},
+		"eq": func(a, b string) bool {
+			return a == b
+		},
+		"or": func(args ...interface{}) bool {
+			for _, arg := range args {
+				switch v := arg.(type) {
+				case bool:
+					if v {
+						return true
+					}
+				case []*FieldData:
+					if len(v) > 0 {
+						return true
+					}
+				case []*MethodData:
+					if len(v) > 0 {
+						return true
+					}
+				case []string:
+					if len(v) > 0 {
+						return true
+					}
+				}
+			}
+			return false
+		},
+	})
+
+	// Parse templates
+	tmpl, err := tmpl.Parse(typeBaseTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to parse type-base template: %w", err)
+	}
+
+	tmpl, err = tmpl.Parse(typeTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to parse type template: %w", err)
+	}
+
+	// Create output file
+	outputPath := filepath.Join(typeDir, typ.Name+".html")
+	f, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create type file: %w", err)
+	}
+	defer f.Close()
+
+	// Execute template
+	if err := tmpl.Execute(f, typ); err != nil {
 		return fmt.Errorf("failed to execute template: %w", err)
 	}
 

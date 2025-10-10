@@ -1,0 +1,5311 @@
+{
+  "items": [
+    {
+      "type": "package",
+      "name": "firebird",
+      "package": "firebird",
+      "path": "packages/firebird.html",
+      "description": "0 types, 0 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "main",
+      "package": "main",
+      "path": "packages/main.html",
+      "description": "0 types, 1 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "main",
+      "package": "main",
+      "path": "packages/main.html#func-main",
+      "description": "Function in main",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "commands",
+      "package": "commands",
+      "path": "packages/commands.html",
+      "description": "0 types, 38 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "ModuleCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-ModuleCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "moduleAddCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-moduleAddCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "moduleRemoveCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-moduleRemoveCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "moduleListCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-moduleListCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-NewCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "promptForDatabase",
+      "package": "commands",
+      "path": "packages/commands.html#func-promptForDatabase",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "validateDatabaseChoice",
+      "package": "commands",
+      "path": "packages/commands.html#func-validateDatabaseChoice",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "promptForRouter",
+      "package": "commands",
+      "path": "packages/commands.html#func-promptForRouter",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "validateRouterChoice",
+      "package": "commands",
+      "path": "packages/commands.html#func-validateRouterChoice",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "printSuccessMessage",
+      "package": "commands",
+      "path": "packages/commands.html#func-printSuccessMessage",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "RealtimeCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-RealtimeCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "realtimeInitCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-realtimeInitCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "initRealtime",
+      "package": "commands",
+      "path": "packages/commands.html#func-initRealtime",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "RootCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-RootCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "HasDatabaseConfigured",
+      "package": "commands",
+      "path": "packages/commands.html#func-HasDatabaseConfigured",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "DBCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-DBCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "newDBGenerateCommand",
+      "package": "commands",
+      "path": "packages/commands.html#func-newDBGenerateCommand",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "newDBVetCommand",
+      "package": "commands",
+      "path": "packages/commands.html#func-newDBVetCommand",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "runSQLCCommand",
+      "package": "commands",
+      "path": "packages/commands.html#func-runSQLCCommand",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GenerateCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-GenerateCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "parseFields",
+      "package": "commands",
+      "path": "packages/commands.html#func-parseFields",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "isValidType",
+      "package": "commands",
+      "path": "packages/commands.html#func-isValidType",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getRouterConfig",
+      "package": "commands",
+      "path": "packages/commands.html#func-getRouterConfig",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "detectPKType",
+      "package": "commands",
+      "path": "packages/commands.html#func-detectPKType",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "cleanType",
+      "package": "commands",
+      "path": "packages/commands.html#func-cleanType",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "countForeignKeys",
+      "package": "commands",
+      "path": "packages/commands.html#func-countForeignKeys",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "autoInitRealtime",
+      "package": "commands",
+      "path": "packages/commands.html#func-autoInitRealtime",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateOrderedMigrations",
+      "package": "commands",
+      "path": "packages/commands.html#func-generateOrderedMigrations",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "pluralize",
+      "package": "commands",
+      "path": "packages/commands.html#func-pluralize",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getModulePath",
+      "package": "commands",
+      "path": "packages/commands.html#func-getModulePath",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "MigrateCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-MigrateCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "migrateUpCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-migrateUpCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "migrateDownCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-migrateDownCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "migrateRollbackCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-migrateRollbackCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "migrateStatusCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-migrateStatusCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "migrateForceCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-migrateForceCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "migrateListCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-migrateListCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "migrateCreateCmd",
+      "package": "commands",
+      "path": "packages/commands.html#func-migrateCreateCmd",
+      "description": "Function in commands",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "dto",
+      "package": "dto",
+      "path": "packages/dto.html",
+      "description": "7 types, 21 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "dto",
+      "path": "types/dto/Generator.html",
+      "description": "struct in dto",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "CreateInputData",
+      "package": "dto",
+      "path": "types/dto/CreateInputData.html",
+      "description": "struct in dto",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "UpdateInputData",
+      "package": "dto",
+      "path": "types/dto/UpdateInputData.html",
+      "description": "struct in dto",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ResponseData",
+      "package": "dto",
+      "path": "types/dto/ResponseData.html",
+      "description": "struct in dto",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "FieldData",
+      "package": "dto",
+      "path": "types/dto/FieldData.html",
+      "description": "struct in dto",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ResponseFieldData",
+      "package": "dto",
+      "path": "types/dto/ResponseFieldData.html",
+      "description": "struct in dto",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "RelationshipFieldData",
+      "package": "dto",
+      "path": "types/dto/RelationshipFieldData.html",
+      "description": "struct in dto",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "dto",
+      "path": "packages/dto.html#func-New",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "dto",
+      "path": "packages/dto.html#func-Generate",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateCreateInput",
+      "package": "dto",
+      "path": "packages/dto.html#func-generateCreateInput",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateUpdateInput",
+      "package": "dto",
+      "path": "packages/dto.html#func-generateUpdateInput",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateResponse",
+      "package": "dto",
+      "path": "packages/dto.html#func-generateResponse",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "prepareCreateInputData",
+      "package": "dto",
+      "path": "packages/dto.html#func-prepareCreateInputData",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "prepareUpdateInputData",
+      "package": "dto",
+      "path": "packages/dto.html#func-prepareUpdateInputData",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "prepareResponseData",
+      "package": "dto",
+      "path": "packages/dto.html#func-prepareResponseData",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "shouldExcludeFromCreate",
+      "package": "dto",
+      "path": "packages/dto.html#func-shouldExcludeFromCreate",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "shouldExcludeFromUpdate",
+      "package": "dto",
+      "path": "packages/dto.html#func-shouldExcludeFromUpdate",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "shouldExcludeFromResponse",
+      "package": "dto",
+      "path": "packages/dto.html#func-shouldExcludeFromResponse",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildValidationTags",
+      "package": "dto",
+      "path": "packages/dto.html#func-buildValidationTags",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "toGoName",
+      "package": "dto",
+      "path": "packages/dto.html#func-toGoName",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "isCommonInitialism",
+      "package": "dto",
+      "path": "packages/dto.html#func-isCommonInitialism",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getJSONTag",
+      "package": "dto",
+      "path": "packages/dto.html#func-getJSONTag",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "cleanType",
+      "package": "dto",
+      "path": "packages/dto.html#func-cleanType",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "hasTypeInFields",
+      "package": "dto",
+      "path": "packages/dto.html#func-hasTypeInFields",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "hasUUIDInResponse",
+      "package": "dto",
+      "path": "packages/dto.html#func-hasUUIDInResponse",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "hasTimeInResponse",
+      "package": "dto",
+      "path": "packages/dto.html#func-hasTimeInResponse",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "prepareRelationshipFields",
+      "package": "dto",
+      "path": "packages/dto.html#func-prepareRelationshipFields",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getTimestampGoType",
+      "package": "dto",
+      "path": "packages/dto.html#func-getTimestampGoType",
+      "description": "Function in dto",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "handler",
+      "package": "handler",
+      "path": "packages/handler.html",
+      "description": "2 types, 8 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "handler",
+      "path": "types/handler/Generator.html",
+      "description": "struct in handler",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "HandlerTemplateData",
+      "package": "handler",
+      "path": "types/handler/HandlerTemplateData.html",
+      "description": "struct in handler",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "handler",
+      "path": "packages/handler.html#func-New",
+      "description": "Function in handler",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "handler",
+      "path": "packages/handler.html#func-Generate",
+      "description": "Function in handler",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateHandler",
+      "package": "handler",
+      "path": "packages/handler.html#func-generateHandler",
+      "description": "Function in handler",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "prepareTemplateData",
+      "package": "handler",
+      "path": "packages/handler.html#func-prepareTemplateData",
+      "description": "Function in handler",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "detectPrimaryKeyType",
+      "package": "handler",
+      "path": "packages/handler.html#func-detectPrimaryKeyType",
+      "description": "Function in handler",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "toLowerCamel",
+      "package": "handler",
+      "path": "packages/handler.html#func-toLowerCamel",
+      "description": "Function in handler",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "pluralize",
+      "package": "handler",
+      "path": "packages/handler.html#func-pluralize",
+      "description": "Function in handler",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "cleanType",
+      "package": "handler",
+      "path": "packages/handler.html#func-cleanType",
+      "description": "Function in handler",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "helpers",
+      "package": "helpers",
+      "path": "packages/helpers.html",
+      "description": "1 types, 5 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "helpers",
+      "path": "types/helpers/Generator.html",
+      "description": "struct in helpers",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-New",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-Generate",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateValidator",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-generateValidator",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateResponseHelpers",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-generateResponseHelpers",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateRequestHelpers",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-generateRequestHelpers",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "logging",
+      "package": "logging",
+      "path": "packages/logging.html",
+      "description": "1 types, 2 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "logging",
+      "path": "types/logging/Generator.html",
+      "description": "struct in logging",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "logging",
+      "path": "packages/logging.html#func-New",
+      "description": "Function in logging",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "logging",
+      "path": "packages/logging.html#func-Generate",
+      "description": "Function in logging",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "appgen",
+      "package": "appgen",
+      "path": "packages/appgen.html",
+      "description": "1 types, 2 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "appgen",
+      "path": "types/appgen/Generator.html",
+      "description": "struct in appgen",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "appgen",
+      "path": "packages/appgen.html#func-New",
+      "description": "Function in appgen",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "appgen",
+      "path": "packages/appgen.html#func-Generate",
+      "description": "Function in appgen",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "middleware",
+      "package": "middleware",
+      "path": "packages/middleware.html",
+      "description": "1 types, 2 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "middleware",
+      "path": "types/middleware/Generator.html",
+      "description": "struct in middleware",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "middleware",
+      "path": "packages/middleware.html#func-New",
+      "description": "Function in middleware",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "middleware",
+      "path": "packages/middleware.html#func-Generate",
+      "description": "Function in middleware",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "migration",
+      "package": "migration",
+      "path": "packages/migration.html",
+      "description": "10 types, 62 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "MigrationData",
+      "package": "migration",
+      "path": "types/migration/MigrationData.html",
+      "description": "struct in migration",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ColumnData",
+      "package": "migration",
+      "path": "types/migration/ColumnData.html",
+      "description": "struct in migration",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "IndexData",
+      "package": "migration",
+      "path": "types/migration/IndexData.html",
+      "description": "struct in migration",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ForeignKeyData",
+      "package": "migration",
+      "path": "types/migration/ForeignKeyData.html",
+      "description": "struct in migration",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "JunctionTableData",
+      "package": "migration",
+      "path": "types/migration/JunctionTableData.html",
+      "description": "struct in migration",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "DatabaseDialect",
+      "package": "migration",
+      "path": "types/migration/DatabaseDialect.html",
+      "description": "alias in migration",
+      "tags": [
+        "type",
+        "alias"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "migration",
+      "path": "types/migration/Generator.html",
+      "description": "struct in migration",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "NumberingStrategy",
+      "package": "migration",
+      "path": "types/migration/NumberingStrategy.html",
+      "description": "alias in migration",
+      "tags": [
+        "type",
+        "alias"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Node",
+      "package": "migration",
+      "path": "types/migration/Node.html",
+      "description": "struct in migration",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "DependencyGraph",
+      "package": "migration",
+      "path": "types/migration/DependencyGraph.html",
+      "description": "struct in migration",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "extractLastSnapshot",
+      "package": "migration",
+      "path": "packages/migration.html#func-extractLastSnapshot",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "findLastMigration",
+      "package": "migration",
+      "path": "packages/migration.html#func-findLastMigration",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "pluralize",
+      "package": "migration",
+      "path": "packages/migration.html#func-pluralize",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "PrepareMigrationData",
+      "package": "migration",
+      "path": "packages/migration.html#func-PrepareMigrationData",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "transformField",
+      "package": "migration",
+      "path": "packages/migration.html#func-transformField",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "mapGoTypeToSQL",
+      "package": "migration",
+      "path": "packages/migration.html#func-mapGoTypeToSQL",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "mapGoTypeToPostgreSQL",
+      "package": "migration",
+      "path": "packages/migration.html#func-mapGoTypeToPostgreSQL",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "mapGoTypeToMySQL",
+      "package": "migration",
+      "path": "packages/migration.html#func-mapGoTypeToMySQL",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "mapGoTypeToSQLite",
+      "package": "migration",
+      "path": "packages/migration.html#func-mapGoTypeToSQLite",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateDefault",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateDefault",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "formatDefaultValue",
+      "package": "migration",
+      "path": "packages/migration.html#func-formatDefaultValue",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "transformIndexes",
+      "package": "migration",
+      "path": "packages/migration.html#func-transformIndexes",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateIndexName",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateIndexName",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getTimestampType",
+      "package": "migration",
+      "path": "packages/migration.html#func-getTimestampType",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getTimestampDefault",
+      "package": "migration",
+      "path": "packages/migration.html#func-getTimestampDefault",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "extractForeignKeyFromTags",
+      "package": "migration",
+      "path": "packages/migration.html#func-extractForeignKeyFromTags",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "transformRelationshipToFK",
+      "package": "migration",
+      "path": "packages/migration.html#func-transformRelationshipToFK",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateJunctionTableData",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateJunctionTableData",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "DetectDatabaseDialect",
+      "package": "migration",
+      "path": "packages/migration.html#func-DetectDatabaseDialect",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "DiffSchemas",
+      "package": "migration",
+      "path": "packages/migration.html#func-DiffSchemas",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateAddColumn",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateAddColumn",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateDropColumn",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateDropColumn",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateModifyColumn",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateModifyColumn",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateAddTimestamps",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateAddTimestamps",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateDropTimestamps",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateDropTimestamps",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateAddSoftDeletes",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateAddSoftDeletes",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateDropSoftDeletes",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateDropSoftDeletes",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "diffIndexes",
+      "package": "migration",
+      "path": "packages/migration.html#func-diffIndexes",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateCreateIndex",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateCreateIndex",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateDropIndex",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateDropIndex",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "fieldExists",
+      "package": "migration",
+      "path": "packages/migration.html#func-fieldExists",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "findField",
+      "package": "migration",
+      "path": "packages/migration.html#func-findField",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "fieldModified",
+      "package": "migration",
+      "path": "packages/migration.html#func-fieldModified",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "indexExists",
+      "package": "migration",
+      "path": "packages/migration.html#func-indexExists",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "diffForeignKeys",
+      "package": "migration",
+      "path": "packages/migration.html#func-diffForeignKeys",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "extractBelongsToRelationships",
+      "package": "migration",
+      "path": "packages/migration.html#func-extractBelongsToRelationships",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateAddForeignKey",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateAddForeignKey",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateDropForeignKey",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateDropForeignKey",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewGenerator",
+      "package": "migration",
+      "path": "packages/migration.html#func-NewGenerator",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "SetBaseTimestamp",
+      "package": "migration",
+      "path": "packages/migration.html#func-SetBaseTimestamp",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "SetOffset",
+      "package": "migration",
+      "path": "packages/migration.html#func-SetOffset",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "migration",
+      "path": "packages/migration.html#func-Generate",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GenerateFromSchema",
+      "package": "migration",
+      "path": "packages/migration.html#func-GenerateFromSchema",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateFromDefinition",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateFromDefinition",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "embedSchemaSnapshot",
+      "package": "migration",
+      "path": "packages/migration.html#func-embedSchemaSnapshot",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "splitLines",
+      "package": "migration",
+      "path": "packages/migration.html#func-splitLines",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateAlterTable",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateAlterTable",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GenerateMigrationNumber",
+      "package": "migration",
+      "path": "packages/migration.html#func-GenerateMigrationNumber",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GenerateMigrationNumberWithOffset",
+      "package": "migration",
+      "path": "packages/migration.html#func-GenerateMigrationNumberWithOffset",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateTimestamp",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateTimestamp",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateTimestampWithOffset",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateTimestampWithOffset",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateSequential",
+      "package": "migration",
+      "path": "packages/migration.html#func-generateSequential",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "MigrationExists",
+      "package": "migration",
+      "path": "packages/migration.html#func-MigrationExists",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GetMigrationFilenames",
+      "package": "migration",
+      "path": "packages/migration.html#func-GetMigrationFilenames",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewDependencyGraph",
+      "package": "migration",
+      "path": "packages/migration.html#func-NewDependencyGraph",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "BuildDependencyGraph",
+      "package": "migration",
+      "path": "packages/migration.html#func-BuildDependencyGraph",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "findResourceByTableName",
+      "package": "migration",
+      "path": "packages/migration.html#func-findResourceByTableName",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "contains",
+      "package": "migration",
+      "path": "packages/migration.html#func-contains",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "TopologicalSort",
+      "package": "migration",
+      "path": "packages/migration.html#func-TopologicalSort",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GetDependencies",
+      "package": "migration",
+      "path": "packages/migration.html#func-GetDependencies",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "HasCircularDependency",
+      "package": "migration",
+      "path": "packages/migration.html#func-HasCircularDependency",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GetNode",
+      "package": "migration",
+      "path": "packages/migration.html#func-GetNode",
+      "description": "Function in migration",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "model",
+      "package": "model",
+      "path": "packages/model.html",
+      "description": "4 types, 12 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "model",
+      "path": "types/model/Generator.html",
+      "description": "struct in model",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "GenerateOptions",
+      "package": "model",
+      "path": "types/model/GenerateOptions.html",
+      "description": "struct in model",
+      "tags": [
+        "type",
+        "struct",
+        "Config"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ModelData",
+      "package": "model",
+      "path": "types/model/ModelData.html",
+      "description": "struct in model",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "FieldData",
+      "package": "model",
+      "path": "types/model/FieldData.html",
+      "description": "struct in model",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "FindSchemaFile",
+      "package": "model",
+      "path": "packages/model.html#func-FindSchemaFile",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewGenerator",
+      "package": "model",
+      "path": "packages/model.html#func-NewGenerator",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "model",
+      "path": "packages/model.html#func-Generate",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GenerateFromSchema",
+      "package": "model",
+      "path": "packages/model.html#func-GenerateFromSchema",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GenerateWithOptions",
+      "package": "model",
+      "path": "packages/model.html#func-GenerateWithOptions",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateFromDefinition",
+      "package": "model",
+      "path": "packages/model.html#func-generateFromDefinition",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "PrepareModelData",
+      "package": "model",
+      "path": "packages/model.html#func-PrepareModelData",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildTagString",
+      "package": "model",
+      "path": "packages/model.html#func-buildTagString",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "contains",
+      "package": "model",
+      "path": "packages/model.html#func-contains",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "containsString",
+      "package": "model",
+      "path": "packages/model.html#func-containsString",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateJSONTag",
+      "package": "model",
+      "path": "packages/model.html#func-generateJSONTag",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "inferPackage",
+      "package": "model",
+      "path": "packages/model.html#func-inferPackage",
+      "description": "Function in model",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "query",
+      "package": "query",
+      "path": "packages/query.html",
+      "description": "2 types, 10 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "query",
+      "path": "types/query/Generator.html",
+      "description": "struct in query",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "RelationshipQueryData",
+      "package": "query",
+      "path": "types/query/RelationshipQueryData.html",
+      "description": "struct in query",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "query",
+      "path": "packages/query.html#func-New",
+      "description": "Function in query",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "query",
+      "path": "packages/query.html#func-Generate",
+      "description": "Function in query",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "templateData",
+      "package": "query",
+      "path": "packages/query.html#func-templateData",
+      "description": "Function in query",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "prepareRelationshipData",
+      "package": "query",
+      "path": "packages/query.html#func-prepareRelationshipData",
+      "description": "Function in query",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getPrimaryKeyDBType",
+      "package": "query",
+      "path": "packages/query.html#func-getPrimaryKeyDBType",
+      "description": "Function in query",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getCursorFieldType",
+      "package": "query",
+      "path": "packages/query.html#func-getCursorFieldType",
+      "description": "Function in query",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "loadTargetModelSchema",
+      "package": "query",
+      "path": "packages/query.html#func-loadTargetModelSchema",
+      "description": "Function in query",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getParamPlaceholder",
+      "package": "query",
+      "path": "packages/query.html#func-getParamPlaceholder",
+      "description": "Function in query",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getTimestampFunction",
+      "package": "query",
+      "path": "packages/query.html#func-getTimestampFunction",
+      "description": "Function in query",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "supportsReturning",
+      "package": "query",
+      "path": "packages/query.html#func-supportsReturning",
+      "description": "Function in query",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "realtime",
+      "package": "realtime",
+      "path": "packages/realtime.html",
+      "description": "3 types, 12 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "realtime",
+      "path": "types/realtime/Generator.html",
+      "description": "struct in realtime",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ModelHelper",
+      "package": "realtime",
+      "path": "types/realtime/ModelHelper.html",
+      "description": "struct in realtime",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "SubscriptionHelpersData",
+      "package": "realtime",
+      "path": "types/realtime/SubscriptionHelpersData.html",
+      "description": "struct in realtime",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-New",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewWithModule",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-NewWithModule",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewWithModels",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-NewWithModels",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-Generate",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateEvents",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-generateEvents",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateMemoryBus",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-generateMemoryBus",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateNATSBus",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-generateNATSBus",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateConnectionManager",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-generateConnectionManager",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateWebSocketHandler",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-generateWebSocketHandler",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generatePresence",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-generatePresence",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateRooms",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-generateRooms",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateSubscriptionHelpers",
+      "package": "realtime",
+      "path": "packages/realtime.html#func-generateSubscriptionHelpers",
+      "description": "Function in realtime",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "repository",
+      "package": "repository",
+      "path": "packages/repository.html",
+      "description": "2 types, 9 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "repository",
+      "path": "types/repository/Generator.html",
+      "description": "struct in repository",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "RelationshipMethodData",
+      "package": "repository",
+      "path": "types/repository/RelationshipMethodData.html",
+      "description": "struct in repository",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "repository",
+      "path": "packages/repository.html#func-New",
+      "description": "Function in repository",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "repository",
+      "path": "packages/repository.html#func-Generate",
+      "description": "Function in repository",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateBase",
+      "package": "repository",
+      "path": "packages/repository.html#func-generateBase",
+      "description": "Function in repository",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateInterface",
+      "package": "repository",
+      "path": "packages/repository.html#func-generateInterface",
+      "description": "Function in repository",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateUser",
+      "package": "repository",
+      "path": "packages/repository.html#func-generateUser",
+      "description": "Function in repository",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateTests",
+      "package": "repository",
+      "path": "packages/repository.html#func-generateTests",
+      "description": "Function in repository",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "templateData",
+      "package": "repository",
+      "path": "packages/repository.html#func-templateData",
+      "description": "Function in repository",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "prepareRelationshipMethods",
+      "package": "repository",
+      "path": "packages/repository.html#func-prepareRelationshipMethods",
+      "description": "Function in repository",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "findForeignKeyType",
+      "package": "repository",
+      "path": "packages/repository.html#func-findForeignKeyType",
+      "description": "Function in repository",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "routes",
+      "package": "routes",
+      "path": "packages/routes.html",
+      "description": "3 types, 11 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "routes",
+      "path": "types/routes/Generator.html",
+      "description": "struct in routes",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "HandlerInfo",
+      "package": "routes",
+      "path": "types/routes/HandlerInfo.html",
+      "description": "struct in routes",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "RoutesTemplateData",
+      "package": "routes",
+      "path": "types/routes/RoutesTemplateData.html",
+      "description": "struct in routes",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "routes",
+      "path": "packages/routes.html#func-New",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "routes",
+      "path": "packages/routes.html#func-Generate",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "discoverHandlers",
+      "package": "routes",
+      "path": "packages/routes.html#func-discoverHandlers",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "parseHandlerFile",
+      "package": "routes",
+      "path": "packages/routes.html#func-parseHandlerFile",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateStdlibRoutes",
+      "package": "routes",
+      "path": "packages/routes.html#func-generateStdlibRoutes",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateChiRoutes",
+      "package": "routes",
+      "path": "packages/routes.html#func-generateChiRoutes",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateGinRoutes",
+      "package": "routes",
+      "path": "packages/routes.html#func-generateGinRoutes",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateEchoRoutes",
+      "package": "routes",
+      "path": "packages/routes.html#func-generateEchoRoutes",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "toLowerCamel",
+      "package": "routes",
+      "path": "packages/routes.html#func-toLowerCamel",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "pluralize",
+      "package": "routes",
+      "path": "packages/routes.html#func-pluralize",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "hasRealtimeEnabled",
+      "package": "routes",
+      "path": "packages/routes.html#func-hasRealtimeEnabled",
+      "description": "Function in routes",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "scaffold",
+      "package": "scaffold",
+      "path": "packages/scaffold.html",
+      "description": "6 types, 8 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Options",
+      "package": "scaffold",
+      "path": "types/scaffold/Options.html",
+      "description": "struct in scaffold",
+      "tags": [
+        "type",
+        "struct",
+        "Config"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Field",
+      "package": "scaffold",
+      "path": "types/scaffold/Field.html",
+      "description": "struct in scaffold",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "scaffold",
+      "path": "types/scaffold/Generator.html",
+      "description": "struct in scaffold",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Schema",
+      "package": "scaffold",
+      "path": "types/scaffold/Schema.html",
+      "description": "struct in scaffold",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Spec",
+      "package": "scaffold",
+      "path": "types/scaffold/Spec.html",
+      "description": "struct in scaffold",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "SchemaField",
+      "package": "scaffold",
+      "path": "types/scaffold/SchemaField.html",
+      "description": "struct in scaffold",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewGenerator",
+      "package": "scaffold",
+      "path": "packages/scaffold.html#func-NewGenerator",
+      "description": "Function in scaffold",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "scaffold",
+      "path": "packages/scaffold.html#func-Generate",
+      "description": "Function in scaffold",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "convertToDefinition",
+      "package": "scaffold",
+      "path": "packages/scaffold.html#func-convertToDefinition",
+      "description": "Function in scaffold",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "readDatabaseDriver",
+      "package": "scaffold",
+      "path": "packages/scaffold.html#func-readDatabaseDriver",
+      "description": "Function in scaffold",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getModulePath",
+      "package": "scaffold",
+      "path": "packages/scaffold.html#func-getModulePath",
+      "description": "Function in scaffold",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildSchema",
+      "package": "scaffold",
+      "path": "packages/scaffold.html#func-buildSchema",
+      "description": "Function in scaffold",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildFields",
+      "package": "scaffold",
+      "path": "packages/scaffold.html#func-buildFields",
+      "description": "Function in scaffold",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "isNullableByDefault",
+      "package": "scaffold",
+      "path": "packages/scaffold.html#func-isNullableByDefault",
+      "description": "Function in scaffold",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "service",
+      "package": "service",
+      "path": "packages/service.html",
+      "description": "4 types, 13 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "service",
+      "path": "types/service/Generator.html",
+      "description": "struct in service",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ServiceTemplateData",
+      "package": "service",
+      "path": "types/service/ServiceTemplateData.html",
+      "description": "struct in service",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "FieldMapping",
+      "package": "service",
+      "path": "types/service/FieldMapping.html",
+      "description": "struct in service",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "RelationshipHelperData",
+      "package": "service",
+      "path": "types/service/RelationshipHelperData.html",
+      "description": "struct in service",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "service",
+      "path": "packages/service.html#func-New",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "service",
+      "path": "packages/service.html#func-Generate",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateSharedFiles",
+      "package": "service",
+      "path": "packages/service.html#func-generateSharedFiles",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateInterface",
+      "package": "service",
+      "path": "packages/service.html#func-generateInterface",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateHelpers",
+      "package": "service",
+      "path": "packages/service.html#func-generateHelpers",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateService",
+      "package": "service",
+      "path": "packages/service.html#func-generateService",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateTest",
+      "package": "service",
+      "path": "packages/service.html#func-generateTest",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "prepareTemplateData",
+      "package": "service",
+      "path": "packages/service.html#func-prepareTemplateData",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildFieldMappings",
+      "package": "service",
+      "path": "packages/service.html#func-buildFieldMappings",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "detectPrimaryKeyType",
+      "package": "service",
+      "path": "packages/service.html#func-detectPrimaryKeyType",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "toGoName",
+      "package": "service",
+      "path": "packages/service.html#func-toGoName",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "cleanType",
+      "package": "service",
+      "path": "packages/service.html#func-cleanType",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "prepareRelationshipHelpers",
+      "package": "service",
+      "path": "packages/service.html#func-prepareRelationshipHelpers",
+      "description": "Function in service",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "shared",
+      "package": "shared",
+      "path": "packages/shared.html",
+      "description": "2 types, 19 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "shared",
+      "path": "types/shared/Generator.html",
+      "description": "struct in shared",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ValidateOperation",
+      "package": "shared",
+      "path": "types/shared/ValidateOperation.html",
+      "description": "struct in shared",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewGenerator",
+      "package": "shared",
+      "path": "packages/shared.html#func-NewGenerator",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "shared",
+      "path": "packages/shared.html#func-Generate",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateErrors",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateErrors",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateHelpers",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateHelpers",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateValidation",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateValidation",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateCORS",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateCORS",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateCORSConfig",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateCORSConfig",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateRequestID",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateRequestID",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateLogger",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateLogger",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateRateLimitConfig",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateRateLimitConfig",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateRateLimit",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateRateLimit",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateQueryHelpers",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateQueryHelpers",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateAuthHelpers",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateAuthHelpers",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateUUIDHelpers",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateUUIDHelpers",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateTestingHelpers",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateTestingHelpers",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateRequestHelpers",
+      "package": "shared",
+      "path": "packages/shared.html#func-generateRequestHelpers",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Validate",
+      "package": "shared",
+      "path": "packages/shared.html#func-Validate",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Execute",
+      "package": "shared",
+      "path": "packages/shared.html#func-Execute",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Description",
+      "package": "shared",
+      "path": "packages/shared.html#func-Description",
+      "description": "Function in shared",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "sqlc",
+      "package": "sqlc",
+      "path": "packages/sqlc.html",
+      "description": "1 types, 5 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "sqlc",
+      "path": "types/sqlc/Generator.html",
+      "description": "struct in sqlc",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "sqlc",
+      "path": "packages/sqlc.html#func-New",
+      "description": "Function in sqlc",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "sqlc",
+      "path": "packages/sqlc.html#func-Generate",
+      "description": "Function in sqlc",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateSQLCConfig",
+      "package": "sqlc",
+      "path": "packages/sqlc.html#func-generateSQLCConfig",
+      "description": "Function in sqlc",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateDBHelper",
+      "package": "sqlc",
+      "path": "packages/sqlc.html#func-generateDBHelper",
+      "description": "Function in sqlc",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "templateData",
+      "package": "sqlc",
+      "path": "packages/sqlc.html#func-templateData",
+      "description": "Function in sqlc",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "wiring",
+      "package": "wiring",
+      "path": "packages/wiring.html",
+      "description": "3 types, 3 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Generator",
+      "package": "wiring",
+      "path": "types/wiring/Generator.html",
+      "description": "struct in wiring",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ResourceData",
+      "package": "wiring",
+      "path": "types/wiring/ResourceData.html",
+      "description": "struct in wiring",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "TemplateData",
+      "package": "wiring",
+      "path": "types/wiring/TemplateData.html",
+      "description": "struct in wiring",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "New",
+      "package": "wiring",
+      "path": "packages/wiring.html#func-New",
+      "description": "Function in wiring",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Generate",
+      "package": "wiring",
+      "path": "packages/wiring.html#func-Generate",
+      "description": "Function in wiring",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "discoverResources",
+      "package": "wiring",
+      "path": "packages/wiring.html#func-discoverResources",
+      "description": "Function in wiring",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "helpers",
+      "package": "helpers",
+      "path": "packages/helpers.html",
+      "description": "0 types, 6 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "IsRealtimeInitialized",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-IsRealtimeInitialized",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "DetectRealtimeFromSchemas",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-DetectRealtimeFromSchemas",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "UpdateConfigWithRealtime",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-UpdateConfigWithRealtime",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GetModulePath",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-GetModulePath",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "UpdateMainGo",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-UpdateMainGo",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "UpdateRoutesGo",
+      "package": "helpers",
+      "path": "packages/helpers.html#func-UpdateRoutesGo",
+      "description": "Function in helpers",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "migrate",
+      "package": "migrate",
+      "path": "packages/migrate.html",
+      "description": "3 types, 20 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Migrator",
+      "package": "migrate",
+      "path": "types/migrate/Migrator.html",
+      "description": "struct in migrate",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Migration",
+      "package": "migrate",
+      "path": "types/migrate/Migration.html",
+      "description": "struct in migrate",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "DatabaseConfig",
+      "package": "migrate",
+      "path": "types/migrate/DatabaseConfig.html",
+      "description": "struct in migrate",
+      "tags": [
+        "type",
+        "struct",
+        "Config"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "BuildConnectionString",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-BuildConnectionString",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildPostgreSQLConnectionString",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-buildPostgreSQLConnectionString",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildMySQLConnectionString",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-buildMySQLConnectionString",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildSQLiteConnectionString",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-buildSQLiteConnectionString",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "CreateManualMigration",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-CreateManualMigration",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewMigrator",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-NewMigrator",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Up",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-Up",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "DryRun",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-DryRun",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Down",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-Down",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Status",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-Status",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Force",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-Force",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "maskPassword",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-maskPassword",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "List",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-List",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "parseMigrationEntries",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-parseMigrationEntries",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "CheckMigrateInstalled",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-CheckMigrateInstalled",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "MaskPassword",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-MaskPassword",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "maskURLPassword",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-maskURLPassword",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "maskMySQLDSN",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-maskMySQLDSN",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "maskSimple",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-maskSimple",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "LoadDatabaseConfig",
+      "package": "migrate",
+      "path": "packages/migrate.html#func-LoadDatabaseConfig",
+      "description": "Function in migrate",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "module",
+      "package": "module",
+      "path": "packages/module.html",
+      "description": "13 types, 32 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "FirebirdConfig",
+      "package": "module",
+      "path": "types/module/FirebirdConfig.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct",
+        "Config"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ProjectConfig",
+      "package": "module",
+      "path": "types/module/ProjectConfig.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct",
+        "Config"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ModuleConfig",
+      "package": "module",
+      "path": "types/module/ModuleConfig.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct",
+        "Config"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Installer",
+      "package": "module",
+      "path": "types/module/Installer.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "InstallOptions",
+      "package": "module",
+      "path": "types/module/InstallOptions.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct",
+        "Config"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "firebirdYmlOperation",
+      "package": "module",
+      "path": "types/module/firebirdYmlOperation.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "deleteFileOperation",
+      "package": "module",
+      "path": "types/module/deleteFileOperation.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ConfigField",
+      "package": "module",
+      "path": "types/module/ConfigField.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "WiringGenerator",
+      "package": "module",
+      "path": "types/module/WiringGenerator.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ModuleWiringData",
+      "package": "module",
+      "path": "types/module/ModuleWiringData.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "OrchestratorData",
+      "package": "module",
+      "path": "types/module/OrchestratorData.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ModuleInfo",
+      "package": "module",
+      "path": "types/module/ModuleInfo.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ConfigBuilder",
+      "package": "module",
+      "path": "types/module/ConfigBuilder.html",
+      "description": "struct in module",
+      "tags": [
+        "type",
+        "struct",
+        "Generator"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "LoadFirebirdConfig",
+      "package": "module",
+      "path": "packages/module.html#func-LoadFirebirdConfig",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "SaveFirebirdConfig",
+      "package": "module",
+      "path": "packages/module.html#func-SaveFirebirdConfig",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "AddModule",
+      "package": "module",
+      "path": "packages/module.html#func-AddModule",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "RemoveModule",
+      "package": "module",
+      "path": "packages/module.html#func-RemoveModule",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewInstaller",
+      "package": "module",
+      "path": "packages/module.html#func-NewInstaller",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Install",
+      "package": "module",
+      "path": "packages/module.html#func-Install",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Uninstall",
+      "package": "module",
+      "path": "packages/module.html#func-Uninstall",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "updateConfig",
+      "package": "module",
+      "path": "packages/module.html#func-updateConfig",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateWiring",
+      "package": "module",
+      "path": "packages/module.html#func-generateWiring",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "regenerateOrchestrator",
+      "package": "module",
+      "path": "packages/module.html#func-regenerateOrchestrator",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "updateFirebirdYml",
+      "package": "module",
+      "path": "packages/module.html#func-updateFirebirdYml",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "removeFromConfig",
+      "package": "module",
+      "path": "packages/module.html#func-removeFromConfig",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "deleteWiring",
+      "package": "module",
+      "path": "packages/module.html#func-deleteWiring",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "removeFromFirebirdYml",
+      "package": "module",
+      "path": "packages/module.html#func-removeFromFirebirdYml",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Validate",
+      "package": "module",
+      "path": "packages/module.html#func-Validate",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Execute",
+      "package": "module",
+      "path": "packages/module.html#func-Execute",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Description",
+      "package": "module",
+      "path": "packages/module.html#func-Description",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Validate",
+      "package": "module",
+      "path": "packages/module.html#func-Validate",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Execute",
+      "package": "module",
+      "path": "packages/module.html#func-Execute",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Description",
+      "package": "module",
+      "path": "packages/module.html#func-Description",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewWiringGenerator",
+      "package": "module",
+      "path": "packages/module.html#func-NewWiringGenerator",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GenerateRegistry",
+      "package": "module",
+      "path": "packages/module.html#func-GenerateRegistry",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GenerateModuleWiring",
+      "package": "module",
+      "path": "packages/module.html#func-GenerateModuleWiring",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateInitBody",
+      "package": "module",
+      "path": "packages/module.html#func-generateInitBody",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "RegenerateOrchestrator",
+      "package": "module",
+      "path": "packages/module.html#func-RegenerateOrchestrator",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "renderTemplate",
+      "package": "module",
+      "path": "packages/module.html#func-renderTemplate",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "toPascalCase",
+      "package": "module",
+      "path": "packages/module.html#func-toPascalCase",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewConfigBuilder",
+      "package": "module",
+      "path": "packages/module.html#func-NewConfigBuilder",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "EnsureModulesField",
+      "package": "module",
+      "path": "packages/module.html#func-EnsureModulesField",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "AddModuleConfig",
+      "package": "module",
+      "path": "packages/module.html#func-AddModuleConfig",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Build",
+      "package": "module",
+      "path": "packages/module.html#func-Build",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "toSnakeCase",
+      "package": "module",
+      "path": "packages/module.html#func-toSnakeCase",
+      "description": "Function in module",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "project",
+      "package": "project",
+      "path": "packages/project.html",
+      "description": "6 types, 12 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "DatabaseDriver",
+      "package": "project",
+      "path": "types/project/DatabaseDriver.html",
+      "description": "alias in project",
+      "tags": [
+        "type",
+        "alias"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "RouterType",
+      "package": "project",
+      "path": "types/project/RouterType.html",
+      "description": "alias in project",
+      "tags": [
+        "type",
+        "alias"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Scaffolder",
+      "package": "project",
+      "path": "types/project/Scaffolder.html",
+      "description": "struct in project",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ScaffoldOptions",
+      "package": "project",
+      "path": "types/project/ScaffoldOptions.html",
+      "description": "struct in project",
+      "tags": [
+        "type",
+        "struct",
+        "Config"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ScaffoldResult",
+      "package": "project",
+      "path": "types/project/ScaffoldResult.html",
+      "description": "struct in project",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ProjectData",
+      "package": "project",
+      "path": "types/project/ProjectData.html",
+      "description": "struct in project",
+      "tags": [
+        "type",
+        "struct",
+        "Template Data"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "IsValid",
+      "package": "project",
+      "path": "packages/project.html#func-IsValid",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Description",
+      "package": "project",
+      "path": "packages/project.html#func-Description",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewScaffolder",
+      "package": "project",
+      "path": "packages/project.html#func-NewScaffolder",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Scaffold",
+      "package": "project",
+      "path": "packages/project.html#func-Scaffold",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildCoreDirectoryOperations",
+      "package": "project",
+      "path": "packages/project.html#func-buildCoreDirectoryOperations",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildCoreFileOperations",
+      "package": "project",
+      "path": "packages/project.html#func-buildCoreFileOperations",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildDatabaseOperations",
+      "package": "project",
+      "path": "packages/project.html#func-buildDatabaseOperations",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "generateDatabaseYML",
+      "package": "project",
+      "path": "packages/project.html#func-generateDatabaseYML",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "detectGoVersion",
+      "package": "project",
+      "path": "packages/project.html#func-detectGoVersion",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "buildLoggingOperations",
+      "package": "project",
+      "path": "packages/project.html#func-buildLoggingOperations",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "RunGoModTidy",
+      "package": "project",
+      "path": "packages/project.html#func-RunGoModTidy",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "detectRealtimeConfig",
+      "package": "project",
+      "path": "packages/project.html#func-detectRealtimeConfig",
+      "description": "Function in project",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "schema",
+      "package": "schema",
+      "path": "packages/schema.html",
+      "description": "17 types, 35 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ForeignKeyDetector",
+      "package": "schema",
+      "path": "types/schema/ForeignKeyDetector.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "FieldNameValidator",
+      "package": "schema",
+      "path": "types/schema/FieldNameValidator.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "TypeValidator",
+      "package": "schema",
+      "path": "types/schema/TypeValidator.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "RelationshipValidator",
+      "package": "schema",
+      "path": "types/schema/RelationshipValidator.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Definition",
+      "package": "schema",
+      "path": "types/schema/Definition.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Spec",
+      "package": "schema",
+      "path": "types/schema/Spec.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "PaginationConfig",
+      "package": "schema",
+      "path": "types/schema/PaginationConfig.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct",
+        "Config"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "RealtimeConfig",
+      "package": "schema",
+      "path": "types/schema/RealtimeConfig.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct",
+        "Config"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Field",
+      "package": "schema",
+      "path": "types/schema/Field.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Index",
+      "package": "schema",
+      "path": "types/schema/Index.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Relationship",
+      "package": "schema",
+      "path": "types/schema/Relationship.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ValidationError",
+      "package": "schema",
+      "path": "types/schema/ValidationError.html",
+      "description": "alias in schema",
+      "tags": [
+        "type",
+        "alias"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ValidationErrors",
+      "package": "schema",
+      "path": "types/schema/ValidationErrors.html",
+      "description": "alias in schema",
+      "tags": [
+        "type",
+        "alias"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ValidatorResult",
+      "package": "schema",
+      "path": "types/schema/ValidatorResult.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ExtendedValidationResult",
+      "package": "schema",
+      "path": "types/schema/ExtendedValidationResult.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "Validator",
+      "package": "schema",
+      "path": "types/schema/Validator.html",
+      "description": "interface in schema",
+      "tags": [
+        "type",
+        "interface"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "ValidationPipeline",
+      "package": "schema",
+      "path": "types/schema/ValidationPipeline.html",
+      "description": "struct in schema",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Name",
+      "package": "schema",
+      "path": "packages/schema.html#func-Name",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Validate",
+      "package": "schema",
+      "path": "packages/schema.html#func-Validate",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "isForeignKeyPattern",
+      "package": "schema",
+      "path": "packages/schema.html#func-isForeignKeyPattern",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "extractTableName",
+      "package": "schema",
+      "path": "packages/schema.html#func-extractTableName",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Name",
+      "package": "schema",
+      "path": "packages/schema.html#func-Name",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Validate",
+      "package": "schema",
+      "path": "packages/schema.html#func-Validate",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Name",
+      "package": "schema",
+      "path": "packages/schema.html#func-Name",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Validate",
+      "package": "schema",
+      "path": "packages/schema.html#func-Validate",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Name",
+      "package": "schema",
+      "path": "packages/schema.html#func-Name",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Validate",
+      "package": "schema",
+      "path": "packages/schema.html#func-Validate",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "findFieldByName",
+      "package": "schema",
+      "path": "packages/schema.html#func-findFieldByName",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Parse",
+      "package": "schema",
+      "path": "packages/schema.html#func-Parse",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "ParseBytes",
+      "package": "schema",
+      "path": "packages/schema.html#func-ParseBytes",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "WriteToFile",
+      "package": "schema",
+      "path": "packages/schema.html#func-WriteToFile",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Validate",
+      "package": "schema",
+      "path": "packages/schema.html#func-Validate",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "ValidateWithLineNumbers",
+      "package": "schema",
+      "path": "packages/schema.html#func-ValidateWithLineNumbers",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "extractLineNumbers",
+      "package": "schema",
+      "path": "packages/schema.html#func-extractLineNumbers",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getLineNumber",
+      "package": "schema",
+      "path": "packages/schema.html#func-getLineNumber",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "isPascalCase",
+      "package": "schema",
+      "path": "packages/schema.html#func-isPascalCase",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "isValidOrderBy",
+      "package": "schema",
+      "path": "packages/schema.html#func-isValidOrderBy",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "DefaultTableName",
+      "package": "schema",
+      "path": "packages/schema.html#func-DefaultTableName",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Pluralize",
+      "package": "schema",
+      "path": "packages/schema.html#func-Pluralize",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "IsValidGoType",
+      "package": "schema",
+      "path": "packages/schema.html#func-IsValidGoType",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "IsPointerType",
+      "package": "schema",
+      "path": "packages/schema.html#func-IsPointerType",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "ValidateValidationRules",
+      "package": "schema",
+      "path": "packages/schema.html#func-ValidateValidationRules",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "validateSingleRule",
+      "package": "schema",
+      "path": "packages/schema.html#func-validateSingleRule",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "isValidCustomValidator",
+      "package": "schema",
+      "path": "packages/schema.html#func-isValidCustomValidator",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "ValidateRelationshipType",
+      "package": "schema",
+      "path": "packages/schema.html#func-ValidateRelationshipType",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "HasErrors",
+      "package": "schema",
+      "path": "packages/schema.html#func-HasErrors",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Error",
+      "package": "schema",
+      "path": "packages/schema.html#func-Error",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewValidationPipeline",
+      "package": "schema",
+      "path": "packages/schema.html#func-NewValidationPipeline",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "AddValidator",
+      "package": "schema",
+      "path": "packages/schema.html#func-AddValidator",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Validate",
+      "package": "schema",
+      "path": "packages/schema.html#func-Validate",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "ValidateDefinition",
+      "package": "schema",
+      "path": "packages/schema.html#func-ValidateDefinition",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "PromptYesNo",
+      "package": "schema",
+      "path": "packages/schema.html#func-PromptYesNo",
+      "description": "Function in schema",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "testutil",
+      "package": "testutil",
+      "path": "packages/testutil.html",
+      "description": "1 types, 6 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "TestProject",
+      "package": "testutil",
+      "path": "types/testutil/TestProject.html",
+      "description": "struct in testutil",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "NewTestProject",
+      "package": "testutil",
+      "path": "packages/testutil.html#func-NewTestProject",
+      "description": "Function in testutil",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "RunFirebird",
+      "package": "testutil",
+      "path": "packages/testutil.html#func-RunFirebird",
+      "description": "Function in testutil",
+      "tags": [
+        "function",
+        "complex"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Build",
+      "package": "testutil",
+      "path": "packages/testutil.html#func-Build",
+      "description": "Function in testutil",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "FileExists",
+      "package": "testutil",
+      "path": "packages/testutil.html#func-FileExists",
+      "description": "Function in testutil",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "WriteSchema",
+      "package": "testutil",
+      "path": "packages/testutil.html#func-WriteSchema",
+      "description": "Function in testutil",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "ReadFile",
+      "package": "testutil",
+      "path": "packages/testutil.html#func-ReadFile",
+      "description": "Function in testutil",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    },
+    {
+      "type": "package",
+      "name": "types",
+      "package": "types",
+      "path": "packages/types.html",
+      "description": "1 types, 5 functions",
+      "tags": [
+        "package"
+      ]
+    },
+    {
+      "type": "type",
+      "name": "TypeInfo",
+      "package": "types",
+      "path": "types/types/TypeInfo.html",
+      "description": "struct in types",
+      "tags": [
+        "type",
+        "struct"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "Lookup",
+      "package": "types",
+      "path": "packages/types.html#func-Lookup",
+      "description": "Function in types",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GetDBType",
+      "package": "types",
+      "path": "packages/types.html#func-GetDBType",
+      "description": "Function in types",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GetGoType",
+      "package": "types",
+      "path": "packages/types.html#func-GetGoType",
+      "description": "Function in types",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "GetPrimaryKeyType",
+      "package": "types",
+      "path": "packages/types.html#func-GetPrimaryKeyType",
+      "description": "Function in types",
+      "tags": [
+        "function",
+        "simple"
+      ]
+    },
+    {
+      "type": "function",
+      "name": "CollectImports",
+      "package": "types",
+      "path": "packages/types.html#func-CollectImports",
+      "description": "Function in types",
+      "tags": [
+        "function",
+        "medium"
+      ]
+    }
+  ]
+}

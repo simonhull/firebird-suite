@@ -50,7 +50,7 @@ func (g *Generator) BuildSearchIndex(data *SiteData) *SearchIndex {
 				Type:        "type",
 				Name:        typ.Name,
 				Package:     pkg.Name,
-				Path:        fmt.Sprintf("packages/%s.html#type-%s", pkg.Name, typ.Name),
+				Path:        fmt.Sprintf("types/%s/%s.html", pkg.Name, typ.Name),
 				Description: fmt.Sprintf("%s in %s", typ.Kind, pkg.Name),
 				Tags:        tags,
 			})

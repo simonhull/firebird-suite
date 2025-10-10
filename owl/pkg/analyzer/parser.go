@@ -186,6 +186,7 @@ func (p *Parser) parseTypeSpec(spec *ast.TypeSpec, doc *ast.CommentGroup, file *
 		Name:     spec.Name.Name,
 		Package:  pkg.Name,
 		FilePath: file.Path,
+		Line:     p.fset.Position(spec.Pos()).Line,
 	}
 
 	// Extract doc comment
@@ -359,6 +360,7 @@ func (p *Parser) parseFuncDecl(decl *ast.FuncDecl, file *File, pkg *Package) *Fu
 		Name:        decl.Name.Name,
 		Package:     pkg.Name,
 		FilePath:    file.Path,
+		Line:        p.fset.Position(decl.Pos()).Line,
 		Calls:       make([]string, 0),
 		UsesTypes:   make([]string, 0),
 		UsesImports: make([]string, 0),

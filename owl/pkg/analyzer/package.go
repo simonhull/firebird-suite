@@ -34,6 +34,7 @@ type Type struct {
 	Methods       []*Function
 	Package       string
 	FilePath      string
+	Line          int // Line number where type is defined
 	GenericParams []GenericParam
 	Convention    *Convention
 
@@ -65,6 +66,7 @@ type Function struct {
 	Returns    []*Parameter
 	Package    string
 	FilePath   string
+	Line       int // Line number where function is defined
 	Convention *Convention
 
 	// Deep parse results

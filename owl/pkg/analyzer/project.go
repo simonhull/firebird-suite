@@ -6,6 +6,7 @@ type Project struct {
 	Module      string
 	Version     string
 	Description string
+	RootPath    string      // Root directory of the project
 	Packages    []*Package
 	Graph       *DependencyGraph
 

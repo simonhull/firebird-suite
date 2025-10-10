@@ -30,6 +30,7 @@ type ConventionDetector interface {
 // Analyze analyzes a Go project and returns a Project structure
 func (a *Analyzer) Analyze(rootPath string) (*Project, error) {
 	proj := &Project{
+		RootPath: rootPath,
 		Packages: make([]*Package, 0),
 	}
 

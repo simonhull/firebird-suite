@@ -62,15 +62,18 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	// Print analysis results
 	printAnalysisResults(project)
 
-	// Generate documentation
-	gen := generator.New(outputPath, "default")
+	// Generate HTML documentation
+	fmt.Println()
+	fmt.Println("🦉 Generating HTML documentation...")
+	gen := generator.NewGenerator(outputPath)
 	if err := gen.Generate(project); err != nil {
 		return fmt.Errorf("generation failed: %w", err)
 	}
 
 	fmt.Println()
 	output.Success("✅ Documentation generated successfully!")
-	fmt.Printf("📁 Output: %s\n", outputPath)
+	fmt.Printf("📁 Output: %s/index.html\n", outputPath)
+	fmt.Printf("💡 Tip: Open %s/index.html in your browser to view the documentation\n", outputPath)
 
 	return nil
 }

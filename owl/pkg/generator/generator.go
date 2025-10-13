@@ -96,6 +96,16 @@ func (g *Generator) Generate(project *analyzer.Project) error {
 		return fmt.Errorf("failed to generate convention pages: %w", err)
 	}
 
+	// Analyze and generate package dependency graph
+	depGraph, err := analyzer.AnalyzeDependencies(project)
+	if err != nil {
+		return fmt.Errorf("failed to analyze dependencies: %w", err)
+	}
+
+	if err := g.GenerateDependencyGraph(depGraph); err != nil {
+		return fmt.Errorf("failed to generate dependency graph: %w", err)
+	}
+
 	// Generate search index
 	searchIndex := g.BuildSearchIndex(siteData)
 	if err := g.WriteSearchIndex(g.outputDir, searchIndex); err != nil {

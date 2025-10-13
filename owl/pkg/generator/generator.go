@@ -91,6 +91,11 @@ func (g *Generator) Generate(project *analyzer.Project) error {
 		return fmt.Errorf("failed to generate type pages: %w", err)
 	}
 
+	// Generate convention group pages
+	if err := g.GenerateConventionPages(project); err != nil {
+		return fmt.Errorf("failed to generate convention pages: %w", err)
+	}
+
 	// Generate search index
 	searchIndex := g.BuildSearchIndex(siteData)
 	if err := g.WriteSearchIndex(g.outputDir, searchIndex); err != nil {

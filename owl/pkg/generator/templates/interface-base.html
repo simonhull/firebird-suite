@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - Interface Implementations</title>
+
+    <!-- Custom CSS Framework -->
+    <link rel="stylesheet" href="../assets/styles.css">
+
+    <!-- Alpine.js v3 for Interactivity (Local) -->
+    <script defer src="../assets/alpine.min.js"></script>
+</head>
+<body x-data="{
+    darkMode: localStorage.getItem('theme') === 'light' ? false : true,
+    init() {
+        this.$watch('darkMode', val => {
+            localStorage.setItem('theme', val ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', val ? 'dark' : 'light');
+        });
+        document.documentElement.setAttribute('data-theme', this.darkMode ? 'dark' : 'light');
+    }
+}">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="flex items-center gap-md">
+                <!-- Back to Home -->
+                <a href="../index.html" class="header-back">
+                    ← Back
+                </a>
+
+                <!-- Title -->
+                <h1 class="header-title">{{.Title}}</h1>
+            </div>
+
+            <div class="header-actions">
+                <!-- Theme Toggle -->
+                <button
+                    class="theme-toggle"
+                    @click="darkMode = !darkMode"
+                    :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+                >
+                    <span class="theme-toggle-icon" x-text="darkMode ? '☀️' : '🌙'"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" style="max-width: 1400px; margin: 0 auto;">
+        {{template "content" .}}
+    </main>
+</body>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.ProjectName}} - Documentation</title>
+
+    <!-- Custom CSS Framework -->
+    <link rel="stylesheet" href="assets/styles.css">
+
+    <!-- Fuse.js for Fuzzy Search -->
+    <script defer src="assets/fuse.min.js"></script>
+
+    <!-- Alpine.js v3 for Interactivity (Local) -->
+    <script defer src="assets/alpine.min.js"></script>
+</head>
+<body x-data="{
+    darkMode: localStorage.getItem('theme') === 'light' ? false : true,
+    mobileMenuOpen: false,
+    searchOpen: false,
+    init() {
+        this.$watch('darkMode', val => {
+            localStorage.setItem('theme', val ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', val ? 'dark' : 'light');
+        });
+        // Set initial theme
+        document.documentElement.setAttribute('data-theme', this.darkMode ? 'dark' : 'light');
+    }
+}">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="flex items-center gap-md">
+                <!-- Mobile Menu Toggle -->
+                <button
+                    class="mobile-menu-toggle"
+                    @click="mobileMenuOpen = !mobileMenuOpen"
+                    aria-label="Toggle menu"
+                >
+                    ☰
+                </button>
+
+                <!-- Logo -->
+                <a href="/" class="header-logo">
+                    <span class="header-logo-icon">🦉</span>
+                    <span>{{.ProjectName}}</span>
+                </a>
+
+                {{if .IsFirebird}}
+                <div class="firebird-badge">
+                    <span class="firebird-icon">🔥</span>
+                    <span>Firebird</span>
+                </div>
+                {{end}}
+            </div>
+
+            <div class="header-actions">
+                <!-- Search (Coming Soon) -->
+                <div class="search-box" style="display: none;">
+                    <span class="search-icon">🔍</span>
+                    <input
+                        type="text"
+                        class="search-input"
+                        placeholder="Search documentation..."
+                    >
+                </div>
+
+                <!-- Theme Toggle -->
+                <button
+                    class="theme-toggle"
+                    @click="darkMode = !darkMode"
+                    :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+                >
+                    <span class="theme-toggle-icon" x-text="darkMode ? '☀️' : '🌙'"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Search Modal (Ctrl+K) -->
+    <div x-data="searchModal()"
+         x-show="open"
+         @keydown.escape.window="open = false"
+         @keydown.meta.k.window.prevent="open = !open"
+         @keydown.ctrl.k.window.prevent="open = !open"
+         class="search-modal"
+         style="display: none;"
+         x-cloak>
+
+        <div class="search-backdrop" @click="open = false"></div>
+
+        <div class="search-container" @click.away="open = false">
+            <div class="search-header">
+                <input
+                    type="text"
+                    x-ref="searchInput"
+                    x-model="query"
+                    @input="search()"
+                    placeholder="Search types, functions, packages..."
+                    class="search-input"
+                    autofocus>
+                <div class="search-hint">ESC to close</div>
+            </div>
+
+            <div class="search-results" x-show="results.length > 0">
+                <template x-for="(result, index) in results" :key="index">
+                    <a :href="result.item.path"
+                       class="search-result-item"
+                       @click="open = false">
+                        <div class="result-icon" x-text="getIcon(result.item.type)"></div>
+                        <div class="result-content">
+                            <div class="result-name" x-text="result.item.name"></div>
+                            <div class="result-meta">
+                                <span class="result-type" x-text="result.item.type"></span>
+                                <span class="result-package" x-text="result.item.package"></span>
+                            </div>
+                        </div>
+                    </a>
+                </template>
+            </div>
+
+            <div class="search-empty" x-show="query && results.length === 0">
+                No results found for "<span x-text="query"></span>"
+            </div>
+
+            <div class="search-footer">
+                <kbd>↑↓</kbd> Navigate
+                <kbd>↵</kbd> Select
+                <kbd>ESC</kbd> Close
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function searchModal() {
+        return {
+            open: false,
+            query: '',
+            results: [],
+            fuse: null,
+
+            init() {
+                // Load search index
+                fetch('assets/search-index.json')
+                    .then(res => res.json())
+                    .then(data => {
+                        this.fuse = new Fuse(data.items, {
+                            keys: ['name', 'description', 'tags'],
+                            threshold: 0.3,
+                            limit: 10
+                        });
+                    });
+
+                // Watch for open state changes
+                this.$watch('open', value => {
+                    if (value) {
+                        this.$nextTick(() => {
+                            this.$refs.searchInput.focus();
+                        });
+                    }
+                });
+            },
+
+            search() {
+                if (!this.query || !this.fuse) {
+                    this.results = [];
+                    return;
+                }
+                this.results = this.fuse.search(this.query);
+            },
+
+            getIcon(type) {
+                const icons = {
+                    'package': '📦',
+                    'type': '🏗️',
+                    'function': '⚡'
+                };
+                return icons[type] || '📄';
+            }
+        };
+    }
+    </script>
+
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside
+            class="sidebar"
+            :class="{ 'open': mobileMenuOpen }"
+            @click.away="mobileMenuOpen = false"
+        >
+            <!-- Search Trigger -->
+            <button class="search-trigger" @click="$dispatch('open-search'); open = true;" x-data="searchModal()">
+                <span class="search-icon">🔍</span>
+                <span class="search-text">Search</span>
+                <kbd class="search-kbd">⌘K</kbd>
+            </button>
+
+            <!-- Package Tree -->
+            <nav class="package-tree" x-data="{ expanded: {} }">
+                <div class="tree-section">
+                    <h3 class="tree-heading">Packages</h3>
+
+                    {{range .Packages}}
+                    {{$pkgName := .Name}}
+                    <div class="tree-item">
+                        <div class="tree-node"
+                             @click="expanded['{{.Name}}'] = !expanded['{{.Name}}']">
+                            <span class="tree-icon"
+                                  x-text="expanded['{{.Name}}'] ? '▼' : '▶'">▶</span>
+                            <a href="packages/{{.Name}}.html" class="tree-link">
+                                {{.Name}}
+                            </a>
+                            <span class="tree-badge">{{len .Types}}</span>
+                        </div>
+
+                        <!-- Type list (collapsible) -->
+                        <div x-show="expanded['{{.Name}}']"
+                             x-collapse
+                             class="tree-children">
+                            {{range .Types}}
+                            <a href="packages/{{$pkgName}}.html#type-{{.Name}}"
+                               class="tree-child-link">
+                                <span class="tree-child-icon">🏗️</span>
+                                {{.Name}}
+                                {{if .PrimaryBadge}}
+                                <span class="tree-child-badge badge-{{.PrimaryBadge.Type}}">
+                                    {{.PrimaryBadge.Label}}
+                                </span>
+                                {{end}}
+                            </a>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </nav>
+
+            <!-- Statistics -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Statistics</h3>
+                <div class="card-meta">
+                    <div>📦 {{.Stats.TotalPackages}} Packages</div>
+                    <div>🔷 {{.Stats.TotalTypes}} Types</div>
+                    <div>⚡ {{.Stats.TotalFunctions}} Functions</div>
+                </div>
+            </div>
+
+            <!-- Architecture -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Architecture</h3>
+                <nav>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item">
+                            <a href="dependencies/packages.html" class="sidebar-nav-link">
+                                <span>📊 Package Dependencies</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="interfaces/implementations.html" class="sidebar-nav-link">
+                                <span>🔌 Interface Implementations</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- Conventions -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Conventions</h3>
+                <nav>
+                    <ul class="sidebar-nav">
+                        <li class="sidebar-nav-item">
+                            <a href="conventions/handlers.html" class="sidebar-nav-link">
+                                <span>Handlers</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="conventions/services.html" class="sidebar-nav-link">
+                                <span>Services</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="conventions/repositories.html" class="sidebar-nav-link">
+                                <span>Repositories</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="conventions/models.html" class="sidebar-nav-link">
+                                <span>Models</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="conventions/middlewares.html" class="sidebar-nav-link">
+                                <span>Middleware</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="conventions/utils.html" class="sidebar-nav-link">
+                                <span>Utils</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-nav-item">
+                            <a href="conventions/configs.html" class="sidebar-nav-link">
+                                <span>Configs</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- Navigation by Convention -->
+            {{if .ConventionGroups}}
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">By Convention</h3>
+                <nav>
+                    <ul class="sidebar-nav">
+                        {{range .ConventionGroups}}
+                        <li class="sidebar-nav-item">
+                            <a href="#{{.Slug}}" class="sidebar-nav-link">
+                                <span>{{.Name}}</span>
+                                <span class="sidebar-nav-count">{{.Count}}</span>
+                            </a>
+                        </li>
+                        {{end}}
+                    </ul>
+                </nav>
+            </div>
+            {{end}}
+
+            <!-- Navigation by Package -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Packages</h3>
+                <nav>
+                    <ul class="sidebar-nav">
+                        {{range .Packages}}
+                        <li class="sidebar-nav-item">
+                            <a href="#pkg-{{.Name}}" class="sidebar-nav-link">
+                                <span>{{.Name}}</span>
+                                <span class="sidebar-nav-count">{{len .Types}}</span>
+                            </a>
+                        </li>
+                        {{end}}
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- Footer -->
+            <div class="sidebar-section" style="margin-top: auto; padding-top: var(--space-xl); border-top: 1px solid var(--border-color);">
+                <div class="text-muted" style="font-size: var(--text-xs);">
+                    Generated {{.GeneratedAt.Format "Jan 2, 2006"}}
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {{template "content" .}}
+        </main>
+    </div>
+
+    <!-- Close mobile menu on ESC key -->
+    <div
+        x-show="mobileMenuOpen"
+        @keydown.escape.window="mobileMenuOpen = false"
+        style="display: none;"
+    ></div>
+</body>
+</html>

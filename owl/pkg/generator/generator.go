@@ -106,6 +106,16 @@ func (g *Generator) Generate(project *analyzer.Project) error {
 		return fmt.Errorf("failed to generate dependency graph: %w", err)
 	}
 
+	// Analyze and generate interface implementations diagram
+	interfaceAnalysis, err := analyzer.AnalyzeInterfaces(project)
+	if err != nil {
+		return fmt.Errorf("failed to analyze interfaces: %w", err)
+	}
+
+	if err := g.GenerateInterfaceDiagram(interfaceAnalysis); err != nil {
+		return fmt.Errorf("failed to generate interface diagram: %w", err)
+	}
+
 	// Generate search index
 	searchIndex := g.BuildSearchIndex(siteData)
 	if err := g.WriteSearchIndex(g.outputDir, searchIndex); err != nil {

@@ -1,0 +1,314 @@
+{{define "content"}}
+<div x-data="interfaceDiagram()">
+    <!-- Header Section -->
+    <div class="interface-header">
+        <div class="interface-hero">
+            <h1 class="interface-hero-title">Interface Implementations</h1>
+            <p class="interface-hero-subtitle">
+                Explore which types implement which interfaces across your codebase
+            </p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-plug"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value">{{.Stats.TotalInterfaces}}</div>
+                    <div class="stat-label">Total Interfaces</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-cube"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value">{{.Stats.TotalImplementers}}</div>
+                    <div class="stat-label">Implementations</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-box"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value">{{.Stats.ProjectInterfaces}}</div>
+                    <div class="stat-label">Project Interfaces</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value">{{printf "%.1f" .Stats.AvgImplementers}}</div>
+                    <div class="stat-label">Avg Implementations</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{if gt (len .UnusedInterfaces) 0}}
+    <!-- Unused Interfaces Warning -->
+    <div class="interface-warning">
+        <div class="warning-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="warning-content">
+            <div class="warning-title">Unused Interfaces Detected</div>
+            <div class="warning-text">
+                {{len .UnusedInterfaces}} interface(s) have no implementations in your codebase.
+                Consider removing them or implementing them.
+            </div>
+            <button class="warning-toggle" @click="showUnused = !showUnused" x-text="showUnused ? 'Hide' : 'Show'">
+                Show
+            </button>
+        </div>
+    </div>
+
+    <!-- Unused Interfaces List -->
+    <div x-show="showUnused" x-collapse class="unused-list">
+        {{range .UnusedInterfaces}}
+        <div class="unused-item">
+            <div class="unused-name">{{.Name}}</div>
+            <div class="unused-package">{{.PackagePath}}</div>
+            <div class="unused-methods">{{len .Methods}} method(s)</div>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    <!-- Controls -->
+    <div class="interface-controls">
+        <div class="control-group">
+            <label class="control-label">
+                <span class="control-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+                Search
+            </label>
+            <input
+                type="text"
+                x-model="search"
+                placeholder="Search interfaces..."
+                class="control-input"
+            >
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">
+                <span class="control-icon"><i class="fa-solid fa-box"></i></span>
+                Group
+            </label>
+            <select x-model="groupFilter" class="control-select">
+                <option value="all">All Groups</option>
+                <option value="project">Project Only</option>
+                <option value="stdlib">Stdlib Only</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">
+                <span class="control-icon"><i class="fa-solid fa-shuffle"></i></span>
+                Sort
+            </label>
+            <select x-model="sortBy" class="control-select">
+                <option value="implementations">Most Implementations</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="methods">Method Count</option>
+                <option value="complexity">Complexity</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">
+                <span class="control-icon">👁️</span>
+                Show
+            </label>
+            <select x-model="showFilter" class="control-select">
+                <option value="all">All Interfaces</option>
+                <option value="implemented">Only Implemented</option>
+                <option value="unused">Only Unused</option>
+                <option value="almost">Has Almost Implementations</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Interface Groups -->
+    {{range .InterfaceGroups}}
+    {{$group := .}}
+    <div class="interface-group" x-show="shouldShowGroup('{{.Key}}')">
+        <div class="group-header">
+            <div class="group-title">
+                <span class="group-icon">{{if .IsStdlib}}<i class="fa-solid fa-book"></i>{{else}}<i class="fa-solid fa-cube"></i>{{end}}</span>
+                {{.Name}}
+                <span class="group-count">{{.Count}}</span>
+            </div>
+            <div class="group-stats">
+                <span class="group-stat">{{.TotalImpls}} total implementations</span>
+                <span class="group-stat">{{printf "%.1f" .AvgImpls}} avg per interface</span>
+            </div>
+        </div>
+
+        <div class="interface-grid">
+            {{range .Interfaces}}
+            {{$item := .}}
+            <div
+                class="interface-card"
+                x-show="shouldShowInterface({
+                    name: '{{.Interface.Name}}',
+                    package: '{{.Interface.PackagePath}}',
+                    implementers: {{.Interface.Implementers}},
+                    unused: {{.IsUnused}},
+                    hasAlmost: {{if .AlmostImplements}}true{{else}}false{{end}},
+                    complexity: {{.ComplexityScore}}
+                })"
+                x-data="{ expanded: false }"
+            >
+                <!-- Interface Header -->
+                <div class="interface-card-header" @click="expanded = !expanded">
+                    <div class="interface-card-title">
+                        <div class="interface-name">{{.Interface.Name}}</div>
+                        <div class="interface-package">{{.Interface.PackagePath}}</div>
+                    </div>
+                    <div class="interface-badges">
+                        {{if .IsUnused}}
+                        <span class="badge badge-warning">Unused</span>
+                        {{end}}
+                        {{if gt (len .AlmostImplements) 0}}
+                        <span class="badge badge-info">{{len .AlmostImplements}} almost</span>
+                        {{end}}
+                        <span class="badge badge-primary">{{len .Implementations}} impl</span>
+                        <span class="badge badge-secondary">{{.Interface.MethodCount}} methods</span>
+                    </div>
+                    <button class="expand-icon" :class="{ 'expanded': expanded }">▼</button>
+                </div>
+
+                <!-- Interface Details (Expandable) -->
+                <div x-show="expanded" x-collapse class="interface-card-details">
+                    <!-- Documentation -->
+                    {{if .Interface.Doc}}
+                    <div class="interface-doc">
+                        <div class="detail-label">Documentation</div>
+                        <div class="detail-value">{{.Interface.Doc}}</div>
+                    </div>
+                    {{end}}
+
+                    <!-- Methods -->
+                    <div class="interface-methods">
+                        <div class="detail-label">Methods ({{len .Interface.Methods}})</div>
+                        <div class="method-list">
+                            {{range .Interface.Methods}}
+                            <div class="method-item">
+                                <div class="method-name">{{.Name}}</div>
+                                <div class="method-signature">{{.Signature}}</div>
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+
+                    <!-- Implementations -->
+                    {{if .Implementations}}
+                    <div class="implementations-section">
+                        <div class="detail-label">Implementations ({{len .Implementations}})</div>
+                        <div class="implementation-list">
+                            {{range .Implementations}}
+                            <div class="implementation-item">
+                                <div class="impl-icon">✓</div>
+                                <div class="impl-content">
+                                    <div class="impl-name">{{.TypeName}}</div>
+                                    <div class="impl-package">{{.PackagePath}}</div>
+                                </div>
+                                {{if .IsExported}}
+                                <span class="impl-badge">exported</span>
+                                {{end}}
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{end}}
+
+                    <!-- Almost Implementations -->
+                    {{if .AlmostImplements}}
+                    <div class="almost-section">
+                        <div class="detail-label">Almost Implements ({{len .AlmostImplements}})</div>
+                        <div class="almost-list">
+                            {{range .AlmostImplements}}
+                            <div class="almost-item">
+                                <div class="almost-icon">⚠️</div>
+                                <div class="almost-content">
+                                    <div class="almost-name">{{.TypeName}}</div>
+                                    <div class="almost-package">{{.PackagePath}}</div>
+                                    <div class="almost-missing">
+                                        Missing {{.MissingCount}} method(s):
+                                        {{range $i, $m := .MissingMethods}}
+                                            {{if $i}}, {{end}}{{$m.Name}}
+                                        {{end}}
+                                    </div>
+                                </div>
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+
+    <!-- Empty State -->
+    <div x-show="filteredCount === 0" class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">No interfaces match your filters</div>
+        <div class="empty-text">Try adjusting your search or filter criteria</div>
+    </div>
+</div>
+
+<script>
+function interfaceDiagram() {
+    return {
+        search: '',
+        groupFilter: 'all',
+        sortBy: 'implementations',
+        showFilter: 'all',
+        showUnused: false,
+        filteredCount: 0,
+
+        shouldShowGroup(groupKey) {
+            if (this.groupFilter === 'all') return true;
+            return this.groupFilter === groupKey;
+        },
+
+        shouldShowInterface(iface) {
+            // Search filter
+            if (this.search) {
+                const searchLower = this.search.toLowerCase();
+                const nameMatch = iface.name.toLowerCase().includes(searchLower);
+                const packageMatch = iface.package.toLowerCase().includes(searchLower);
+                if (!nameMatch && !packageMatch) {
+                    return false;
+                }
+            }
+
+            // Show filter
+            if (this.showFilter === 'implemented' && iface.implementers === 0) {
+                return false;
+            }
+            if (this.showFilter === 'unused' && !iface.unused) {
+                return false;
+            }
+            if (this.showFilter === 'almost' && !iface.hasAlmost) {
+                return false;
+            }
+
+            return true;
+        },
+
+        init() {
+            // Count visible interfaces on any change
+            this.$watch('search', () => this.updateFilteredCount());
+            this.$watch('groupFilter', () => this.updateFilteredCount());
+            this.$watch('showFilter', () => this.updateFilteredCount());
+            this.updateFilteredCount();
+        },
+
+        updateFilteredCount() {
+            // This is a placeholder - actual counting would need to traverse DOM or data
+            this.filteredCount = document.querySelectorAll('.interface-card[x-show]:not([style*="display: none"])').length;
+        }
+    };
+}
+</script>
+{{end}}

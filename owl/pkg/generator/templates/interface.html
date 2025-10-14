@@ -12,28 +12,28 @@
         <!-- Stats Cards -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">🔌</div>
+                <div class="stat-icon"><i class="fa-solid fa-plug"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">{{.Stats.TotalInterfaces}}</div>
                     <div class="stat-label">Total Interfaces</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🏗️</div>
+                <div class="stat-icon"><i class="fa-solid fa-cube"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">{{.Stats.TotalImplementers}}</div>
                     <div class="stat-label">Implementations</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📦</div>
+                <div class="stat-icon"><i class="fa-solid fa-box"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">{{.Stats.ProjectInterfaces}}</div>
                     <div class="stat-label">Project Interfaces</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">⚡</div>
+                <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">{{printf "%.1f" .Stats.AvgImplementers}}</div>
                     <div class="stat-label">Avg Implementations</div>
@@ -45,7 +45,7 @@
     {{if gt (len .UnusedInterfaces) 0}}
     <!-- Unused Interfaces Warning -->
     <div class="interface-warning">
-        <div class="warning-icon">⚠️</div>
+        <div class="warning-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
         <div class="warning-content">
             <div class="warning-title">Unused Interfaces Detected</div>
             <div class="warning-text">
@@ -74,7 +74,7 @@
     <div class="interface-controls">
         <div class="control-group">
             <label class="control-label">
-                <span class="control-icon">🔍</span>
+                <span class="control-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
                 Search
             </label>
             <input
@@ -87,7 +87,7 @@
 
         <div class="control-group">
             <label class="control-label">
-                <span class="control-icon">📦</span>
+                <span class="control-icon"><i class="fa-solid fa-box"></i></span>
                 Group
             </label>
             <select x-model="groupFilter" class="control-select">
@@ -99,7 +99,7 @@
 
         <div class="control-group">
             <label class="control-label">
-                <span class="control-icon">🔀</span>
+                <span class="control-icon"><i class="fa-solid fa-shuffle"></i></span>
                 Sort
             </label>
             <select x-model="sortBy" class="control-select">
@@ -130,7 +130,7 @@
     <div class="interface-group" x-show="shouldShowGroup('{{.Key}}')">
         <div class="group-header">
             <div class="group-title">
-                <span class="group-icon">{{if .IsStdlib}}📚{{else}}🏗️{{end}}</span>
+                <span class="group-icon">{{if .IsStdlib}}<i class="fa-solid fa-book"></i>{{else}}<i class="fa-solid fa-cube"></i>{{end}}</span>
                 {{.Name}}
                 <span class="group-count">{{.Count}}</span>
             </div>

@@ -3488,3 +3488,41 @@ a.type-card:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* Font Awesome Icon Styling */
+.fa-solid, .fa-regular, .fa-brands {
+  font-size: inherit;
+  vertical-align: middle;
+  margin-right: 0.25em;
+}
+
+/* Icon-specific styling */
+.stat-icon i {
+  font-size: 2em;
+  margin-right: 0;
+}
+
+.search-icon i,
+.control-icon i,
+.import-icon i {
+  font-size: 1.2em;
+}
+
+.warning-icon i {
+  font-size: 2.5em;
+  margin-right: 0;
+}
+
+.empty-icon i {
+  font-size: 4em;
+  margin-right: 0;
+  opacity: 0.3;
+}
+
+.group-icon i {
+  font-size: 1.3em;
+}
+
+.tree-child-icon i {
+  font-size: 0.9em;
+}

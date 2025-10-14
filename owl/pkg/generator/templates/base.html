@@ -8,6 +8,9 @@
     <!-- Custom CSS Framework -->
     <link rel="stylesheet" href="assets/styles.css">
 
+    <!-- Font Awesome Free 6.5.1 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <!-- Fuse.js for Fuzzy Search -->
     <script defer src="assets/fuse.min.js"></script>
 
@@ -171,11 +174,11 @@
 
             getIcon(type) {
                 const icons = {
-                    'package': '📦',
-                    'type': '🏗️',
-                    'function': '⚡'
+                    'package': '<i class="fa-solid fa-box"></i>',
+                    'type': '<i class="fa-solid fa-cube"></i>',
+                    'function': '<i class="fa-solid fa-bolt"></i>'
                 };
-                return icons[type] || '📄';
+                return icons[type] || '<i class="fa-solid fa-file"></i>';
             }
         };
     }
@@ -190,7 +193,7 @@
         >
             <!-- Search Trigger -->
             <button class="search-trigger" @click="$dispatch('open-search'); open = true;" x-data="searchModal()">
-                <span class="search-icon">🔍</span>
+                <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
                 <span class="search-text">Search</span>
                 <kbd class="search-kbd">⌘K</kbd>
             </button>
@@ -220,7 +223,7 @@
                             {{range .Types}}
                             <a href="packages/{{$pkgName}}.html#type-{{.Name}}"
                                class="tree-child-link">
-                                <span class="tree-child-icon">🏗️</span>
+                                <span class="tree-child-icon"><i class="fa-solid fa-cube"></i></span>
                                 {{.Name}}
                                 {{if .PrimaryBadge}}
                                 <span class="tree-child-badge badge-{{.PrimaryBadge.Type}}">
@@ -239,9 +242,9 @@
             <div class="sidebar-section">
                 <h3 class="sidebar-title">Statistics</h3>
                 <div class="card-meta">
-                    <div>📦 {{.Stats.TotalPackages}} Packages</div>
-                    <div>🔷 {{.Stats.TotalTypes}} Types</div>
-                    <div>⚡ {{.Stats.TotalFunctions}} Functions</div>
+                    <div><i class="fa-solid fa-box"></i> {{.Stats.TotalPackages}} Packages</div>
+                    <div><i class="fa-solid fa-cube"></i> {{.Stats.TotalTypes}} Types</div>
+                    <div><i class="fa-solid fa-bolt"></i> {{.Stats.TotalFunctions}} Functions</div>
                 </div>
             </div>
 
@@ -252,12 +255,12 @@
                     <ul class="sidebar-nav">
                         <li class="sidebar-nav-item">
                             <a href="dependencies/packages.html" class="sidebar-nav-link">
-                                <span>📊 Package Dependencies</span>
+                                <span><i class="fa-solid fa-chart-simple"></i> Package Dependencies</span>
                             </a>
                         </li>
                         <li class="sidebar-nav-item">
                             <a href="interfaces/implementations.html" class="sidebar-nav-link">
-                                <span>🔌 Interface Implementations</span>
+                                <span><i class="fa-solid fa-plug"></i> Interface Implementations</span>
                             </a>
                         </li>
                     </ul>

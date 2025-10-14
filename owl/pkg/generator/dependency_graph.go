@@ -29,7 +29,7 @@ func (g *Generator) GenerateDependencyGraph(graph *analyzer.PackageDependencyGra
 
 	// Create template with helper functions
 	tmpl := template.New("dependency-base").Funcs(template.FuncMap{
-		"len": func(v interface{}) int {
+		"len": func(v any) int {
 			switch val := v.(type) {
 			case [][]string:
 				return len(val)

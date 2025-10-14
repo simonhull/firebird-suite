@@ -140,15 +140,18 @@ var importantStdlibInterfaces = map[string]*Interface{
 
 // AnalyzeInterfaces performs interface implementation analysis
 func AnalyzeInterfaces(project *Project) (*InterfaceAnalysis, error) {
+	// Estimate sizes based on project
+	estimatedInterfaces := len(project.Packages) * 2 // Rough estimate
+
 	analysis := &InterfaceAnalysis{
-		Interfaces:       make([]*Interface, 0),
-		Implementations:  make(map[string][]*Implementation),
-		AlmostImplements: make(map[string][]*AlmostImplementation),
-		UnusedInterfaces: make([]*Interface, 0),
+		Interfaces:       make([]*Interface, 0, estimatedInterfaces+len(importantStdlibInterfaces)),
+		Implementations:  make(map[string][]*Implementation, estimatedInterfaces),
+		AlmostImplements: make(map[string][]*AlmostImplementation, estimatedInterfaces),
+		UnusedInterfaces: make([]*Interface, 0, estimatedInterfaces/4),
 	}
 
 	// Step 1: Collect all interfaces (project + important stdlib)
-	interfaceMap := make(map[string]*Interface)
+	interfaceMap := make(map[string]*Interface, estimatedInterfaces+len(importantStdlibInterfaces))
 
 	// Collect project interfaces
 	for _, pkg := range project.Packages {

@@ -52,15 +52,18 @@ type DependencyStats struct {
 
 // AnalyzeDependencies builds the complete dependency graph
 func AnalyzeDependencies(project *Project) (*PackageDependencyGraph, error) {
+	numPackages := len(project.Packages)
+	estimatedImports := numPackages * 5 // Average imports per package
+
 	graph := &PackageDependencyGraph{
-		Nodes:  make([]*PackageNode, 0),
-		Edges:  make([]*DependencyEdge, 0),
-		Cycles: make([][]string, 0),
-		Layers: make(map[string]int),
+		Nodes:  make([]*PackageNode, 0, numPackages),
+		Edges:  make([]*DependencyEdge, 0, estimatedImports),
+		Cycles: make([][]string, 0, 4), // Typically few cycles
+		Layers: make(map[string]int, numPackages),
 	}
 
 	// Build node map for quick lookup
-	nodeMap := make(map[string]*PackageNode)
+	nodeMap := make(map[string]*PackageNode, numPackages*2) // Allow for external packages
 
 	// Get module path for identifying internal vs external packages
 	modulePath := project.Module

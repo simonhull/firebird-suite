@@ -149,7 +149,7 @@ func (g *Generator) buildConventionGroups(project *analyzer.Project) []Conventio
 func (g *Generator) generateConventionPage(group ConventionPageGroup, outputDir string) error {
 	// Create template with helper functions
 	tmpl := template.New("base").Funcs(template.FuncMap{
-		"len": func(v interface{}) int {
+		"len": func(v any) int {
 			switch val := v.(type) {
 			case []ConventionItem:
 				return len(val)
@@ -203,7 +203,7 @@ func (g *Generator) generateConventionPage(group ConventionPageGroup, outputDir 
 }
 
 // toJSON converts a value to JSON for use in templates
-func toJSON(v interface{}) template.JS {
+func toJSON(v any) template.JS {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return template.JS("{}")

@@ -60,7 +60,7 @@ func (g *Generator) GenerateInterfaceDiagram(analysis *analyzer.InterfaceAnalysi
 
 	// Create template with helper functions
 	tmpl := template.New("interface-base").Funcs(template.FuncMap{
-		"len": func(v interface{}) int {
+		"len": func(v any) int {
 			switch val := v.(type) {
 			case []*analyzer.Implementation:
 				return len(val)
@@ -95,7 +95,7 @@ func (g *Generator) GenerateInterfaceDiagram(analysis *analyzer.InterfaceAnalysi
 			}
 			return "complex"
 		},
-		"toJSON": func(v interface{}) template.JS {
+		"toJSON": func(v any) template.JS {
 			// For Alpine.js data binding
 			return template.JS(fmt.Sprintf("%v", v))
 		},

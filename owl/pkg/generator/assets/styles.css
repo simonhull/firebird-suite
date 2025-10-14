@@ -880,12 +880,41 @@ pre code {
   font-weight: 500;
 }
 
-/* Type Grid (for package pages) */
+/* Type Grid (for package pages) - Responsive */
 .type-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: var(--space-lg);
   margin-top: var(--space-lg);
+  /* Mobile: 1 column */
+  grid-template-columns: 1fr;
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 768px) {
+  .type-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  }
+}
+
+/* Desktop: 2-3 columns */
+@media (min-width: 1024px) {
+  .type-grid {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  }
+}
+
+/* Large Desktop: 3-4 columns */
+@media (min-width: 1536px) {
+  .type-grid {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  }
+}
+
+/* Extra Large: 4+ columns */
+@media (min-width: 1920px) {
+  .type-grid {
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  }
 }
 
 .type-card {
@@ -952,10 +981,6 @@ pre code {
 
 /* Responsive adjustments for package pages */
 @media (max-width: 768px) {
-  .type-grid {
-    grid-template-columns: 1fr;
-  }
-
   .breadcrumb {
     flex-wrap: wrap;
   }
@@ -2325,8 +2350,37 @@ a.type-card:hover {
 
 .convention-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
+  /* Mobile: 1 column */
+  grid-template-columns: 1fr;
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 768px) {
+  .convention-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+/* Desktop: 2-3 columns */
+@media (min-width: 1024px) {
+  .convention-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+/* Large Desktop: 3-4 columns */
+@media (min-width: 1536px) {
+  .convention-grid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+}
+
+/* Extra Large: 4+ columns */
+@media (min-width: 1920px) {
+  .convention-grid {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  }
 }
 
 .convention-card {
@@ -2457,10 +2511,6 @@ a.type-card:hover {
   .result-count {
     margin-left: 0;
     text-align: center;
-  }
-
-  .convention-grid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -3121,11 +3171,40 @@ a.type-card:hover {
   color: var(--text-muted);
 }
 
-/* Interface Grid */
+/* Interface Grid - Responsive */
 .interface-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: var(--space-lg);
+  /* Mobile: 1 column */
+  grid-template-columns: 1fr;
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 768px) {
+  .interface-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  }
+}
+
+/* Desktop: 2-3 columns */
+@media (min-width: 1024px) {
+  .interface-grid {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  }
+}
+
+/* Large Desktop: 3-4 columns */
+@media (min-width: 1536px) {
+  .interface-grid {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  }
+}
+
+/* Extra Large: 4+ columns */
+@media (min-width: 1920px) {
+  .interface-grid {
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  }
 }
 
 /* Interface Cards */
@@ -3384,10 +3463,6 @@ a.type-card:hover {
 
 /* Responsive - Interface Diagrams */
 @media (max-width: 768px) {
-  .interface-grid {
-    grid-template-columns: 1fr;
-  }
-
   .interface-controls {
     flex-direction: column;
   }

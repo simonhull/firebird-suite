@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/simonhull/firebird-suite/owl/pkg/analyzer"
+	"github.com/simonhull/firebird-suite/owl/pkg/logger"
 )
 
 //go:embed templates/convention-base.html
@@ -63,7 +64,7 @@ func (g *Generator) GenerateConventionPages(project *analyzer.Project) error {
 		}
 	}
 
-	fmt.Printf("   ✓ Generated %d convention pages\n", len(groups))
+	g.logger.Info("Generated convention pages", logger.F("count", len(groups)))
 	return nil
 }
 

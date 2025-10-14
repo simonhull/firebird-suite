@@ -80,7 +80,7 @@ func (g *Generator) GenerateDependencyGraph(graph *analyzer.PackageDependencyGra
 		return fmt.Errorf("executing template: %w", err)
 	}
 
-	fmt.Printf("   ✓ Generated dependency graph page\n")
+	g.logger.Info("Generated dependency graph page")
 	return nil
 }
 

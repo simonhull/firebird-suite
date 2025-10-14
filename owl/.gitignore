@@ -12,6 +12,7 @@ coverage.txt
 
 # Generated documentation
 docs/
+test-docs/
 *.html
 
 # IDE

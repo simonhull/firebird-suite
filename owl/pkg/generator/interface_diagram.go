@@ -133,7 +133,7 @@ func (g *Generator) GenerateInterfaceDiagram(analysis *analyzer.InterfaceAnalysi
 		return fmt.Errorf("executing template: %w", err)
 	}
 
-	fmt.Printf("   ✓ Generated interface diagram page\n")
+	g.logger.Info("Generated interface diagram page")
 	return nil
 }
 

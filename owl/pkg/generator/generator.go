@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/simonhull/firebird-suite/owl/pkg/analyzer"
+	"github.com/simonhull/firebird-suite/owl/pkg/logger"
 )
 
 //go:embed assets
@@ -40,12 +41,24 @@ type Generator struct {
 	outputDir         string
 	project           *analyzer.Project
 	functionCallGraph map[string][]string // function ID -> callers
+	logger            logger.Logger
 }
 
 // NewGenerator creates a new HTML documentation generator
 func NewGenerator(outputDir string) *Generator {
 	return &Generator{
 		outputDir: outputDir,
+		logger:    logger.Default(),
+	}
+}
+
+// WithLogger returns a new Generator with the specified logger
+func (g *Generator) WithLogger(log logger.Logger) *Generator {
+	return &Generator{
+		outputDir:         g.outputDir,
+		project:           g.project,
+		functionCallGraph: g.functionCallGraph,
+		logger:            log,
 	}
 }
 
@@ -122,7 +135,7 @@ func (g *Generator) Generate(project *analyzer.Project) error {
 		return fmt.Errorf("failed to generate search index: %w", err)
 	}
 
-	fmt.Printf("✅ Documentation generated successfully at %s\n", g.outputDir)
+	g.logger.Info("Documentation generated successfully", logger.F("output", g.outputDir))
 	return nil
 }
 
@@ -423,7 +436,7 @@ func (g *Generator) copyAssets(assetsDir string) error {
 	if err := os.WriteFile(cssPath, []byte(cssContent), 0644); err != nil {
 		return fmt.Errorf("failed to write styles.css: %w", err)
 	}
-	fmt.Printf("   ✓ Copied styles.css (%d bytes)\n", len(cssContent))
+	g.logger.Debug("Copied styles.css", logger.F("bytes", len(cssContent)))
 
 	// Copy Alpine.js from embedded assets
 	alpinePath := filepath.Join(assetsDir, "alpine.min.js")
@@ -434,7 +447,7 @@ func (g *Generator) copyAssets(assetsDir string) error {
 	if err := os.WriteFile(alpinePath, alpineContent, 0644); err != nil {
 		return fmt.Errorf("failed to write alpine.min.js: %w", err)
 	}
-	fmt.Printf("   ✓ Copied alpine.min.js (%d bytes)\n", len(alpineContent))
+	g.logger.Debug("Copied alpine.min.js", logger.F("bytes", len(alpineContent)))
 
 	// Copy Fuse.js from embedded assets
 	fusePath := filepath.Join(assetsDir, "fuse.min.js")
@@ -445,7 +458,7 @@ func (g *Generator) copyAssets(assetsDir string) error {
 	if err := os.WriteFile(fusePath, fuseContent, 0644); err != nil {
 		return fmt.Errorf("failed to write fuse.min.js: %w", err)
 	}
-	fmt.Printf("   ✓ Copied fuse.min.js (%d bytes)\n", len(fuseContent))
+	g.logger.Debug("Copied fuse.min.js", logger.F("bytes", len(fuseContent)))
 
 	return nil
 }
@@ -514,7 +527,7 @@ func (g *Generator) generatePackagePages(siteData *SiteData) error {
 		}
 	}
 
-	fmt.Printf("   ✓ Generated %d package pages\n", len(siteData.Packages))
+	g.logger.Info("Generated package pages", logger.F("count", len(siteData.Packages)))
 	return nil
 }
 
@@ -604,7 +617,7 @@ func (g *Generator) generateTypePages(siteData *SiteData) error {
 		}
 	}
 
-	fmt.Printf("   ✓ Generated %d type detail pages\n", totalTypes)
+	g.logger.Info("Generated type detail pages", logger.F("count", totalTypes))
 	return nil
 }
 
